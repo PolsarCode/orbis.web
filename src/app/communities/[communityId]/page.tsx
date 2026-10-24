@@ -44,10 +44,34 @@ export default function CommunityPage() {
   const setCommunityImage = useCommunityStore(
     (state) => state.setCommunityImage,
   );
+  const joinCommunity = useCommunityStore((state) => state.joinCommunity);
+  const [joining, setJoining] = useState(false);
+  const [joinError, setJoinError] = useState<string | null>(null);
 
   async function handleImage(image: CommunityImage, file: File | null) {
     const community = await setCommunityImage(Number(communityId), image, file);
     setLoaded({ id: communityId, community });
+  }
+
+  async function handleJoin() {
+    const community = loaded?.id === communityId ? loaded.community : null;
+    if (!community || community.role) return;
+
+    setJoining(true);
+    setJoinError(null);
+    try {
+      const joined = await joinCommunity(community.id);
+      setLoaded({
+        id: communityId,
+        community: { ...community, ...joined, role: "member" },
+      });
+    } catch (error) {
+      setJoinError(
+        error instanceof Error ? error.message : "Could not join the community.",
+      );
+    } finally {
+      setJoining(false);
+    }
   }
 
   function handleScroll(event: UIEvent<HTMLDivElement>) {
@@ -88,9 +112,54 @@ export default function CommunityPage() {
         <Template.CenteredTemplate>
           <Atom.Heading>Community not found</Atom.Heading>
           <p className="text-sm text-muted">
-            It doesn&apos;t exist, or you&apos;re not a member.
+            It doesn&apos;t exist, or it isn&apos;t public.
           </p>
         </Template.CenteredTemplate>
+      ) : !current.community.role ? (
+        <main className="flex min-h-0 flex-1 flex-col">
+          <Organism.CommunityHeader
+            community={current.community}
+            collapsed={false}
+            actions={null}
+          />
+          <div className="relative isolate flex min-h-0 flex-1">
+            <Molecule.PageWallpaper src={current.community.backgroundUrl} />
+            <Template.PageColumn>
+              <section className="flex flex-col gap-4 rounded-xl border border-divider bg-surface p-5 sm:p-6">
+                <p className="flex items-center gap-2 text-xs text-muted">
+                  <Globe size={14} aria-hidden />
+                  Public community
+                  {current.community.memberCount !== undefined &&
+                    ` · ${current.community.memberCount.toLocaleString()} ${
+                      current.community.memberCount === 1
+                        ? "member"
+                        : "members"
+                    }`}
+                </p>
+                <p className="whitespace-pre-wrap text-sm">
+                  {current.community.description || "No description yet."}
+                </p>
+                <div className="flex flex-col gap-3 border-t border-divider pt-4">
+                  <div>
+                    <h2 className="font-display text-xl font-bold">
+                      Join to participate
+                    </h2>
+                    <p className="mt-1 text-sm text-muted">
+                      Join this community to post, comment, and take part in
+                      discussions.
+                    </p>
+                  </div>
+                  {joinError && <Atom.ErrorMessage>{joinError}</Atom.ErrorMessage>}
+                  <div>
+                    <Atom.Button loading={joining} onClick={handleJoin}>
+                      Join community
+                    </Atom.Button>
+                  </div>
+                </div>
+              </section>
+            </Template.PageColumn>
+          </div>
+        </main>
       ) : (
         <main className="flex min-h-0 flex-1 flex-col">
           <Organism.CommunityHeader

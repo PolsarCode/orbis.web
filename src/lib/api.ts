@@ -34,7 +34,7 @@ export type Community = {
   ownerId: number;
   isPublic: boolean;
   createdAt: string;
-  role?: CommunityRole;
+  role?: CommunityRole | null;
   memberCount?: number;
 };
 
