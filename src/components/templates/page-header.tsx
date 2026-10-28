@@ -14,7 +14,7 @@ export function PageHeader({
   return (
     <header
       className={`flex h-14 shrink-0 items-center gap-3 border-b border-divider px-4 sm:h-[72px] sm:gap-6 sm:px-8 ${
-        tagline || actions || center ? "" : "authenticated:sm:hidden"
+        tagline || actions || center ? "" : "authenticated:hidden"
       }`}
     >
       <div className="flex min-w-0 flex-1 items-center gap-2 authenticated:sm:invisible">

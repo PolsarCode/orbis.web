@@ -257,8 +257,8 @@ export function CommunityHeader({
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/25 to-black/10" />
       <div
-        className={`absolute inset-0 flex gap-3 px-4 pr-28 sm:gap-4 sm:px-8 sm:pr-32 ${
-          collapsed ? "items-center" : "items-end pb-4 sm:pb-6"
+        className={`absolute inset-0 flex gap-3 px-4 sm:gap-4 sm:px-8 sm:pr-32 ${
+          collapsed ? "items-center pr-28" : "items-end pb-4 sm:pb-6"
         }`}
       >
         <CommunityBadge
@@ -276,7 +276,9 @@ export function CommunityHeader({
             collapsed ? "" : "sm:text-4xl"
           }`}
         >
-          <span className="truncate">{community.name}</span>
+          <span className={collapsed ? "truncate" : "max-sm:line-clamp-2 sm:truncate"}>
+            {community.name}
+          </span>
           {community.isVerified && <Atom.VerifiedBadge size="heading" />}
         </Atom.Heading>
         {live && <span className="sr-only">Live on Twitch</span>}

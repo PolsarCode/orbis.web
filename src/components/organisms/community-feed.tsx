@@ -119,7 +119,7 @@ export function CommunityFeed({
     <Segmented<ListSort>
       aria-label="Show"
       size="small"
-      className="!bg-surface !shadow-[inset_0_0_0_1px_var(--divider)] [&_.ant-segmented-item-selected]:!bg-rail [&_.ant-segmented-thumb]:!bg-rail"
+      className="!bg-surface !shadow-[inset_0_0_0_1px_var(--divider)] max-sm:[&_.ant-segmented-item-icon]:hidden [&_.ant-segmented-item-selected]:!bg-rail [&_.ant-segmented-thumb]:!bg-rail"
       options={listSorts}
       value={sort}
       onChange={setSort}

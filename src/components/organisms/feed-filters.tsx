@@ -70,11 +70,11 @@ export function FeedFilters({
             view === "card" ? <LayoutPanelTop size={14} /> : <List size={14} />
           }
         >
-          {view === "card" ? "Card" : "Compact"}
+          <span className="hidden sm:inline">{view === "card" ? "Card" : "Compact"}</span>
           <ChevronDown size={12} aria-hidden />
         </Atom.Button>
       </Dropdown>
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
         {trailing}
         {filterControl}
         {!filterControl && types.length > 1 && (
@@ -119,7 +119,7 @@ export function FeedFilters({
                 variant="secondary"
                 icon={<SlidersHorizontal size={14} />}
               >
-                Filter feed
+                Filter<span className="hidden sm:inline"> feed</span>
               </Atom.Button>
             </Popover>
           </>

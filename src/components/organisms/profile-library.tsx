@@ -5,6 +5,7 @@ import { useState, type ReactNode } from "react";
 import * as Molecule from "@molecule";
 import type { LibraryStatus, MediaType, SteamLink } from "@/lib/api";
 import { libraryStatuses, statusLabel } from "@/lib/library";
+import { useTabScroller } from "@/lib/use-tab-scroller";
 import { ReadOnlyLibraryCard } from "./library-view";
 
 type ShelfEntry = {
@@ -28,6 +29,7 @@ export function ProfileLibrary({
   action?: ReactNode;
 }) {
   const [status, setStatus] = useState<"all" | LibraryStatus>("all");
+  const [tabsRef, tabsFade] = useTabScroller<HTMLDivElement>(status);
   const shown = entries.filter((entry) => status === "all" || entry.status === status);
   const tabs = (["all", ...libraryStatuses] as const).filter(
     (value) => value === "all" || entries.some((entry) => entry.status === value),
@@ -38,21 +40,27 @@ export function ProfileLibrary({
       title="Library"
       count={entries.length}
       actions={
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex max-w-full min-w-0 flex-wrap items-center gap-2">
           {entries.length > 0 && (
-            <Segmented<"all" | LibraryStatus>
-              size="small"
-              value={status}
-              onChange={setStatus}
-              options={tabs.map((value) => ({
-                value,
-                label: `${value === "all" ? "All" : statusLabel(value)} · ${
-                  value === "all"
-                    ? entries.length
-                    : entries.filter((entry) => entry.status === value).length
-                }`,
-              }))}
-            />
+            <div
+              ref={tabsRef}
+              style={tabsFade}
+              className="max-w-full min-w-0 overflow-x-auto [scrollbar-width:none]"
+            >
+              <Segmented<"all" | LibraryStatus>
+                size="small"
+                value={status}
+                onChange={setStatus}
+                options={tabs.map((value) => ({
+                  value,
+                  label: `${value === "all" ? "All" : statusLabel(value)} · ${
+                    value === "all"
+                      ? entries.length
+                      : entries.filter((entry) => entry.status === value).length
+                  }`,
+                }))}
+              />
+            </div>
           )}
           {action}
         </div>

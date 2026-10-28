@@ -39,12 +39,16 @@ type LayoutState = {
   panelCollapsed: boolean;
   dockOpen: boolean;
   drawerOpen: boolean;
+  railOpen: boolean;
+  feedbackOpen: boolean;
   panelLabel: string | null;
   togglePanel: (isDesktop: boolean) => void;
   restorePanel: () => void;
   setDockOpen: (open: boolean) => void;
   restoreDock: () => void;
   closeDrawer: () => void;
+  setRailOpen: (open: boolean) => void;
+  setFeedbackOpen: (open: boolean) => void;
   setPanelLabel: (label: string | null) => void;
 };
 
@@ -52,6 +56,8 @@ export const useLayoutStore = create<LayoutState>()((set, get) => ({
   panelCollapsed: false,
   dockOpen: false,
   drawerOpen: false,
+  railOpen: false,
+  feedbackOpen: false,
   panelLabel: null,
   togglePanel: (isDesktop) => {
     if (!isDesktop) {
@@ -69,5 +75,7 @@ export const useLayoutStore = create<LayoutState>()((set, get) => ({
   },
   restoreDock: () => set({ dockOpen: savedDock() }),
   closeDrawer: () => set({ drawerOpen: false }),
+  setRailOpen: (railOpen) => set({ railOpen }),
+  setFeedbackOpen: (feedbackOpen) => set({ feedbackOpen }),
   setPanelLabel: (panelLabel) => set({ panelLabel }),
 }));

@@ -3,6 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, type KeyboardEvent, type ReactNode } from "react";
 import * as Template from "@template";
+import { useTabScroller } from "@/lib/use-tab-scroller";
 
 export type SettingsTab = {
   key: string;
@@ -18,6 +19,7 @@ function Tabs({ label, tabs, aside }: SettingsTabsProps) {
   const pathname = usePathname();
   const router = useRouter();
   const active = tabs.find((tab) => tab.key === params.get("tab")) ?? tabs[0];
+  const [tabsRef, tabsFade] = useTabScroller<HTMLDivElement>(active.key);
 
   function select(key: string) {
     const next = new URLSearchParams(params.toString());
@@ -40,6 +42,8 @@ function Tabs({ label, tabs, aside }: SettingsTabsProps) {
     <>
       <div className="flex shrink-0 items-end border-b border-divider px-4 sm:px-8">
         <div
+          ref={tabsRef}
+          style={tabsFade}
           role="tablist"
           aria-label={label}
           onKeyDown={handleKeyDown}

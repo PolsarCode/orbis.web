@@ -28,6 +28,7 @@ import {
 } from "@/lib/api";
 import { displayName } from "@/lib/display-name";
 import { timeAgo } from "@/lib/time";
+import { useTabScroller } from "@/lib/use-tab-scroller";
 import { useAuthStore } from "@/stores/auth-store";
 import { useNotificationsStore } from "@/stores/notifications-store";
 import { FriendsPanel } from "./friends-panel";
@@ -261,14 +262,19 @@ export function NotificationCenter() {
   }
 
   const filtered = filter !== "all" || unreadOnly;
+  const [tabsRef, tabsFade] = useTabScroller<HTMLDivElement>(filter);
 
   return (
     <>
       <nav
         aria-label="Notification filters"
-        className="flex shrink-0 items-end gap-6 border-b border-divider px-4 sm:px-8"
+        className="flex shrink-0 items-end gap-6 border-b border-divider px-4 max-sm:flex-wrap max-sm:gap-y-0 sm:px-8"
       >
-        <div className="-mb-px flex min-w-0 items-end gap-6 overflow-x-auto overflow-y-hidden [scrollbar-width:none]">
+        <div
+          ref={tabsRef}
+          style={tabsFade}
+          className="-mb-px flex min-w-0 items-end gap-6 overflow-x-auto overflow-y-hidden [scrollbar-width:none]"
+        >
           {filters.map(({ value, label, icon }) => (
             <button
               key={value}
@@ -286,7 +292,7 @@ export function NotificationCenter() {
             </button>
           ))}
         </div>
-        <label className="ml-auto flex shrink-0 items-center gap-2 self-center text-xs whitespace-nowrap">
+        <label className="ml-auto flex shrink-0 items-center gap-2 self-center text-xs whitespace-nowrap max-sm:order-first max-sm:ml-0 max-sm:w-full max-sm:pt-3">
           <Switch size="small" checked={unreadOnly} onChange={setUnreadOnly} />
           Unread only
         </label>

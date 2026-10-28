@@ -160,8 +160,8 @@ function MediaHeader({
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/10" />
       <div
-        className={`absolute inset-0 flex gap-4 px-4 pr-40 sm:gap-5 sm:px-8 sm:pr-56 ${
-          collapsed ? "items-center" : "items-end pb-5 sm:pb-6"
+        className={`absolute inset-0 flex gap-4 px-4 sm:gap-5 sm:px-8 sm:pr-56 ${
+          collapsed ? "items-center pr-40" : "items-end pb-5 sm:pb-6"
         }`}
       >
         <MediaCover
@@ -181,8 +181,8 @@ function MediaHeader({
             </p>
           )}
           <Atom.Heading
-            className={`min-w-0 truncate text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)] ${
-              collapsed ? "" : "sm:text-4xl"
+            className={`min-w-0 text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)] ${
+              collapsed ? "truncate" : "max-sm:line-clamp-2 sm:truncate sm:text-4xl"
             }`}
           >
             {profile.title}

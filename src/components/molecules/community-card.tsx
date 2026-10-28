@@ -38,7 +38,7 @@ export function CommunityCard({
       avatar={icon}
       title={
         <span className="flex min-w-0 items-center gap-1 text-[13px] font-semibold">
-          <span className="truncate">{name}</span>
+          <span className="max-sm:line-clamp-2 sm:truncate">{name}</span>
           {isVerified && <Atom.VerifiedBadge />}
         </span>
       }

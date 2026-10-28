@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from "react";
 import * as Atom from "@atom";
 import { getLibrary, type LibraryEntry } from "@/lib/api";
+import { useIsPhone } from "@/lib/use-is-phone";
 import { useAuthStore } from "@/stores/auth-store";
 import { useLayoutStore } from "@/stores/layout-store";
 import { useLibraryPreferencesStore } from "@/stores/library-preferences-store";
@@ -97,7 +98,8 @@ export function LibraryDock() {
   const dock = useRef<HTMLElement>(null);
   const footer = useRef<HTMLDivElement>(null);
   const [footerHeight, setFooterHeight] = useState(0);
-  const shown = profile !== null;
+  const isPhone = useIsPhone();
+  const shown = profile !== null && !isPhone;
   const panelHeight = PANEL_HEIGHT + footerHeight;
   const height = shown
     ? Math.min(

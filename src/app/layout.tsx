@@ -1,5 +1,5 @@
 import { Analytics } from "@vercel/analytics/next";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, Inter } from "next/font/google";
 import { TopLoadingBar } from "@/components/organisms/top-loading-bar";
 import { wakeServerScript } from "@/lib/api";
@@ -29,6 +29,7 @@ export const metadata: Metadata = {
   title: { default: siteTitle, template: `%s · ${siteTitle}` },
   description,
   applicationName: "Orbis",
+  appleWebApp: { capable: true, title: "Orbis" },
   openGraph: {
     type: "website",
     siteName: "Orbis",
@@ -41,6 +42,13 @@ export const metadata: Metadata = {
     title: "Orbis — Your fandom. Your people.",
     description,
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#eae5dc" },
+    { media: "(prefers-color-scheme: dark)", color: "#151613" },
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

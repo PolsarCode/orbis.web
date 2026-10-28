@@ -11,6 +11,7 @@ import { submitReport, type ReportCategory } from "@/lib/api";
 import { ticketNumber } from "@/lib/ticket";
 import { useReadOnly } from "@/lib/read-only";
 import { useAuthStore } from "@/stores/auth-store";
+import { useLayoutStore } from "@/stores/layout-store";
 
 const categories: { value: ReportCategory; label: string }[] = [
   { value: "bug", label: "Bug" },
@@ -140,7 +141,8 @@ function FeedbackModal({ open, onClose }: { open: boolean; onClose: () => void }
 export function FeedbackDock() {
   const profile = useAuthStore((state) => state.profile);
   const readOnly = useReadOnly();
-  const [open, setOpen] = useState(false);
+  const open = useLayoutStore((state) => state.feedbackOpen);
+  const setOpen = useLayoutStore((state) => state.setFeedbackOpen);
   const dock = useRef<HTMLDivElement>(null);
   const signedIn = profile !== null;
 
@@ -152,7 +154,9 @@ export function FeedbackDock() {
     const measure = () =>
       root.style.setProperty(
         "--feedback-dock-space",
-        `${window.innerHeight - element.getBoundingClientRect().top}px`,
+        element.offsetParent
+          ? `${window.innerHeight - element.getBoundingClientRect().top}px`
+          : "0px",
       );
     const observer = new ResizeObserver(measure);
     observer.observe(element);
@@ -171,7 +175,7 @@ export function FeedbackDock() {
     <>
       <div
         ref={dock}
-        className="fixed right-4 bottom-[calc(1rem+var(--library-dock-height,0px))] z-40 flex flex-col items-center gap-3 sm:right-6 sm:bottom-[calc(1.5rem+var(--library-dock-height,0px))]"
+        className="fixed right-4 bottom-[calc(1rem+var(--library-dock-height,0px))] z-40 hidden flex-col items-center gap-3 sm:right-6 sm:flex sm:bottom-[calc(1.5rem+var(--library-dock-height,0px))]"
       >
         {profile.isAdmin && (
           <Tooltip title="Directory" placement="left">

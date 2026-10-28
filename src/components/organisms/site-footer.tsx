@@ -21,7 +21,7 @@ export function SiteFooter({
       }
     >
       <div
-        className={`flex flex-wrap justify-between gap-2 text-muted ${
+        className={`flex flex-wrap justify-between gap-2 text-muted max-sm:flex-col max-sm:items-center max-sm:text-center ${
           compact ? "text-[11px] sm:text-xs" : "pt-6 text-xs"
         } ${
           bordered ? "border-t border-divider" : ""
@@ -40,7 +40,7 @@ export function SiteFooter({
         </p>
         <nav
           aria-label="Legal"
-          className={`flex flex-wrap gap-y-1 ${compact ? "gap-x-3 sm:gap-x-4" : "gap-x-4"}`}
+          className={`flex flex-wrap gap-y-1 max-sm:justify-center ${compact ? "gap-x-3 sm:gap-x-4" : "gap-x-4"}`}
         >
           {links.map((link) => (
             <Link

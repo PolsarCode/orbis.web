@@ -35,10 +35,12 @@ import {
   type PublicProfile as Profile,
 } from "@/lib/api";
 import { usePaged } from "@/lib/use-paged";
+import { useTabScroller } from "@/lib/use-tab-scroller";
 import { displayName } from "@/lib/display-name";
 import { useAuthStore } from "@/stores/auth-store";
 import { useCommunityStore } from "@/stores/community-store";
 import { useFriendsStore } from "@/stores/friends-store";
+import { useLayoutStore } from "@/stores/layout-store";
 import { MessageButton } from "./chat-dock";
 import { FriendAction } from "./member-list";
 import { ReportButton } from "./report-content";
@@ -230,6 +232,7 @@ function ProfileHeader({
 }
 
 function ProfileTabs({ profile, tab }: { profile: Profile; tab: Tab }) {
+  const [tabsRef, tabsFade] = useTabScroller<HTMLElement>(tab);
   const joined = new Date(profile.createdAt).toLocaleDateString(undefined, {
     month: "long",
     year: "numeric",
@@ -242,6 +245,8 @@ function ProfileTabs({ profile, tab }: { profile: Profile; tab: Tab }) {
 
   return (
     <nav
+      ref={tabsRef}
+      style={tabsFade}
       aria-label="Profile sections"
       data-tour="profile-tabs"
       className="flex shrink-0 items-end gap-6 overflow-x-auto border-b border-divider px-4 sm:px-8"
@@ -555,9 +560,11 @@ const PANEL_LABEL = "Friends & communities";
 
 function SeeAll({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <Link href={href} className="focus-ring w-fit rounded-sm text-xs font-semibold text-accent hover:underline">
-      {children}
-    </Link>
+    <div onClick={() => useLayoutStore.getState().closeDrawer()}>
+      <Atom.ButtonLink href={href} variant="secondary" block>
+        {children}
+      </Atom.ButtonLink>
+    </div>
   );
 }
 

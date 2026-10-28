@@ -36,7 +36,7 @@ export function SiteHeader({ sticky = false }: { sticky?: boolean }) {
         <Atom.Brand />
         <nav
           aria-label="Main navigation"
-          className="order-3 col-span-2 flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-[13px] lg:order-none lg:col-span-1"
+          className="order-3 col-span-2 flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-[13px] max-sm:hidden lg:order-none lg:col-span-1"
         >
           {[
             { id: "statistics", label: "Statistics" },

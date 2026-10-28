@@ -299,7 +299,7 @@ function UserRow({
   const name = displayName(user);
 
   return (
-    <li className="flex items-center gap-3 px-4 py-3">
+    <li className="flex items-center gap-3 px-4 py-3 max-sm:flex-wrap">
       <Atom.Avatar size="sm" label={name} src={user.avatarUrl} seed={user.userId} />
       <div className="flex min-w-0 flex-1 flex-col">
         <span className="flex min-w-0 items-center gap-1.5">
@@ -323,7 +323,11 @@ function UserRow({
           <EmailStatus confirmedAt={user.emailVerifiedAt} />
         </span>
       </div>
-      {onChange && <UserControls user={user} onChange={onChange} />}
+      {onChange && (
+        <div className="max-sm:basis-full max-sm:pl-11">
+          <UserControls user={user} onChange={onChange} />
+        </div>
+      )}
       <div className="hidden shrink-0 flex-col items-end text-xs text-muted sm:flex">
         <span>Joined {joined(user.createdAt)}</span>
         <span>

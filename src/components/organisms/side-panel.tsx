@@ -1,7 +1,7 @@
 "use client";
 
 import { Drawer } from "antd";
-import { PanelRightClose, PanelRightOpen, X } from "lucide-react";
+import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import { useEffect, useLayoutEffect, type ReactNode } from "react";
 import { useIsDesktop } from "@/lib/use-is-desktop";
 import { useLayoutStore } from "@/stores/layout-store";
@@ -75,12 +75,11 @@ export function SidePanelOpener({
   const isDesktop = useIsDesktop();
   const label = useLayoutStore((state) => state.panelLabel);
   const collapsed = useLayoutStore((state) => state.panelCollapsed);
-  const drawerOpen = useLayoutStore((state) => state.drawerOpen);
   const togglePanel = useLayoutStore((state) => state.togglePanel);
 
   if (!label) return null;
 
-  const shown = isDesktop ? collapsed : !drawerOpen;
+  const shown = !isDesktop || collapsed;
   const title = `Show ${label.toLowerCase()}`;
   return (
     <div
@@ -126,6 +125,8 @@ export function SidePanelToggle({ label }: { label: string }) {
   const open = isDesktop ? !collapsed : drawerOpen;
   const title = `${open ? "Hide" : "Show"} ${label.toLowerCase()}`;
 
+  if (!isDesktop) return null;
+
   return (
     <button
       type="button"
@@ -135,13 +136,7 @@ export function SidePanelToggle({ label }: { label: string }) {
       onClick={() => togglePanel(isDesktop)}
       className="icon-button"
     >
-      {!open ? (
-        <PanelRightOpen size={20} />
-      ) : isDesktop ? (
-        <PanelRightClose size={20} />
-      ) : (
-        <X size={20} />
-      )}
+      {open ? <PanelRightClose size={20} /> : <PanelRightOpen size={20} />}
     </button>
   );
 }

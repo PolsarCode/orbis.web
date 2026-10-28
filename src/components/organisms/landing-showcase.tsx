@@ -87,7 +87,8 @@ export function LandingCommunities() {
                   href={`/communities/${community.id}`}
                   action={
                     <span className="flex items-center gap-1 text-xs font-semibold text-accent">
-                      View community <ArrowRight size={14} aria-hidden />
+                      <span className="hidden sm:inline">View community</span>
+                      <ArrowRight size={14} aria-hidden />
                     </span>
                   }
                 />
@@ -137,7 +138,7 @@ export function LandingPeople() {
       </div>
       <ul
         aria-label="Public profiles"
-        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3"
       >
         {people.map((person) => (
           <li key={person.userId}>
@@ -248,11 +249,11 @@ export function LandingExtras() {
           A few thoughtful details to help you feel at home.
         </p>
       </div>
-      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         {extras.map((extra) => (
           <li key={extra.label}>
             <LandingReveal className="h-full">
-              <div className="group flex h-full items-center gap-4 rounded-xl border border-divider bg-surface p-5 transition-colors hover:border-accent/40 hover:bg-accent-soft/30">
+              <div className="group flex h-full flex-col items-start gap-3 rounded-xl border border-divider bg-surface p-4 transition-colors sm:flex-row sm:items-center sm:gap-4 sm:p-5 hover:border-accent/40 hover:bg-accent-soft/30">
                 <span
                   aria-hidden
                   className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-accent/15 bg-accent-soft text-accent"

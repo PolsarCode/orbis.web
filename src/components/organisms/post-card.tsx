@@ -99,15 +99,20 @@ export function PostCard({
               </>
             )}
           </span>
-          <span className="truncate text-xs text-muted">
-            {showCommunity && post.community && `${post.community.name} · `}
-            <time
-              dateTime={post.createdAt}
-              title={new Date(post.createdAt).toLocaleString()}
-            >
-              {timeAgo(post.createdAt)}
-            </time>{" "}
-            <Molecule.EditedMark editedAt={post.editedAt} />
+          <span className="flex min-w-0 gap-1 text-xs text-muted">
+            {showCommunity && post.community && (
+              <span className="truncate">{post.community.name}</span>
+            )}
+            <span className="shrink-0">
+              {showCommunity && post.community && "· "}
+              <time
+                dateTime={post.createdAt}
+                title={new Date(post.createdAt).toLocaleString()}
+              >
+                {timeAgo(post.createdAt)}
+              </time>{" "}
+              <Molecule.EditedMark editedAt={post.editedAt} />
+            </span>
           </span>
         </div>
         <ContentActions

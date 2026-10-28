@@ -9,6 +9,7 @@ import * as Atom from "@atom";
 import * as Template from "@template";
 import { getReportAdmins, type Report, type ReportAdmin } from "@/lib/api";
 import { displayName } from "@/lib/display-name";
+import { useTabScroller } from "@/lib/use-tab-scroller";
 import { useAuthStore } from "@/stores/auth-store";
 import { MyReports } from "./my-reports";
 import { ReportedContent } from "./reported-content";
@@ -68,6 +69,7 @@ function AdminReports() {
   const profile = useAuthStore((state) => state.profile);
   const requested = params.get("tab");
   const tab: Tab = tabs.find(({ value }) => value === requested)?.value ?? "board";
+  const [tabsRef, tabsFade] = useTabScroller<HTMLDivElement>(tab);
   const reportParam = Number(params.get("report"));
   const openReport = Number.isInteger(reportParam) && reportParam > 0 ? reportParam : null;
   const [admins, setAdmins] = useState<ReportAdmin[] | null>(null);
@@ -105,9 +107,11 @@ function AdminReports() {
       </Template.PageHeader>
       <nav
         aria-label="Report sections"
-        className="flex shrink-0 items-end gap-6 border-b border-divider px-4 sm:px-8"
+        className="flex shrink-0 items-end gap-6 border-b border-divider px-4 max-sm:flex-wrap max-sm:gap-y-0 sm:px-8"
       >
         <div
+          ref={tabsRef}
+          style={tabsFade}
           data-tour="reports-tabs"
           className="-mb-px flex min-w-0 items-end gap-6 overflow-x-auto overflow-y-hidden [scrollbar-width:none]"
         >
@@ -129,7 +133,7 @@ function AdminReports() {
         </div>
         <div
           data-tour="reports-filters"
-          className={`ml-auto flex shrink-0 items-center gap-2 self-center ${tab === "reported" ? "invisible" : ""}`}
+          className={`ml-auto flex shrink-0 items-center gap-2 self-center max-sm:order-first max-sm:ml-0 max-sm:w-full max-sm:pt-3 ${tab === "reported" ? "invisible max-sm:hidden" : ""}`}
         >
           <Select<ReportFilter["assignee"]>
             size="small"
@@ -178,7 +182,10 @@ function AdminReports() {
           <ViewToggle view={views[tab]} onChange={(view) => setViews({ ...views, [tab]: view })} />
         </div>
         {profile?.isHeadAdmin && (
-          <span data-tour="reports-discord" className="flex shrink-0 self-center">
+          <span
+            data-tour="reports-discord"
+            className="flex shrink-0 self-center max-sm:order-first max-sm:pt-2"
+          >
             <DiscordWebhookButton />
           </span>
         )}

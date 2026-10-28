@@ -187,8 +187,8 @@ function ChecklistLink({ href, children }: { href: string; children: ReactNode }
 function visibleTarget(name: string) {
   const element = document.querySelector<HTMLElement>(`[data-tour="${name}"]`);
   if (!element) return null;
-  const { width, height } = element.getBoundingClientRect();
-  return width > 0 && height > 0 ? element : null;
+  const { width, height, left, right } = element.getBoundingClientRect();
+  return width > 0 && height > 0 && right > 0 && left < window.innerWidth ? element : null;
 }
 
 function scrollParent(element: HTMLElement) {

@@ -21,6 +21,7 @@ import {
   type Community,
   type CommunityImage,
 } from "@/lib/api";
+import { useTabScroller } from "@/lib/use-tab-scroller";
 import { useAuthStore } from "@/stores/auth-store";
 import { useCommunityStore } from "@/stores/community-store";
 
@@ -41,6 +42,7 @@ export function CommunityView({ members = false }: { members?: boolean }) {
   const requested = useSearchParams().get("tab");
   const tab: Tab = members ? "members" : (pages.find((value) => value === requested) ?? "feed");
   const section = tab === "forum" ? "feed" : tab;
+  const [tabsRef, tabsFade] = useTabScroller<HTMLElement>(section);
   const [collapsed, setCollapsed] = useState(false);
   const setCommunityImage = useCommunityStore(
     (state) => state.setCommunityImage,
@@ -182,6 +184,8 @@ export function CommunityView({ members = false }: { members?: boolean }) {
             communityId={current.community.id}
           />
           <nav
+            ref={tabsRef}
+            style={tabsFade}
             aria-label="Community sections"
             className="flex shrink-0 items-end gap-6 overflow-x-auto border-b border-divider px-4 sm:px-8"
           >

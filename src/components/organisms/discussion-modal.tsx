@@ -121,7 +121,7 @@ export function DiscussionModal({
       width={840}
       destroyOnHidden
       title={null}
-      styles={{ container: { padding: 32 } }}
+      classNames={{ container: "!p-5 sm:!p-8" }}
     >
       {item && (
         <div className="flex flex-col gap-6">

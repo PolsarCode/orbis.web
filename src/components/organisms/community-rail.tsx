@@ -42,6 +42,7 @@ import {
 import * as Atom from "@atom";
 import type { Community, RailFolder, RailItem } from "@/lib/api";
 import { useReadOnly } from "@/lib/read-only";
+import { useIsPhone } from "@/lib/use-is-phone";
 import {
   communityKey,
   folderKey,
@@ -53,11 +54,12 @@ import {
 } from "@/lib/rail-layout";
 import { useCommunityStore } from "@/stores/community-store";
 import { useFriendsStore } from "@/stores/friends-store";
+import { useLayoutStore } from "@/stores/layout-store";
 import { CreateCommunityModal } from "./create-community-modal";
 import { FolderSettingsModal } from "./folder-settings-modal";
 
 function itemClass(active: boolean) {
-  return `focus-ring relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-full font-display text-[17px] leading-none font-bold sm:h-12 sm:w-12 sm:text-[23px] transition-colors motion-reduce:transition-none ${
+  return `focus-ring relative flex h-12 w-12 cursor-pointer items-center justify-center rounded-full font-display text-[23px] leading-none font-bold transition-colors motion-reduce:transition-none ${
     active
       ? "bg-accent text-accent-foreground"
       : "bg-rail-item text-foreground hover:bg-accent-soft"
@@ -91,7 +93,7 @@ function RailSlot({
       {indicator && (
         <span
           aria-hidden
-          className={`absolute left-1/2 h-1 w-8 -translate-x-1/2 rounded-full bg-accent sm:w-10 ${
+          className={`absolute left-1/2 h-1 w-10 -translate-x-1/2 rounded-full bg-accent ${
             indicator === "before" ? "-top-2.5" : "-bottom-2.5"
           }`}
         />
@@ -246,7 +248,7 @@ function SortableFolder({
           aria-expanded={open}
           onClick={onToggle}
           style={open ? undefined : tint(folder.color, "40")}
-          className={`focus-ring relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-[14px] transition-[background-color,transform] sm:h-12 sm:w-12 sm:rounded-2xl motion-reduce:transition-none ${
+          className={`focus-ring relative flex h-12 w-12 cursor-pointer items-center justify-center rounded-2xl transition-[background-color,transform] motion-reduce:transition-none ${
             open ? "" : folder.color ? "" : "bg-rail-item"
           } ${
             active && !open ? "ring-2 ring-accent ring-offset-2 ring-offset-rail" : ""
@@ -263,11 +265,11 @@ function SortableFolder({
               fillOpacity={0.35}
             />
           ) : (
-            <span className="grid grid-cols-[repeat(2,0.875rem)] grid-rows-[repeat(2,0.875rem)] gap-0.5 sm:grid-cols-[repeat(2,18px)] sm:grid-rows-[repeat(2,18px)] sm:gap-1">
+            <span className="grid grid-cols-[repeat(2,18px)] grid-rows-[repeat(2,18px)] gap-1">
               {communities.slice(0, 4).map((community) => (
                 <span
                   key={community.id}
-                  className="relative flex h-3.5 w-3.5 items-center justify-center rounded-full bg-surface font-display text-[7px] leading-none font-bold text-foreground sm:h-[18px] sm:w-[18px] sm:text-[9px]"
+                  className="relative flex h-[18px] w-[18px] items-center justify-center rounded-full bg-surface font-display text-[9px] leading-none font-bold text-foreground"
                 >
                   <Atom.CommunityIcon name={community.name} src={community.iconUrl} />
                 </span>
@@ -316,6 +318,19 @@ export function CommunityRail() {
   const suppressClick = useRef(false);
   const scrollList = useRef<HTMLUListElement>(null);
   const [overflow, setOverflow] = useState({ above: false, below: false });
+  const railOpen = useLayoutStore((state) => state.railOpen);
+  const setRailOpen = useLayoutStore((state) => state.setRailOpen);
+  const isPhone = useIsPhone();
+  const hidden = isPhone && !railOpen;
+
+  useEffect(() => {
+    if (!railOpen) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setRailOpen(false);
+    };
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, [railOpen, setRailOpen]);
 
   function measureOverflow() {
     const list = scrollList.current;
@@ -569,17 +584,23 @@ export function CommunityRail() {
   return (
     <nav
       aria-label="Communities"
-      className="flex h-full w-14 shrink-0 flex-col items-center gap-4 bg-rail px-2 py-5 sm:w-20 sm:px-4"
+      inert={hidden}
+      className={`fixed inset-y-0 left-0 z-50 flex h-dvh w-20 shrink-0 flex-col items-center gap-4 bg-rail px-4 py-5 transition-transform duration-300 ease-out motion-reduce:transition-none sm:static sm:z-auto sm:h-full sm:translate-x-0 ${
+        railOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
+      }`}
       onClickCapture={(event) => {
         if (!suppressClick.current) return;
         event.preventDefault();
         event.stopPropagation();
       }}
+      onClick={(event) => {
+        if ((event.target as HTMLElement).closest("a")) setRailOpen(false);
+      }}
     >
       <Link
         href="/"
         aria-label="Orbis home"
-        className="group focus-ring flex rounded-sm font-display text-2xl leading-none font-extrabold text-accent sm:text-[32px]"
+        className="group focus-ring flex rounded-sm font-display text-[32px] leading-none font-extrabold text-accent"
       >
         <Atom.LogoMark animation="hover" />
       </Link>
@@ -627,7 +648,7 @@ export function CommunityRail() {
         ref={scrollList}
         onScroll={measureOverflow}
         style={fadeMask(overflow)}
-        className="-mx-2 -my-1 flex min-h-0 w-[calc(100%+1rem)] flex-1 flex-col items-center gap-4 overflow-y-auto px-2 py-2 [scrollbar-width:none] sm:-mx-4 sm:w-[calc(100%+2rem)] sm:px-4"
+        className="-mx-4 -my-1 flex min-h-0 w-[calc(100%+2rem)] flex-1 flex-col items-center gap-4 overflow-y-auto px-4 py-2 [scrollbar-width:none]"
       >
         {communities.length > 0 && (
         <li data-tour="communities" className="w-full">
@@ -673,11 +694,11 @@ export function CommunityRail() {
               return (
                 <li
                   key={folderKey(item.id)}
-                  className="-mx-1 w-[calc(100%+0.5rem)] sm:-mx-1.5 sm:w-[calc(100%+0.75rem)]"
+                  className="-mx-1.5 w-[calc(100%+0.75rem)]"
                 >
                   <ul
                     style={closing ? undefined : tint(item.color, "26")}
-                    className={`flex flex-col items-center rounded-[22px] py-1 transition-colors duration-200 sm:rounded-[30px] sm:py-1.5 motion-reduce:transition-none ${
+                    className={`flex flex-col items-center rounded-[30px] py-1.5 transition-colors duration-200 motion-reduce:transition-none ${
                       opening ? "starting:bg-transparent" : ""
                     } ${
                       closing ? "bg-transparent" : item.color ? "" : "bg-rail-item/60"
@@ -773,5 +794,20 @@ export function CommunityRail() {
         onUngroup={() => editing && saveLayout(ungroup(items, editing.id))}
       />
     </nav>
+  );
+}
+
+export function CommunityRailBackdrop() {
+  const railOpen = useLayoutStore((state) => state.railOpen);
+  const setRailOpen = useLayoutStore((state) => state.setRailOpen);
+
+  if (!railOpen) return null;
+
+  return (
+    <div
+      aria-hidden
+      onClick={() => setRailOpen(false)}
+      className="fixed inset-0 z-40 bg-black/50 sm:hidden"
+    />
   );
 }

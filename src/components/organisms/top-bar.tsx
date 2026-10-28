@@ -1,11 +1,12 @@
 "use client";
 
-import { MessageCircle, UserPlus } from "lucide-react";
+import { Menu, MessageCircle, UserPlus } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import { useFriendsStore } from "@/stores/friends-store";
+import { useLayoutStore } from "@/stores/layout-store";
 import { useMessagesStore } from "@/stores/messages-store";
 import { HEADER_POPOVER_LIMIT, HeaderPopover, HeaderPopoverNote } from "./header-popover";
 import { ConversationRow } from "./messages-view";
@@ -168,9 +169,19 @@ function MessagesButton() {
 }
 
 export function TopBar() {
+  const setRailOpen = useLayoutStore((state) => state.setRailOpen);
   return (
-    <header className="grid h-14 shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 bg-rail px-4 sm:h-16 sm:grid-cols-[1fr_minmax(0,28rem)_1fr] sm:gap-6 sm:px-8">
-      <div aria-hidden className="hidden sm:block" />
+    <header className="grid h-14 shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 bg-rail px-4 sm:h-16 sm:grid-cols-[1fr_minmax(0,28rem)_1fr] sm:gap-6 sm:px-8">
+      <div className="-ml-2 flex sm:ml-0 sm:block">
+        <button
+          type="button"
+          aria-label="Show communities"
+          onClick={() => setRailOpen(true)}
+          className={`cursor-pointer sm:hidden ${itemClass(false)}`}
+        >
+          <Menu size={20} />
+        </button>
+      </div>
       <div className="min-w-0">
         <SiteSearch />
       </div>

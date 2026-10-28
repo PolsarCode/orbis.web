@@ -34,6 +34,7 @@ import {
 } from "@/lib/api";
 import { libraryStatuses, mediaPath, statusLabel } from "@/lib/library";
 import { useReadOnly } from "@/lib/read-only";
+import { useTabScroller } from "@/lib/use-tab-scroller";
 import { useAuthStore } from "@/stores/auth-store";
 import { useSearchStore } from "@/stores/search-store";
 import {
@@ -743,13 +744,16 @@ export function LibraryTabs({
   const count = (value: StatusFilter) =>
     value === "all" ? ofType.length : ofType.filter((entry) => entry.status === value).length;
   const typeForLabels = type === "all" ? undefined : type;
+  const [tabsRef, tabsFade] = useTabScroller<HTMLDivElement>(status);
 
   return (
     <nav
       aria-label="Library sections"
-      className={`flex shrink-0 items-end gap-6 px-4 sm:px-8 ${bordered ? "border-b border-divider" : ""}`}
+      className={`flex shrink-0 items-end gap-6 px-4 max-sm:flex-wrap max-sm:gap-y-0 sm:px-8 ${bordered ? "border-b border-divider" : ""}`}
     >
       <div
+        ref={tabsRef}
+        style={tabsFade}
         data-tour="library-tabs"
         className="-mb-px flex min-w-0 items-end gap-6 overflow-x-auto overflow-y-hidden [scrollbar-width:none]"
       >
@@ -775,7 +779,10 @@ export function LibraryTabs({
           );
         })}
       </div>
-      <div data-tour="library-view" className="ml-auto flex shrink-0 items-center gap-2 self-center">
+      <div
+        data-tour="library-view"
+        className="ml-auto flex shrink-0 items-center gap-2 self-center max-sm:order-first max-sm:ml-0 max-sm:w-full max-sm:pt-3"
+      >
         <Select<TypeFilter>
           size="small"
           aria-label="Media type"
