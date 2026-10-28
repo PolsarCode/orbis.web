@@ -31,6 +31,7 @@ import { PostComposer } from "./post-composer";
 import { PostList } from "./post-list";
 import { PanelHeading, SidePanel } from "./side-panel";
 import { PageTour } from "./onboarding";
+import { MediaLinkedDiscussion } from "./linked-discussion";
 import { PersonRow } from "./person-row";
 
 const detailLabels: Record<string, string> = {
@@ -439,6 +440,7 @@ export function MediaProfile({ type, sourceId }: { type: string; sourceId: strin
         }}
       />
       <PageTour name="media" />
+      <MediaLinkedDiscussion type={profile.type} sourceId={profile.sourceId} />
       <MediaHeader profile={profile} collapsed={collapsed} onChange={setEntry} />
       <MetaBar profile={profile} />
       <div className="flex min-h-0 flex-1">

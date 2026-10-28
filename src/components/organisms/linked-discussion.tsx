@@ -6,8 +6,12 @@ import { useCallback, useEffect, useState } from "react";
 import {
   getCommunityActivity,
   getCommunityPost,
+  getMediaPost,
+  getProfileActivity,
+  getProfilePost,
   getThread,
   type FeedEntry,
+  type MediaType,
 } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
 import { DiscussionModal } from "./discussion-modal";
@@ -24,17 +28,49 @@ function linkedTarget(params: URLSearchParams) {
   return null;
 }
 
-function loadLinked(communityId: number, type: LinkType, id: number): Promise<FeedEntry> {
-  const { token } = useAuthStore.getState();
-  if (type === "post") return getCommunityPost(token, communityId, id);
-  if (type === "activity") return getCommunityActivity(token, communityId, id);
-  return getThread(token, id).then((thread) => {
-    if (thread.communityId !== communityId) throw new Error("That thread isn’t available.");
-    return thread;
-  });
-}
+type LoadLinked = (type: LinkType, id: number) => Promise<FeedEntry>;
 
 export function LinkedDiscussion({ communityId }: { communityId: number }) {
+  const load = useCallback<LoadLinked>(
+    (type, id) => {
+      const { token } = useAuthStore.getState();
+      if (type === "post") return getCommunityPost(token, communityId, id);
+      if (type === "activity") return getCommunityActivity(token, communityId, id);
+      return getThread(token, id).then((thread) => {
+        if (thread.communityId !== communityId) throw new Error("That thread isn’t available.");
+        return thread;
+      });
+    },
+    [communityId],
+  );
+  return <LinkedItem load={load} />;
+}
+
+export function ProfileLinkedDiscussion({ username }: { username: string }) {
+  const load = useCallback<LoadLinked>(
+    (type, id) => {
+      const { token } = useAuthStore.getState();
+      if (type === "post") return getProfilePost(token, username, id);
+      if (type === "activity") return getProfileActivity(token, username, id);
+      return getThread(token, id);
+    },
+    [username],
+  );
+  return <LinkedItem load={load} />;
+}
+
+export function MediaLinkedDiscussion({ type, sourceId }: { type: MediaType; sourceId: string }) {
+  const load = useCallback<LoadLinked>(
+    (linkType, id) => {
+      if (linkType !== "post") return Promise.reject(new Error("That post isn’t available."));
+      return getMediaPost(useAuthStore.getState().token, type, sourceId, id);
+    },
+    [type, sourceId],
+  );
+  return <LinkedItem load={load} />;
+}
+
+function LinkedItem({ load }: { load: LoadLinked }) {
   const params = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -53,7 +89,7 @@ export function LinkedDiscussion({ communityId }: { communityId: number }) {
   useEffect(() => {
     if (!type || !id) return;
     let current = true;
-    loadLinked(communityId, type, id)
+    load(type, id)
       .then((loaded) => {
         if (current) setItem(loaded);
       })
@@ -65,7 +101,7 @@ export function LinkedDiscussion({ communityId }: { communityId: number }) {
     return () => {
       current = false;
     };
-  }, [communityId, type, id, message, clearLink]);
+  }, [load, type, id, message, clearLink]);
 
   function close() {
     setItem(null);

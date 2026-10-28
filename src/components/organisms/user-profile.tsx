@@ -49,6 +49,7 @@ import { ProfileLibrary } from "./profile-library";
 import { PanelHeading, SidePanel } from "./side-panel";
 import { TwitchClips } from "./twitch-clips";
 import { PageTour } from "./onboarding";
+import { ProfileLinkedDiscussion } from "./linked-discussion";
 import { PersonRow } from "./person-row";
 import { VerifyToggle } from "./verify-toggle";
 import { AdminToggle } from "./admin-toggle";
@@ -777,6 +778,7 @@ export function UserProfile({ username }: { username: string }) {
     <main className="flex min-h-0 flex-1 flex-col">
       <ProfileSearchScope key={profile.username} profile={profile} />
       <PageTour name="profile" />
+      <ProfileLinkedDiscussion username={profile.username} />
       <ProfileHeader
         profile={profile}
         status={status}

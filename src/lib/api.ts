@@ -1282,6 +1282,46 @@ export async function getCommunityActivity(
   return res.json();
 }
 
+export async function getProfilePost(
+  token: string | null,
+  username: string,
+  postId: number,
+): Promise<Post> {
+  const res = await api(`/users/${encodeURIComponent(username)}/posts/${postId}`, {
+    headers: authHeaders(token),
+  });
+
+  if (!res.ok) throw new Error("That post isn’t available.");
+  return res.json();
+}
+
+export async function getProfileActivity(
+  token: string | null,
+  username: string,
+  activityId: number,
+): Promise<Activity> {
+  const res = await api(`/users/${encodeURIComponent(username)}/posts/activities/${activityId}`, {
+    headers: authHeaders(token),
+  });
+
+  if (!res.ok) throw new Error("That library update isn’t available.");
+  return res.json();
+}
+
+export async function getMediaPost(
+  token: string | null,
+  type: MediaType,
+  sourceId: string,
+  postId: number,
+): Promise<Post> {
+  const res = await api(`/library/media/${type}/${encodeURIComponent(sourceId)}/posts/${postId}`, {
+    headers: authHeaders(token),
+  });
+
+  if (!res.ok) throw new Error("That post isn’t available.");
+  return res.json();
+}
+
 export async function updatePost(
   token: string,
   postId: number,
