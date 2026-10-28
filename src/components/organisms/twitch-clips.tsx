@@ -157,10 +157,11 @@ export function TwitchClips({ communityId, username, name }: ClipSource & { name
         centered
         destroyOnHidden
         closeIcon={
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white transition-colors group-hover:bg-black/85">
             <X size={16} />
           </span>
         }
+        classNames={{ close: "group !bg-transparent" }}
         styles={{ container: { padding: 0, overflow: "hidden" } }}
       >
         {playing && (

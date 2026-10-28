@@ -31,7 +31,7 @@ const tabs = [
   { value: "clips", label: "Clips", icon: <Clapperboard size={16} /> },
 ] as const;
 
-const pages = ["feed", "forum", "members", "clips"] as const;
+const pages = ["feed", "forum", "clips"] as const;
 
 type Tab = (typeof pages)[number];
 
@@ -246,11 +246,6 @@ export default function CommunityPage() {
                   communityId={current.community.id}
                   name={current.community.name}
                 />
-              ) : tab === "members" ? (
-                <Organism.MemberList
-                  key={current.community.id}
-                  communityId={current.community.id}
-                />
               ) : (
                 <Organism.CommunityFeed
                   key={`${current.community.id}-${tab}`}
@@ -276,7 +271,7 @@ export default function CommunityPage() {
               <Organism.MemberPresence
                 key={current.community.id}
                 communityId={current.community.id}
-                seeAllHref={`/communities/${current.community.id}?tab=members`}
+                seeAllHref={`/communities/${current.community.id}/members`}
               />
             </Organism.SidePanel>
           </div>
