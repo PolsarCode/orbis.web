@@ -37,7 +37,7 @@ export function ActivityCard({
 
   return (
     <article className="flex flex-col gap-3 rounded-lg border border-divider bg-surface p-4">
-      <div className="flex items-center gap-4">
+      <div className="flex items-start gap-4">
       <Molecule.AuthorAvatar author={author} />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="text-sm">
@@ -53,20 +53,22 @@ export function ActivityCard({
           </Link>
           {suffix && ` ${suffix}`}
         </p>
-        <p className="flex items-center gap-2 text-xs text-muted">
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
           <span className="flex items-center gap-1 rounded-full bg-rail-item px-2 py-0.5 font-semibold text-foreground">
             {kind.icon}
             {kind.label}
           </span>
           {activity.steam && <Molecule.SteamBadge steam={activity.steam} title={media.title} />}
-          {media.year && <span>{media.year}</span>}
-          <span>·</span>
-          <time
-            dateTime={activity.createdAt}
-            title={new Date(activity.createdAt).toLocaleString()}
-          >
-            {timeAgo(activity.createdAt)}
-          </time>
+          <span className="flex items-center gap-2 whitespace-nowrap">
+            {media.year && <span>{media.year}</span>}
+            <span>·</span>
+            <time
+              dateTime={activity.createdAt}
+              title={new Date(activity.createdAt).toLocaleString()}
+            >
+              {timeAgo(activity.createdAt)}
+            </time>
+          </span>
         </p>
       </div>
       <Link
