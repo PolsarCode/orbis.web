@@ -57,6 +57,8 @@ import { VerifyToggle } from "./verify-toggle";
 import { AdminToggle } from "./admin-toggle";
 import type { PresenceStatus } from "@/lib/api";
 import { presenceDot, presenceLabel } from "@/lib/presence";
+import { pageTitle } from "@/lib/site-title";
+import { useDocumentTitle } from "@/lib/use-document-title";
 
 const tabs = [
   { value: "posts", label: "Posts", icon: <Newspaper size={16} /> },
@@ -719,6 +721,7 @@ export function UserProfile({ username }: { username: string }) {
   }
 
   const current = loaded?.username === username ? loaded : null;
+  useDocumentTitle(pageTitle(current?.profile && displayName(current.profile), "Profile"));
 
   if (!current?.profile) {
     return (

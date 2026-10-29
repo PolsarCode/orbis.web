@@ -33,6 +33,8 @@ import { PanelHeading, SidePanel } from "./side-panel";
 import { PageTour } from "./onboarding";
 import { MediaLinkedDiscussion } from "./linked-discussion";
 import { PersonRow } from "./person-row";
+import { pageTitle } from "@/lib/site-title";
+import { useDocumentTitle } from "@/lib/use-document-title";
 
 const detailLabels: Record<string, string> = {
   format: "Format",
@@ -363,10 +365,12 @@ function People({ profile }: { profile: Profile }) {
 
   return (
     <>
-      <PanelHeading
-        title={`In your communities / ${profile.members.length}`}
-        label="People"
-      />
+      <div className="flex flex-col gap-1">
+        <PanelHeading title={`Fans / ${profile.members.length}`} label="People" />
+        {profile.members.length > 0 && (
+          <p className="text-xs text-muted">From your communities</p>
+        )}
+      </div>
       {profile.members.length === 0 ? (
         <p className="text-xs text-muted">
           {signedIn
@@ -419,6 +423,7 @@ export function MediaProfile({ type, sourceId }: { type: string; sourceId: strin
   }
 
   const current = loaded?.key === key ? loaded : null;
+  useDocumentTitle(pageTitle(current?.profile?.title, "Library"));
 
   if (!current || !current.profile) {
     return (

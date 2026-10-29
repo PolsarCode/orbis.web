@@ -10,6 +10,8 @@ import { getInvitePreview, type InvitePreview } from "@/lib/api";
 import { useReadOnly } from "@/lib/read-only";
 import { useAuthStore } from "@/stores/auth-store";
 import { useCommunityStore } from "@/stores/community-store";
+import { pageTitle } from "@/lib/site-title";
+import { useDocumentTitle } from "@/lib/use-document-title";
 
 type Loaded = { code: string; invite: InvitePreview | null; failed?: boolean };
 
@@ -48,6 +50,7 @@ export default function InvitePage() {
 
   const current = loaded?.code === code ? loaded : null;
   const community = current?.invite?.community;
+  useDocumentTitle(pageTitle(community?.name, "Invite"));
   const background = community?.backgroundUrl ?? community?.coverUrl ?? null;
 
   return (

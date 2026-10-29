@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import * as Organism from "@organism";
 import * as Template from "@template";
+
+export const metadata: Metadata = { title: "Reports" };
 
 export default function ReportsPage() {
   return (

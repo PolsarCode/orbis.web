@@ -10,6 +10,8 @@ import * as Organism from "@organism";
 import * as Template from "@template";
 import { getCommunity, type Community } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
+import { pageTitle } from "@/lib/site-title";
+import { useDocumentTitle } from "@/lib/use-document-title";
 
 type Loaded = { id: string; community: Community | null; failed?: boolean };
 
@@ -34,6 +36,7 @@ export default function CommunityMemberSettingsPage() {
   }, [communityId, router]);
 
   const current = loaded?.id === communityId ? loaded : null;
+  useDocumentTitle(pageTitle(current?.community?.name, "Your settings"));
 
   return (
     <Template.AppTemplate>

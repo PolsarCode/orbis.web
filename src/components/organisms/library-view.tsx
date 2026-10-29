@@ -48,6 +48,8 @@ import { EntryMenu } from "./library-controls";
 import { SidePanel } from "./side-panel";
 import { PageTour } from "./onboarding";
 import { SearchScope } from "./site-search";
+import { pageTitle } from "@/lib/site-title";
+import { useDocumentTitle } from "@/lib/use-document-title";
 
 export function ProgressControl({
   entry,
@@ -851,6 +853,7 @@ function LibraryShelf({
 }
 
 export function LibraryView() {
+  useDocumentTitle(pageTitle("Library"));
   const [entries, setEntries] = useState<LibraryEntry[] | null>(null);
   const [failed, setFailed] = useState(false);
 

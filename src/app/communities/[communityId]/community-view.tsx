@@ -24,6 +24,8 @@ import {
 import { useTabScroller } from "@/lib/use-tab-scroller";
 import { useAuthStore } from "@/stores/auth-store";
 import { useCommunityStore } from "@/stores/community-store";
+import { pageTitle } from "@/lib/site-title";
+import { useDocumentTitle } from "@/lib/use-document-title";
 
 type Loaded = { id: string; community: Community | null; failed?: boolean };
 
@@ -107,6 +109,7 @@ export function CommunityView({ members = false }: { members?: boolean }) {
   }, [communityId]);
 
   const current = loaded?.id === communityId ? loaded : null;
+  useDocumentTitle(pageTitle(current?.community?.name, members ? "Members" : "Community"));
   const signedIn = useAuthStore((state) => Boolean(state.token));
   const headAdmin = useAuthStore((state) => Boolean(state.profile?.isHeadAdmin));
   const joinPrompt =

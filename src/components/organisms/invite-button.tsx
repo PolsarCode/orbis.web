@@ -1,15 +1,19 @@
 "use client";
 
-import { Modal, Select, Tooltip } from "antd";
-import { Check, Copy, Infinity as Unlimited, Timer, Trash2, UserPlus, Users } from "lucide-react";
+import { Checkbox, Modal, Select, Tooltip } from "antd";
+import { Check, Copy, Infinity as Unlimited, Send, Timer, Trash2, UserPlus, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import {
   createInvite,
   getInvites,
+  getMembers,
+  openDirectChat,
   revokeInvite,
+  sendMessage,
   type Community,
+  type Friend,
   type Invite,
 } from "@/lib/api";
 import { displayName } from "@/lib/display-name";
@@ -22,8 +26,10 @@ import {
   inviteUses,
 } from "@/lib/invites";
 import { useAuthStore } from "@/stores/auth-store";
+import { useFriendsStore } from "@/stores/friends-store";
 
 const DEFAULT_MAX_AGE = 604800;
+const MAX_RECIPIENTS = 20;
 
 function useNow(active: boolean) {
   const [now, setNow] = useState(() => Date.now());
@@ -128,6 +134,176 @@ function InviteList({
         </li>
       ))}
     </ul>
+  );
+}
+
+function namesOf(friends: Friend[]) {
+  const [first, ...rest] = friends.map(displayName);
+  if (rest.length === 0) return first;
+  if (rest.length === 1) return `${first} and ${rest[0]}`;
+  return `${first} and ${rest.length} others`;
+}
+
+function SendToFriends({ community, invite }: { community: Community; invite: Invite | null }) {
+  const friends = useFriendsStore((state) => state.friends);
+  const loaded = useFriendsStore((state) => state.loaded);
+  const [memberIds, setMemberIds] = useState<Set<number>>(new Set());
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState<number[]>([]);
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    getMembers(useAuthStore.getState().token, community.id)
+      .then((members) => {
+        if (active) setMemberIds(new Set(members.map((member) => member.userId)));
+      })
+      .catch(() => null);
+    return () => {
+      active = false;
+    };
+  }, [community.id]);
+
+  if (loaded && friends.length === 0) return null;
+
+  const search = query.trim().toLowerCase();
+  const shown = friends
+    .filter(
+      (friend) =>
+        !search ||
+        displayName(friend).toLowerCase().includes(search) ||
+        friend.username.toLowerCase().includes(search),
+    )
+    .sort((a, b) => Number(memberIds.has(a.userId)) - Number(memberIds.has(b.userId)));
+  const remaining = invite?.maxUses ? Math.max(invite.maxUses - invite.uses, 0) : null;
+
+  function toggle(userId: number) {
+    setSent(null);
+    setSelected((current) =>
+      current.includes(userId)
+        ? current.filter((id) => id !== userId)
+        : current.length < MAX_RECIPIENTS
+          ? [...current, userId]
+          : current,
+    );
+  }
+
+  async function send() {
+    const { token } = useAuthStore.getState();
+    if (!token || !invite || selected.length === 0) return;
+
+    setSending(true);
+    setSent(null);
+    setError(null);
+    const text = `You’re invited to join ${community.name} on Orbis: ${inviteUrl(invite.code)}`;
+    const failed: number[] = [];
+    for (const userId of selected) {
+      try {
+        const conversation = await openDirectChat(token, userId);
+        await sendMessage(token, conversation.id, text);
+      } catch {
+        failed.push(userId);
+      }
+    }
+    const byId = (ids: number[]) => friends.filter((friend) => ids.includes(friend.userId));
+    const delivered = selected.filter((id) => !failed.includes(id));
+    if (delivered.length > 0) setSent(`Sent to ${namesOf(byId(delivered))}.`);
+    if (failed.length > 0) setError(`Couldn’t send to ${namesOf(byId(failed))}. Try again.`);
+    setSelected(failed);
+    setSending(false);
+  }
+
+  return (
+    <section className="flex flex-col gap-3 border-t border-divider pt-6">
+      <h3 className="flex items-baseline justify-between gap-2">
+        <span className="text-[13px] font-semibold">Send to friends</span>
+        {selected.length > 0 && (
+          <span className="text-xs text-muted">
+            {selected.length} selected{selected.length === MAX_RECIPIENTS ? " (max)" : ""}
+          </span>
+        )}
+      </h3>
+      {!loaded ? (
+        <div className="flex py-4">
+          <Atom.Loader />
+        </div>
+      ) : (
+        <>
+          {friends.length > 6 && (
+            <Atom.Input
+              aria-label="Search friends"
+              placeholder="Search friends"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          )}
+          <ul className="flex max-h-56 flex-col overflow-y-auto">
+            {shown.map((friend) => {
+              const member = memberIds.has(friend.userId);
+              const checked = selected.includes(friend.userId);
+              return (
+                <li key={friend.userId}>
+                  <label
+                    className={`flex items-center gap-3 rounded-md px-2 py-2 ${
+                      member ? "opacity-60" : "cursor-pointer hover:bg-rail-item"
+                    }`}
+                  >
+                    <Checkbox
+                      checked={checked}
+                      disabled={
+                        member || sending || (!checked && selected.length >= MAX_RECIPIENTS)
+                      }
+                      onChange={() => toggle(friend.userId)}
+                    />
+                    <Atom.Avatar
+                      size="sm"
+                      label={displayName(friend)}
+                      src={friend.avatarUrl}
+                      seed={friend.userId}
+                    />
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate text-[13px] font-semibold">{displayName(friend)}</span>
+                      <span className="truncate text-xs text-muted">
+                        {member ? "Already a member" : `@${friend.username}`}
+                      </span>
+                    </span>
+                  </label>
+                </li>
+              );
+            })}
+            {shown.length === 0 && (
+              <li className="px-2 py-2 text-xs text-muted">No friends match “{query.trim()}”.</li>
+            )}
+          </ul>
+          {remaining !== null && selected.length > remaining && (
+            <p className="text-xs text-warning">
+              This link can only be used {remaining} more {remaining === 1 ? "time" : "times"}.
+              Generate a new link below to invite more people.
+            </p>
+          )}
+          {sent && (
+            <p className="flex items-center gap-1.5 text-xs text-muted">
+              <Check size={13} aria-hidden className="text-online" />
+              {sent}
+            </p>
+          )}
+          {error && <Atom.ErrorMessage>{error}</Atom.ErrorMessage>}
+          <Molecule.ReadOnlyGate action="send messages">
+            <Atom.Button
+              icon={<Send size={16} />}
+              disabled={!invite || selected.length === 0}
+              loading={sending}
+              onClick={send}
+              className="w-fit"
+            >
+              {selected.length > 1 ? `Send to ${selected.length} friends` : "Send invite"}
+            </Atom.Button>
+          </Molecule.ReadOnlyGate>
+        </>
+      )}
+    </section>
   );
 }
 
@@ -265,6 +441,7 @@ export function InviteButton({ community }: { community: Community }) {
             )}
           </div>
           {error && <Atom.ErrorMessage>{error}</Atom.ErrorMessage>}
+          {open && <SendToFriends community={community} invite={invite} />}
           <div className="flex flex-col gap-4 border-t border-divider pt-6">
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="flex flex-col gap-2">

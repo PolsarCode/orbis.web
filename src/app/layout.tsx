@@ -7,6 +7,7 @@ import { authScript } from "@/stores/auth-store";
 import { themeScript } from "@/stores/theme-store";
 import { AntdProvider } from "./antd-provider";
 import "./globals.css";
+import { landingTitle, siteTitle } from "@/lib/site-title";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -19,14 +20,11 @@ const barlowCondensed = Barlow_Condensed({
   weight: ["700", "800"],
 });
 
-const siteTitle =
-  process.env.NODE_ENV === "development" ? "Orbis (Development)" : "Orbis";
-
 const description =
   "Orbis is a home for fan communities, with a feed for quick updates and a library to track what you’re watching, reading, and playing.";
 
 export const metadata: Metadata = {
-  title: { default: siteTitle, template: `%s · ${siteTitle}` },
+  title: { default: landingTitle, template: `%s - ${siteTitle}` },
   description,
   applicationName: "Orbis",
   appleWebApp: { capable: true, title: "Orbis" },
