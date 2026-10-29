@@ -63,6 +63,10 @@ export function AuthForm({
   const signup = useAuthStore((state) => state.signup);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+  const [checkFailed, setCheckFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const checking = Boolean(Molecule.turnstileSiteKey) && !token;
   const { title, submit, switchText, switchLabel, switchHref, footnote } =
     content[mode];
 
@@ -78,12 +82,14 @@ export function AuthForm({
         await login({
           identifier: String(form.get("identifier")).trim(),
           password,
+          turnstileToken: token ?? undefined,
         });
       } else {
         await signup({
           email: String(form.get("email")),
           username: String(form.get("username")),
           password,
+          turnstileToken: token ?? undefined,
         });
       }
       if (onAuthenticated) onAuthenticated();
@@ -94,6 +100,10 @@ export function AuthForm({
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
       setPending(false);
+      if (Molecule.turnstileSiteKey) {
+        setToken(null);
+        setAttempt((current) => current + 1);
+      }
     }
   }
 
@@ -173,10 +183,26 @@ export function AuthForm({
             }
             extra={mode === "signup" ? "At least 6 characters." : undefined}
           />
+          {Molecule.turnstileSiteKey && (
+            <Molecule.Turnstile
+              key={attempt}
+              onToken={(value) => {
+                setToken(value);
+                if (value) setCheckFailed(false);
+              }}
+              onError={() => setCheckFailed(true)}
+            />
+          )}
           {error && <Atom.ErrorMessage>{error}</Atom.ErrorMessage>}
+          {checkFailed && !error && (
+            <Atom.ErrorMessage>
+              We couldn’t check that you’re human. Refresh the page and try again.
+            </Atom.ErrorMessage>
+          )}
           <Atom.Button
             type="submit"
             size="large"
+            disabled={checking && !pending}
             loading={pending}
             className={compact ? "w-fit" : "mt-1 w-full"}
             icon={compact ? undefined : <ArrowRight size={17} />}

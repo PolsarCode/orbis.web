@@ -4,9 +4,14 @@ export const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const wakeServerScript = `fetch(${JSON.stringify(`${API_URL}/health`)}).catch(function(){});`;
 
-export type LoginCredentials = { identifier: string; password: string };
+export type LoginCredentials = { identifier: string; password: string; turnstileToken?: string };
 
-export type SignupDetails = { email: string; username: string; password: string };
+export type SignupDetails = {
+  email: string;
+  username: string;
+  password: string;
+  turnstileToken?: string;
+};
 
 export type Credentials = LoginCredentials | SignupDetails;
 
@@ -141,6 +146,12 @@ async function authenticate(
   }
   if (res.status === 409) {
     throw new Error(await errorMessage(res, "That account already exists."));
+  }
+  if (res.status === 403) {
+    throw new Error(await errorMessage(res, "We couldn’t check that you’re human. Try again."));
+  }
+  if (res.status === 503) {
+    throw new Error(await errorMessage(res, "Something went wrong. Please try again."));
   }
   if (res.status === 400) {
     throw new Error(

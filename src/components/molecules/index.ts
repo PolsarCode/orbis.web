@@ -29,4 +29,5 @@ export * from "./steam-badge";
 export * from "./stream-pill";
 export * from "./read-only-gate";
 export * from "./tab-section";
+export * from "./turnstile";
 export * from "./edited-mark";
