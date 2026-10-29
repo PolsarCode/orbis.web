@@ -1,0 +1,106 @@
+{
+  "date": "2026-10-29",
+  "versions": [
+    "v0.77.3",
+    "v0.77.4",
+    "v0.78.0",
+    "v0.79.0",
+    "v0.80.0",
+    "v0.80.1",
+    "v0.80.2",
+    "v0.80.3",
+    "v0.80.4",
+    "v0.80.5",
+    "v0.81.0",
+    "v0.82.0",
+    "v0.83.0"
+  ],
+  "entries": [
+    {
+      "type": "new",
+      "title": "See who’s streaming on Twitch",
+      "description": "You can see live status and the next scheduled stream on profiles, with a link to watch on Twitch. People who are streaming appear first in friends and member lists, with a direct link to their channel.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Browse and customize profiles in the mobile app",
+      "description": "You can view your own and other members’ profiles, including posts, friends, communities, public library entries, and Twitch clips. Filter posts and library updates, play clips without leaving the app, and upload, replace, or remove your avatar, cover, and wallpaper.",
+      "platforms": ["mobile"]
+    },
+    {
+      "type": "new",
+      "title": "Sign in with Discord or Twitch in the mobile app",
+      "description": "You can sign in or sign up with Discord or Twitch and return to the app after signing in through your browser. Manage linked accounts in settings, and choose whether to use your Discord or Twitch picture when creating an account. The picture choice is also available on the web."
+    },
+    {
+      "type": "new",
+      "title": "Sign up and log in with email on mobile",
+      "description": "You can create an account or log in with email, with clear guidance for invalid details, connection problems, and expired sessions. After signing in, you return to the page you were trying to open.",
+      "platforms": ["mobile"]
+    },
+    {
+      "type": "new",
+      "title": "Explore media pages before signing in",
+      "description": "You can open media pages and read their public posts without an account.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Discover anime from Orbis libraries",
+      "description": "You can discover featured anime on the welcome, sign-in, and sign-up pages, with artwork and a link to each title’s page. The selection refreshes with one different title each day.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "improved",
+      "title": "Community conversations move to posts",
+      "description": "You now use posts and their comments for community conversations. Separate forum threads and voting have been removed from feeds and profiles."
+    },
+    {
+      "type": "improved",
+      "title": "Like comments instead of voting",
+      "description": "You can like a comment with the same heart button you use on posts. Comment likes replace upvotes and downvotes.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "improved",
+      "title": "Find your way around the mobile app",
+      "description": "You can switch between Home, Communities, Library, Messages, and Profile using the bottom tabs, and return from other screens with a back button. Features still being built show a notice with a link to the website and a way back to Orbis.",
+      "platforms": ["mobile"]
+    },
+    {
+      "type": "improved",
+      "title": "First-day limits for new accounts",
+      "description": "If you’ve just joined, you’ll need to wait 24 hours before creating a community or sharing links in posts, comments, or messages. A notice tells you how long remains, and new accounts have tighter limits on how often they can act."
+    },
+    {
+      "type": "improved",
+      "title": "Recognize Orbis pages in your browser tabs",
+      "description": "You can tell which page is open from its browser tab title, including the person, community, or media title you’re viewing.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "improved",
+      "title": "Tidier activity cards on phones",
+      "description": "You can read activity details more easily on small screens, with details wrapping to fit and the year kept alongside the timestamp.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "fixed",
+      "title": "Return to the app after signing in",
+      "description": "If your browser blocks the automatic return after Discord or Twitch sign-in, you can use a link to open Orbis instead of waiting on a loading screen."
+    },
+    {
+      "type": "fixed",
+      "title": "Clearer messages when a mobile action is unavailable",
+      "description": "You can see why a post, like, or request was refused, including when you need to wait before trying again. If your email is unconfirmed, the post box asks you to confirm it and lets you resend the email.",
+      "platforms": ["mobile"]
+    },
+    {
+      "type": "fixed",
+      "title": "Header links lead to sections on the page",
+      "description": "You only see section links in the welcome-page header when those sections are present on the page you’re viewing.",
+      "platforms": ["web"]
+    }
+  ]
+}
