@@ -103,7 +103,7 @@ export async function api(path: string, init?: RequestInit) {
     throw new Error("Can't reach Orbis right now. Please try again.");
   }
   if (res.status === 429) {
-    throw new Error("You’re doing that too often. Try again in a minute.");
+    throw new Error(await errorMessage(res, "You’re doing that too often. Try again in a minute."));
   }
   if (res.status === 403 && typeof window !== "undefined") {
     res

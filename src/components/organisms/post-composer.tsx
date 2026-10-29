@@ -8,6 +8,7 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "rea
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import { previewFor, TEXT_LINK, trimLink, webUrl, youtubeVideo } from "@/lib/links";
+import { newAccountMessage, useNewAccountWait } from "@/lib/new-account";
 import { useReadOnly } from "@/lib/read-only";
 import { useAuthStore } from "@/stores/auth-store";
 import { useMentionSuggestions } from "./mention-suggestions";
@@ -127,6 +128,8 @@ export function PostComposer({
 
   const mentions = useMentionSuggestions(editor);
   const readOnly = useReadOnly();
+  const newAccountWait = useNewAccountWait();
+  const previews = linkPreview && !newAccountWait;
   useEffect(() => {
     mentionKeys.current = mentions.handleKeyDown;
   });
@@ -143,13 +146,15 @@ export function PostComposer({
       bulletList: editor?.isActive("bulletList") ?? false,
       orderedList: editor?.isActive("orderedList") ?? false,
       link: editor?.isActive("link") ?? false,
-      html: linkPreview ? (editor?.getHTML() ?? "") : "",
+      hasLink: newAccountWait !== null && editor !== null && findFirstLink(editor) !== null,
+      html: previews ? (editor?.getHTML() ?? "") : "",
     }),
   });
   const html = state?.html ?? "";
+  const linkHeld = newAccountWait !== null && (Boolean(state?.hasLink) || attachment !== null);
 
   useEffect(() => {
-    if (!linkPreview || !editor || attachment) return;
+    if (!previews || !editor || attachment) return;
 
     const timer = setTimeout(async () => {
       if (editor.isEmpty) {
@@ -184,7 +189,7 @@ export function PostComposer({
       if (current.removable) removeLinkText(editor, current);
     }, PREVIEW_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [linkPreview, editor, attachment, html]);
+  }, [previews, editor, attachment, html]);
 
   function removeAttachment() {
     attached.current = null;
@@ -193,7 +198,13 @@ export function PostComposer({
   }
 
   async function submit() {
-    if (!editor || submitDisabled || (editor.isEmpty && !allowEmpty && !attachment) || pending) {
+    if (
+      !editor ||
+      submitDisabled ||
+      linkHeld ||
+      (editor.isEmpty && !allowEmpty && !attachment) ||
+      pending
+    ) {
       return;
     }
     setError(null);
@@ -247,6 +258,7 @@ export function PostComposer({
     label: string;
     glyph: ReactNode;
     active?: boolean;
+    blocked?: string;
     run: () => void;
   }[] = [
     { label: "Bold", glyph: <span className="font-extrabold">B</span>, active: state?.bold, run: () => editor?.chain().focus().toggleBold().run() },
@@ -256,7 +268,14 @@ export function PostComposer({
     { label: "Inline code", glyph: "</>", active: state?.code, run: () => editor?.chain().focus().toggleCode().run() },
     { label: "Bulleted list", glyph: "≡", active: state?.bulletList, run: () => editor?.chain().focus().toggleBulletList().run() },
     { label: "Numbered list", glyph: "1.", active: state?.orderedList, run: () => editor?.chain().focus().toggleOrderedList().run() },
-    { label: state?.link ? "Remove link" : "Add link", glyph: <Link2 size={14} aria-hidden />, active: state?.link, run: toggleLink },
+    {
+      label: state?.link ? "Remove link" : "Add link",
+      glyph: <Link2 size={14} aria-hidden />,
+      active: state?.link,
+      blocked:
+        newAccountWait && !state?.link ? newAccountMessage("add links", newAccountWait) : undefined,
+      run: toggleLink,
+    },
   ];
 
   if (readOnly) {
@@ -299,14 +318,21 @@ export function PostComposer({
             className="flex flex-wrap items-center gap-1 text-[13px] font-medium"
           >
             {tools.map((tool) => (
-              <Tooltip key={tool.label} title={tool.label}>
+              <Tooltip
+                key={tool.label}
+                title={tool.blocked ?? tool.label}
+                classNames={tool.blocked ? { root: "touch-visible" } : undefined}
+              >
                 <button
                   type="button"
                   aria-label={tool.label}
                   aria-pressed={tool.active}
+                  aria-disabled={tool.blocked ? true : undefined}
                   onMouseDown={(event) => event.preventDefault()}
-                  onClick={tool.run}
-                  className={`focus-ring flex h-7 min-w-7 items-center justify-center rounded-md px-1 transition-colors ${
+                  onClick={() => {
+                    if (!tool.blocked) tool.run();
+                  }}
+                  className={`focus-ring flex h-7 min-w-7 items-center justify-center rounded-md px-1 transition-colors aria-disabled:cursor-not-allowed aria-disabled:opacity-50 ${
                     tool.active
                       ? "bg-accent-soft text-accent"
                       : "text-muted hover:text-foreground"
@@ -328,13 +354,20 @@ export function PostComposer({
               size="small"
               onClick={submit}
               loading={pending}
-              disabled={submitDisabled || (state?.empty && !allowEmpty && !attachment)}
+              disabled={
+                submitDisabled || linkHeld || (state?.empty && !allowEmpty && !attachment)
+              }
             >
               {submitLabel}
             </Atom.Button>
           </div>
         </div>
       </div>
+      {linkHeld && newAccountWait && (
+        <p className="text-xs text-muted">
+          {newAccountMessage("post links", newAccountWait)} Remove the link to post.
+        </p>
+      )}
       {error && <Atom.ErrorMessage>{error}</Atom.ErrorMessage>}
       <Modal
         open={linkOpen}

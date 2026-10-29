@@ -41,6 +41,7 @@ import {
 } from "react";
 import * as Atom from "@atom";
 import type { Community, RailFolder, RailItem } from "@/lib/api";
+import { newAccountMessage, useNewAccountWait } from "@/lib/new-account";
 import { useReadOnly } from "@/lib/read-only";
 import { useIsPhone } from "@/lib/use-is-phone";
 import {
@@ -307,6 +308,8 @@ export function CommunityRail() {
   const updateLayout = useCommunityStore((state) => state.updateLayout);
   const [creating, setCreating] = useState(false);
   const readOnly = useReadOnly();
+  const newAccountWait = useNewAccountWait();
+  const createBlocked = readOnly || newAccountWait !== null;
   const [openFolders, setOpenFolders] = useState(readOpenFolders);
   const [closingFolders, setClosingFolders] = useState<Set<number>>(new Set());
   const [openingFolders, setOpeningFolders] = useState<Set<number>>(new Set());
@@ -752,17 +755,23 @@ export function CommunityRail() {
       <div aria-hidden className="h-px w-full shrink-0 bg-divider" />
       <ul className="flex w-full shrink-0 flex-col items-center gap-4">
         <RailSlot
-          label={readOnly ? "Confirm your email first to create a community." : "Create a community"}
+          label={
+            readOnly
+              ? "Confirm your email first to create a community."
+              : newAccountWait
+                ? newAccountMessage("create a community", newAccountWait)
+                : "Create a community"
+          }
         >
           <button
             type="button"
             aria-label="Create a community"
-            aria-disabled={readOnly || undefined}
+            aria-disabled={createBlocked || undefined}
             data-tour="create"
             onClick={() => {
-              if (!readOnly) setCreating(true);
+              if (!createBlocked) setCreating(true);
             }}
-            className={`${itemClass(false)} ${readOnly ? "cursor-not-allowed opacity-50" : ""}`}
+            className={`${itemClass(false)} ${createBlocked ? "cursor-not-allowed opacity-50" : ""}`}
           >
             <Plus size={20} />
           </button>

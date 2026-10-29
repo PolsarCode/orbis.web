@@ -42,7 +42,7 @@ export const tourStops: TourStop[] = [
     placement: "right",
     title: "Start a community",
     description:
-      "Make your own space, public or private. As the owner you can set its icon, cover, and background right on its page.",
+      "Make your own space, public or private. As the owner you can set its icon, cover, and background right on its page. New accounts can start one after their first day.",
   },
   {
     target: "explore",
