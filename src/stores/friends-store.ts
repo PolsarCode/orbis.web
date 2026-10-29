@@ -28,6 +28,7 @@ type FriendsState = {
   connect: () => void;
   fetchFriends: () => Promise<void>;
   fetchSuggestions: () => Promise<void>;
+  dismissSuggestion: (userId: number) => Promise<void>;
   addFriend: (target: FriendTarget, options?: { fromSuggestion?: boolean }) => Promise<void>;
   removeFriend: (userId: number) => Promise<void>;
 };
@@ -178,6 +179,19 @@ export const useFriendsStore = create<FriendsState>()((set, get) => ({
         suggestionsRequest = null;
       });
     return suggestionsRequest;
+  },
+  dismissSuggestion: async (userId) => {
+    const { token } = useAuthStore.getState();
+    if (!token) throw new Error("Please log in again.");
+
+    const previous = get().suggestions;
+    set({ suggestions: previous.filter((person) => person.userId !== userId) });
+    try {
+      await api.dismissSuggestion(token, userId);
+    } catch (error) {
+      set({ suggestions: previous });
+      throw error;
+    }
   },
   addFriend: async (target, options) => {
     const { token } = useAuthStore.getState();

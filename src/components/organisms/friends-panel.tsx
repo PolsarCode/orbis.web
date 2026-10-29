@@ -1,7 +1,7 @@
 "use client";
 
 import { App, Tooltip } from "antd";
-import { Inbox, Send, UserPlus } from "lucide-react";
+import { Inbox, Send, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { Fragment, useEffect, useState, type ReactNode } from "react";
 import * as Atom from "@atom";
@@ -42,27 +42,68 @@ function useSuggestions() {
   return suggestions.filter(({ userId }) => !known.has(userId));
 }
 
-function useAddSuggestion(person: FriendSuggestion) {
+function useSuggestionActions(person: FriendSuggestion) {
   const { message } = App.useApp();
   const addFriend = useFriendsStore((state) => state.addFriend);
-  const [pending, setPending] = useState(false);
+  const dismissSuggestion = useFriendsStore((state) => state.dismissSuggestion);
+  const [pending, setPending] = useState<"add" | "remove" | null>(null);
 
-  async function add() {
-    setPending(true);
+  async function run(action: "add" | "remove", task: () => Promise<void>) {
+    setPending(action);
     try {
-      await addFriend({ userId: person.userId }, { fromSuggestion: true });
+      await task();
     } catch (e) {
       message.error(e instanceof Error ? e.message : "Something went wrong.");
-      setPending(false);
+      setPending(null);
     }
   }
 
-  return { add, pending };
+  return {
+    pending,
+    add: () => run("add", () => addFriend({ userId: person.userId }, { fromSuggestion: true })),
+    remove: () => run("remove", () => dismissSuggestion(person.userId)),
+  };
+}
+
+function SuggestionIconButton({
+  title,
+  label,
+  readOnlyAction,
+  disabled,
+  onClick,
+  children,
+}: {
+  title: string;
+  label: string;
+  readOnlyAction: string;
+  disabled: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  const readOnly = useReadOnly();
+
+  return (
+    <Tooltip
+      title={readOnly ? `Confirm your email first to ${readOnlyAction}.` : title}
+      classNames={{ root: "touch-visible" }}
+    >
+      <span className="inline-flex">
+        <button
+          type="button"
+          aria-label={label}
+          disabled={readOnly || disabled}
+          onClick={onClick}
+          className="icon-button cursor-pointer disabled:pointer-events-none disabled:opacity-40"
+        >
+          {children}
+        </button>
+      </span>
+    </Tooltip>
+  );
 }
 
 function SuggestionRow({ person }: { person: FriendSuggestion }) {
-  const { add, pending } = useAddSuggestion(person);
-  const readOnly = useReadOnly();
+  const { add, remove, pending } = useSuggestionActions(person);
   const label = displayName(person);
 
   return (
@@ -85,22 +126,26 @@ function SuggestionRow({ person }: { person: FriendSuggestion }) {
         </Molecule.UserLink>
         <span className="truncate text-xs text-muted">{person.reason}</span>
       </div>
-      <Tooltip
-        title={readOnly ? "Confirm your email first to add friends." : "Add friend"}
-        classNames={{ root: "touch-visible" }}
-      >
-        <span className="inline-flex">
-          <button
-            type="button"
-            aria-label={`Add ${label} as a friend`}
-            disabled={readOnly || pending}
-            onClick={add}
-            className="icon-button cursor-pointer disabled:pointer-events-none disabled:opacity-40"
-          >
-            <UserPlus size={16} />
-          </button>
-        </span>
-      </Tooltip>
+      <div className="flex items-center gap-1">
+        <SuggestionIconButton
+          title="Add friend"
+          label={`Add ${label} as a friend`}
+          readOnlyAction="add friends"
+          disabled={pending !== null}
+          onClick={add}
+        >
+          <UserPlus size={16} />
+        </SuggestionIconButton>
+        <SuggestionIconButton
+          title="Remove"
+          label={`Remove ${label} from suggestions`}
+          readOnlyAction="remove suggestions"
+          disabled={pending !== null}
+          onClick={remove}
+        >
+          <X size={16} />
+        </SuggestionIconButton>
+      </div>
     </li>
   );
 }
@@ -242,7 +287,7 @@ function RequestCard({
 }
 
 function SuggestionCard({ person }: { person: FriendSuggestion }) {
-  const { add, pending } = useAddSuggestion(person);
+  const { add, remove, pending } = useSuggestionActions(person);
 
   return (
     <RequestCard
@@ -261,18 +306,33 @@ function SuggestionCard({ person }: { person: FriendSuggestion }) {
         </div>
       }
       actions={
-        <Molecule.ReadOnlyGate action="add friends">
-          <Atom.Button
-            size="small"
-            variant="secondary"
-            icon={<UserPlus size={14} />}
-            loading={pending}
-            className="flex-1"
-            onClick={add}
-          >
-            Add friend
-          </Atom.Button>
-        </Molecule.ReadOnlyGate>
+        <>
+          <Molecule.ReadOnlyGate action="add friends">
+            <Atom.Button
+              size="small"
+              variant="secondary"
+              icon={<UserPlus size={14} />}
+              loading={pending === "add"}
+              disabled={pending !== null}
+              className="flex-1"
+              onClick={add}
+            >
+              Add friend
+            </Atom.Button>
+          </Molecule.ReadOnlyGate>
+          <Molecule.ReadOnlyGate action="remove suggestions">
+            <Atom.Button
+              size="small"
+              variant="secondary"
+              loading={pending === "remove"}
+              disabled={pending !== null}
+              className="flex-1"
+              onClick={remove}
+            >
+              Remove
+            </Atom.Button>
+          </Molecule.ReadOnlyGate>
+        </>
       }
     />
   );

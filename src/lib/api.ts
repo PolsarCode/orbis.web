@@ -1060,6 +1060,15 @@ export async function getFriendSuggestions(token: string): Promise<FriendSuggest
   return res.json();
 }
 
+export async function dismissSuggestion(token: string, userId: number): Promise<void> {
+  const res = await api(`/friends/suggestions/${userId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) throw new Error("Couldn’t remove that suggestion. Try again.");
+}
+
 export async function addFriend(
   token: string,
   target: FriendTarget,
