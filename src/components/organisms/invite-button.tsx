@@ -1,8 +1,18 @@
 "use client";
 
 import { Checkbox, Modal, Select, Tooltip } from "antd";
-import { Check, Copy, Infinity as Unlimited, Send, Timer, Trash2, UserPlus, Users } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  Check,
+  Copy,
+  Link,
+  Infinity as Unlimited,
+  Send,
+  Timer,
+  Trash2,
+  UserPlus,
+  Users,
+} from "lucide-react";
+import { useEffect, useState, type KeyboardEvent, type ReactNode } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import {
@@ -144,7 +154,15 @@ function namesOf(friends: Friend[]) {
   return `${first} and ${rest.length} others`;
 }
 
-function SendToFriends({ community, invite }: { community: Community; invite: Invite | null }) {
+function SendToFriends({
+  community,
+  invite,
+  onNewLink,
+}: {
+  community: Community;
+  invite: Invite | null;
+  onNewLink: () => void;
+}) {
   const friends = useFriendsStore((state) => state.friends);
   const loaded = useFriendsStore((state) => state.loaded);
   const [memberIds, setMemberIds] = useState<Set<number>>(new Set());
@@ -166,7 +184,13 @@ function SendToFriends({ community, invite }: { community: Community; invite: In
     };
   }, [community.id]);
 
-  if (loaded && friends.length === 0) return null;
+  if (loaded && friends.length === 0) {
+    return (
+      <p className="text-sm text-muted">
+        Once you have friends on Orbis, you can send them this invite from here.
+      </p>
+    );
+  }
 
   const search = query.trim().toLowerCase();
   const shown = friends
@@ -216,9 +240,9 @@ function SendToFriends({ community, invite }: { community: Community; invite: In
   }
 
   return (
-    <section className="flex flex-col gap-3 border-t border-divider pt-6">
+    <section className="flex flex-col gap-3">
       <h3 className="flex items-baseline justify-between gap-2">
-        <span className="text-[13px] font-semibold">Send to friends</span>
+        <span className="text-[13px] font-semibold">Choose friends</span>
         {selected.length > 0 && (
           <span className="text-xs text-muted">
             {selected.length} selected{selected.length === MAX_RECIPIENTS ? " (max)" : ""}
@@ -279,8 +303,15 @@ function SendToFriends({ community, invite }: { community: Community; invite: In
           </ul>
           {remaining !== null && selected.length > remaining && (
             <p className="text-xs text-warning">
-              This link can only be used {remaining} more {remaining === 1 ? "time" : "times"}.
-              Generate a new link below to invite more people.
+              This link can only be used {remaining} more {remaining === 1 ? "time" : "times"}.{" "}
+              <button
+                type="button"
+                onClick={onNewLink}
+                className="focus-ring cursor-pointer rounded-sm font-semibold underline underline-offset-2"
+              >
+                Generate a new link
+              </button>{" "}
+              to invite more people.
             </p>
           )}
           {sent && (
@@ -307,9 +338,77 @@ function SendToFriends({ community, invite }: { community: Community; invite: In
   );
 }
 
+type InviteTab = "friends" | "links";
+
+function InviteTabs({
+  active,
+  onSelect,
+  tabs,
+}: {
+  active: InviteTab;
+  onSelect: (tab: InviteTab) => void;
+  tabs: { key: InviteTab; label: ReactNode; icon: ReactNode; content: ReactNode }[];
+}) {
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    event.preventDefault();
+    const index = tabs.findIndex((tab) => tab.key === active);
+    const next = tabs[(index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length];
+    onSelect(next.key);
+    document.getElementById(`invite-tab-${next.key}`)?.focus();
+  }
+
+  return (
+    <div className="flex flex-col gap-5">
+      <div
+        role="tablist"
+        aria-label="Invite options"
+        onKeyDown={handleKeyDown}
+        className="flex items-end gap-6 border-b border-divider"
+      >
+        {tabs.map((tab) => {
+          const selected = tab.key === active;
+          return (
+            <button
+              key={tab.key}
+              id={`invite-tab-${tab.key}`}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              aria-controls={`invite-panel-${tab.key}`}
+              tabIndex={selected ? 0 : -1}
+              onClick={() => onSelect(tab.key)}
+              className={`focus-ring -mb-px flex shrink-0 cursor-pointer items-center gap-2 rounded-t-sm border-b-2 px-1 py-3 text-sm whitespace-nowrap transition-colors ${
+                selected
+                  ? "border-accent text-accent"
+                  : "border-transparent font-semibold text-foreground hover:text-accent"
+              }`}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+      {tabs.map((tab) => (
+        <div
+          key={tab.key}
+          role="tabpanel"
+          id={`invite-panel-${tab.key}`}
+          aria-labelledby={`invite-tab-${tab.key}`}
+          hidden={tab.key !== active}
+        >
+          {tab.content}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function InviteButton({ community }: { community: Community }) {
   const myId = useAuthStore((state) => state.profile?.userId);
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<InviteTab>("friends");
   const [invites, setInvites] = useState<Invite[] | null>(null);
   const [current, setCurrent] = useState<string | null>(null);
   const [maxAge, setMaxAge] = useState(DEFAULT_MAX_AGE);
@@ -344,6 +443,7 @@ export function InviteButton({ community }: { community: Community }) {
   }
 
   async function handleOpen() {
+    setTab("friends");
     setOpen(true);
     const { token } = useAuthStore.getState();
     if (!token) return;
@@ -441,48 +541,81 @@ export function InviteButton({ community }: { community: Community }) {
             )}
           </div>
           {error && <Atom.ErrorMessage>{error}</Atom.ErrorMessage>}
-          {open && <SendToFriends community={community} invite={invite} />}
-          <div className="flex flex-col gap-4 border-t border-divider pt-6">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="flex flex-col gap-2">
-                <span className="text-[13px] font-semibold">Expire after</span>
-                <Select<number>
-                  value={maxAge}
-                  onChange={setMaxAge}
-                  options={inviteMaxAges}
-                />
-              </label>
-              <label className="flex flex-col gap-2">
-                <span className="text-[13px] font-semibold">
-                  Max number of uses
-                </span>
-                <Select<number>
-                  value={maxUses}
-                  onChange={setMaxUses}
-                  options={inviteMaxUses}
-                />
-              </label>
-            </div>
-            <Atom.Button
-              variant="secondary"
-              loading={pending}
-              onClick={() => generate()}
-              className="w-fit"
-            >
-              Generate a new link
-            </Atom.Button>
-          </div>
-          {active && active.length > 0 && (
-            <section className="flex flex-col gap-2 border-t border-divider pt-6">
-              <h3 className="flex items-baseline justify-between gap-2">
-                <span className="text-[13px] font-semibold">Active invites</span>
-                <span className="text-xs text-muted">{active.length}</span>
-              </h3>
-              <div className="max-h-64 overflow-y-auto">
-                <InviteList invites={active} now={now} onRevoke={handleRevoke} />
-              </div>
-            </section>
-          )}
+          <InviteTabs
+            active={tab}
+            onSelect={setTab}
+            tabs={[
+              {
+                key: "friends",
+                label: "Send to friends",
+                icon: <Send size={16} aria-hidden />,
+                content: open && (
+                  <SendToFriends
+                    community={community}
+                    invite={invite}
+                    onNewLink={() => setTab("links")}
+                  />
+                ),
+              },
+              {
+                key: "links",
+                label: (
+                  <>
+                    Invite links
+                    {active && active.length > 0 && (
+                      <span className="text-xs font-normal text-muted">{active.length}</span>
+                    )}
+                  </>
+                ),
+                icon: <Link size={16} aria-hidden />,
+                content: (
+                  <div className="flex flex-col gap-6">
+                    <div className="flex flex-col gap-4">
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <label className="flex flex-col gap-2">
+                          <span className="text-[13px] font-semibold">Expire after</span>
+                          <Select<number>
+                            value={maxAge}
+                            onChange={setMaxAge}
+                            options={inviteMaxAges}
+                          />
+                        </label>
+                        <label className="flex flex-col gap-2">
+                          <span className="text-[13px] font-semibold">
+                            Max number of uses
+                          </span>
+                          <Select<number>
+                            value={maxUses}
+                            onChange={setMaxUses}
+                            options={inviteMaxUses}
+                          />
+                        </label>
+                      </div>
+                      <Atom.Button
+                        variant="secondary"
+                        loading={pending}
+                        onClick={() => generate()}
+                        className="w-fit"
+                      >
+                        Generate a new link
+                      </Atom.Button>
+                    </div>
+                    {active && active.length > 0 && (
+                      <section className="flex flex-col gap-2 border-t border-divider pt-6">
+                        <h3 className="flex items-baseline justify-between gap-2">
+                          <span className="text-[13px] font-semibold">Active invites</span>
+                          <span className="text-xs text-muted">{active.length}</span>
+                        </h3>
+                        <div className="max-h-64 overflow-y-auto">
+                          <InviteList invites={active} now={now} onRevoke={handleRevoke} />
+                        </div>
+                      </section>
+                    )}
+                  </div>
+                ),
+              },
+            ]}
+          />
         </div>
       </Modal>
     </>
