@@ -24,11 +24,11 @@ type FriendsState = {
   twitchLogins: Record<number, string | null>;
   loaded: boolean;
   suggestions: FriendSuggestion[];
-  suggestionsLoaded: boolean;
+  suggestionsFetchedAt: number;
   connect: () => void;
   fetchFriends: () => Promise<void>;
   fetchSuggestions: () => Promise<void>;
-  addFriend: (target: FriendTarget) => Promise<void>;
+  addFriend: (target: FriendTarget, options?: { fromSuggestion?: boolean }) => Promise<void>;
   removeFriend: (userId: number) => Promise<void>;
 };
 
@@ -42,7 +42,7 @@ const empty = {
   twitchLogins: {},
   loaded: false,
   suggestions: [],
-  suggestionsLoaded: false,
+  suggestionsFetchedAt: 0,
 };
 
 let socket: Socket | null = null;
@@ -173,18 +173,18 @@ export const useFriendsStore = create<FriendsState>()((set, get) => ({
     suggestionsRequest ??= api
       .getFriendSuggestions(token)
       .catch(() => [])
-      .then((suggestions) => set({ suggestions, suggestionsLoaded: true }))
+      .then((suggestions) => set({ suggestions, suggestionsFetchedAt: Date.now() }))
       .finally(() => {
         suggestionsRequest = null;
       });
     return suggestionsRequest;
   },
-  addFriend: async (target) => {
+  addFriend: async (target, options) => {
     const { token } = useAuthStore.getState();
     if (!token) throw new Error("Please log in again.");
 
     try {
-      await api.addFriend(token, target);
+      await api.addFriend(token, target, options?.fromSuggestion);
       set((state) => ({
         suggestions: state.suggestions.filter((person) =>
           "userId" in target ? person.userId !== target.userId : person.username !== target.username,

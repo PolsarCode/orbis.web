@@ -1063,6 +1063,7 @@ export async function getFriendSuggestions(token: string): Promise<FriendSuggest
 export async function addFriend(
   token: string,
   target: FriendTarget,
+  fromSuggestion = false,
 ): Promise<void> {
   const res = await api("/friends", {
     method: "POST",
@@ -1070,7 +1071,7 @@ export async function addFriend(
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(target),
+    body: JSON.stringify({ ...target, ...(fromSuggestion && { fromSuggestion }) }),
   });
 
   if (res.status === 404) {

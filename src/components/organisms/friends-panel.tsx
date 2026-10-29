@@ -25,6 +25,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 }
 
 const PANEL_SUGGESTIONS = 3;
+const SUGGESTIONS_STALE_MS = 10 * 60 * 1000;
 
 function useSuggestions() {
   const suggestions = useFriendsStore((state) => state.suggestions);
@@ -33,9 +34,8 @@ function useSuggestions() {
   const outgoing = useFriendsStore((state) => state.outgoing);
 
   useEffect(() => {
-    if (!useFriendsStore.getState().suggestionsLoaded) {
-      useFriendsStore.getState().fetchSuggestions();
-    }
+    const { suggestionsFetchedAt, fetchSuggestions } = useFriendsStore.getState();
+    if (Date.now() - suggestionsFetchedAt > SUGGESTIONS_STALE_MS) fetchSuggestions();
   }, []);
 
   const known = new Set([...friends, ...incoming, ...outgoing].map(({ userId }) => userId));
@@ -50,7 +50,7 @@ function useAddSuggestion(person: FriendSuggestion) {
   async function add() {
     setPending(true);
     try {
-      await addFriend({ userId: person.userId });
+      await addFriend({ userId: person.userId }, { fromSuggestion: true });
     } catch (e) {
       message.error(e instanceof Error ? e.message : "Something went wrong.");
       setPending(false);
