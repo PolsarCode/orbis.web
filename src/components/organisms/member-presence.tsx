@@ -74,15 +74,27 @@ export function MemberPresence({
       ? !profile.appearOffline
       : (presence[member.userId] ?? member.online);
   const statusOf = (member: Member): PresenceStatus => {
-    if (member.userId !== profile?.userId) return statuses[member.userId] ?? member.status;
-    return profile.appearOffline ? "offline" : profile.status;
+    const status = statuses[member.userId] ?? member.status;
+    if (member.userId !== profile?.userId) return status;
+    if (profile.appearOffline) return "offline";
+    return status === "streaming" ? "streaming" : profile.status;
   };
-  const online = members.filter(isOnline).map((member) => ({ ...member, status: statusOf(member) }));
-  const offline = members.filter((member) => !isOnline(member));
+  const withStatus = members.map((member) => ({ ...member, status: statusOf(member) }));
+  const streaming = withStatus.filter((member) => member.status === "streaming");
+  const online = withStatus.filter((member) => member.status !== "streaming" && isOnline(member));
+  const offline = withStatus.filter((member) => member.status !== "streaming" && !isOnline(member));
 
   return (
     <>
       <PanelHeading title={`Members / ${members.length}`} label="Members" />
+      {streaming.length > 0 && (
+        <PresenceGroup
+          title="Streaming"
+          members={streaming}
+          online
+          emptyText="No one is streaming right now."
+        />
+      )}
       <PresenceGroup
         title="Online"
         members={online}

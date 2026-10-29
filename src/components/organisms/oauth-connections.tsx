@@ -216,24 +216,26 @@ export function OAuthConnections() {
               )}
               </div>
               {provider === "twitch" && connection && (
-                <>
-                  <label className="flex items-center justify-between gap-3 pl-11 text-xs">
-                    <span className="text-muted">Show when I’m live on Twitch</span>
+                <div className="flex flex-col gap-4 pl-11">
+                  <Molecule.SettingsRow
+                    label="Live status"
+                    description="Show a LIVE badge on your profile while you’re streaming, and a countdown to your next scheduled stream. Friends and communities also see you as Streaming."
+                  >
                     <Switch
-                      size="small"
                       checked={connection.showLive}
                       onChange={(value) => toggleTwitch("showLive", value)}
                     />
-                  </label>
-                  <label className="flex items-center justify-between gap-3 pl-11 text-xs">
-                    <span className="text-muted">Show my Twitch clips on my profile</span>
+                  </Molecule.SettingsRow>
+                  <Molecule.SettingsRow
+                    label="Clips tab"
+                    description="Show your most-watched Twitch clips in a Clips tab on your profile."
+                  >
                     <Switch
-                      size="small"
                       checked={connection.showClips}
                       onChange={(value) => toggleTwitch("showClips", value)}
                     />
-                  </label>
-                </>
+                  </Molecule.SettingsRow>
+                </div>
               )}
             </li>
           );

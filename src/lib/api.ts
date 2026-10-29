@@ -1942,6 +1942,8 @@ export type PublicProfile = {
   isPublic: boolean;
   restricted: boolean;
   hasClips: boolean;
+  twitchLogin?: string | null;
+  nextStream?: NextStream | null;
   createdAt: string;
   online: boolean;
   status: PresenceStatus;

@@ -1,90 +1,24 @@
 "use client";
 
-import { DiscordFilled, TwitchFilled } from "@ant-design/icons";
+import { DiscordFilled } from "@ant-design/icons";
 import { Tooltip } from "antd";
 import Image from "next/image";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
-import type { Community, CommunityImage, NextStream } from "@/lib/api";
+import type { Community, CommunityImage } from "@/lib/api";
 import { useCommunityStore } from "@/stores/community-store";
 import { CommunityLinkIcons } from "./community-links";
 import { ReportButton } from "./report-content";
 
 type ImageChange = (image: CommunityImage, file: File | null) => Promise<unknown>;
 
-const STARTING_SOON_MS = 60 * 60 * 1000;
-
-function useNow() {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-  return now;
-}
-
-function countdown(ms: number) {
-  const seconds = Math.floor(ms / 1000);
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor((seconds % 86400) / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  if (days > 0) return `${days}d ${hours}h ${minutes}m`;
-  if (hours > 0) return `${hours}h ${minutes}m ${seconds % 60}s`;
-  return `${minutes}m ${seconds % 60}s`;
-}
-
-function StreamCountdown({ login, next }: { login: string; next: NextStream }) {
-  const now = useNow();
-  const startsAt = Date.parse(next.startsAt);
-  const endsAt = next.endsAt ? Date.parse(next.endsAt) : startsAt + STARTING_SOON_MS;
-  if (now >= endsAt) return null;
-
-  const remaining = now < startsAt ? countdown(startsAt - now) : null;
-
-  return (
-    <Tooltip
-      placement="bottom"
-      classNames={{ root: "touch-visible" }}
-      title={`Follow ${next.channel ?? login} on Twitch`}
-    >
-      <a
-        href={`https://www.twitch.tv/${login}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="focus-ring flex h-9 shrink-0 items-center gap-2 rounded-lg whitespace-nowrap bg-surface/85 px-3 text-xs font-semibold text-foreground tabular-nums backdrop-blur transition-colors hover:bg-surface"
-      >
-        <TwitchFilled aria-hidden className="text-[#9146FF]" />
-        {remaining ? (
-          <>
-            <span className="sr-only">Next stream in </span>
-            {remaining}
-          </>
-        ) : (
-          "Starting soon"
-        )}
-      </a>
-    </Tooltip>
-  );
-}
-
 function StreamCorner({ community, live }: { community: Community; live: boolean }) {
   const login = community.twitchLogin;
   if (!login || community.showTwitchLive === false) return null;
-  if (!live && !community.nextStream) return null;
 
-  return live ? (
-    <a
-      href={`https://www.twitch.tv/${login}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="focus-ring flex h-9 shrink-0 items-center gap-2 rounded-lg whitespace-nowrap bg-[#9146FF] px-3 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#772ce8]"
-    >
-      <TwitchFilled aria-hidden />
-      Watch on Twitch
-    </a>
-  ) : (
-    community.nextStream && <StreamCountdown login={login} next={community.nextStream} />
+  return (
+    <Molecule.StreamPill login={login} live={live} nextStream={community.nextStream ?? null} />
   );
 }
 

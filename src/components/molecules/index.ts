@@ -27,6 +27,7 @@ export * from "./settings-row";
 export * from "./user-link";
 export * from "./vote-control";
 export * from "./steam-badge";
+export * from "./stream-pill";
 export * from "./read-only-gate";
 export * from "./tab-section";
 export * from "./edited-mark";

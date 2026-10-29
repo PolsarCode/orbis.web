@@ -19,6 +19,8 @@ const categories: { value: ReportCategory; label: string }[] = [
   { value: "other", label: "Other" },
 ];
 
+const DOCK_CLEARANCE = 16;
+
 const dockButton =
   "focus-ring flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border shadow-[0_8px_20px_-10px_rgb(0_0_0/0.45)] transition-colors";
 
@@ -151,13 +153,17 @@ export function FeedbackDock() {
     if (!element) return;
 
     const root = document.documentElement;
-    const measure = () =>
+    const measure = () => {
+      const libraryDock =
+        parseFloat(getComputedStyle(root).getPropertyValue("--library-dock-height")) || 0;
       root.style.setProperty(
         "--feedback-dock-space",
-        element.offsetParent
-          ? `${window.innerHeight - element.getBoundingClientRect().top}px`
+        element.offsetHeight > 0
+          ? `${window.innerHeight - element.getBoundingClientRect().top - libraryDock + DOCK_CLEARANCE}px`
           : "0px",
       );
+    };
+    measure();
     const observer = new ResizeObserver(measure);
     observer.observe(element);
     window.addEventListener("resize", measure);

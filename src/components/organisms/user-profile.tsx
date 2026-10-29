@@ -123,6 +123,7 @@ function ProfileAvatar({
 function ProfileHeader({
   profile,
   status,
+  live = false,
   collapsed,
   actions,
   adminAction,
@@ -131,6 +132,7 @@ function ProfileHeader({
 }: {
   profile: Profile;
   status: PresenceStatus;
+  live?: boolean;
   collapsed: boolean;
   actions: React.ReactNode;
   adminAction?: React.ReactNode;
@@ -204,17 +206,28 @@ function ProfileHeader({
           {!collapsed && social && <div className="mt-2 flex items-center gap-2">{social}</div>}
         </div>
       </div>
-      <div className="absolute top-2.5 right-4 flex items-center gap-2 sm:top-4 sm:right-8">
-        {adminAction && !collapsed && (
-          <div className="flex items-center gap-1 rounded-lg bg-surface/85 p-0.5 backdrop-blur">
-            {adminAction}
+      <div className="pointer-events-none absolute top-2.5 right-4 left-4 flex items-start gap-2 sm:top-4 sm:right-8 sm:left-8">
+        {!collapsed && profile.twitchLogin && (
+          <div className="pointer-events-auto flex min-w-0 flex-1 flex-wrap items-center gap-2">
+            <Molecule.StreamPill
+              login={profile.twitchLogin}
+              live={live}
+              nextStream={profile.nextStream ?? null}
+            />
           </div>
         )}
-        {actions && (
-          <div className="flex items-center gap-1 rounded-lg bg-surface/85 p-0.5 backdrop-blur">
-            {actions}
-          </div>
-        )}
+        <div className="pointer-events-auto ml-auto flex shrink-0 items-center gap-2">
+          {adminAction && !collapsed && (
+            <div className="flex items-center gap-1 rounded-lg bg-surface/85 p-0.5 backdrop-blur">
+              {adminAction}
+            </div>
+          )}
+          {actions && (
+            <div className="flex items-center gap-1 rounded-lg bg-surface/85 p-0.5 backdrop-blur">
+              {actions}
+            </div>
+          )}
+        </div>
       </div>
       {images && !collapsed && (
         <Molecule.CoverButton
@@ -739,6 +752,7 @@ export function UserProfile({ username }: { username: string }) {
     : isSelf
       ? (me?.status ?? "online")
       : (liveStatuses[profile.userId] ?? profile.status);
+  const live = (liveStatuses[profile.userId] ?? profile.status) === "streaming";
   const social = !isSelf && me && (
     <>
       <MessageButton person={profile} />
@@ -789,6 +803,7 @@ export function UserProfile({ username }: { username: string }) {
       <ProfileHeader
         profile={profile}
         status={status}
+        live={live}
         collapsed={collapsed}
         images={images}
         social={social}
