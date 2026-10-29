@@ -4,7 +4,6 @@ import type { FeedContentType } from "@/lib/api";
 
 export const feedContentTypes: FeedContentType[] = [
   "post",
-  "thread",
   "activity",
 ];
 

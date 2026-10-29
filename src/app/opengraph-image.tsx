@@ -76,7 +76,7 @@ export default async function OpengraphImage() {
             <span>Your people.</span>
           </div>
           <div style={{ fontSize: 26, color: muted, lineHeight: 1.35 }}>
-            Communities, forums, and a library for everything you’re watching,
+            Communities, feeds, and a library for everything you’re watching,
             reading, and playing.
           </div>
         </div>

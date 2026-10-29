@@ -227,27 +227,6 @@ export type Post = {
   wallUser: Author | null;
 };
 
-export type Thread = {
-  type: "thread";
-  id: number;
-  communityId: number;
-  title: string;
-  content: string;
-  linkUrl: string | null;
-  score: number;
-  commentCount: number;
-  myVote: number;
-  previewComments?: PreviewComment[];
-  hiddenAt?: string | null;
-  editedAt?: string | null;
-  canDelete?: boolean;
-  createdAt: string;
-  author: Author;
-  community: CommunitySummary;
-};
-
-export type FeedItem = Post | Thread;
-
 export type MediaType = "anime" | "manga" | "game";
 
 export type LibraryStatus =
@@ -298,7 +277,7 @@ export type Activity = {
   };
 };
 
-export type FeedEntry = FeedItem | Activity;
+export type FeedEntry = Post | Activity;
 
 export type FeedContentType = FeedEntry["type"];
 
@@ -357,15 +336,13 @@ export async function getDirectoryCommunities(
   return res.json();
 }
 
-export type ThreadSort = "hot" | "new" | "top";
-
 export type Comment = {
   id: number;
   parentId: number | null;
   content: string;
   linkUrl: string | null;
-  score: number;
-  myVote: number;
+  likeCount: number;
+  liked: boolean;
   hidden?: "review" | "reported" | null;
   editedAt?: string | null;
   deleted?: boolean;
@@ -376,13 +353,9 @@ export type Comment = {
 
 export type Commentable = { type: FeedEntry["type"]; id: number };
 
-export type Likeable = { type: "post" | "activity"; id: number };
+export type Likeable = { type: "post" | "activity" | "comment"; id: number };
 
 export type LikeResult = { likeCount: number; liked: boolean };
-
-export type Votable = { type: "thread" | "comment"; id: number };
-
-export type VoteResult = { score: number; myVote: number };
 
 export type Member = {
   userId: number;
@@ -854,7 +827,7 @@ export async function createWallPost(
   return res.json();
 }
 
-export async function searchPosts(token: string, q: string): Promise<FeedItem[]> {
+export async function searchPosts(token: string, q: string): Promise<Post[]> {
   const res = await api(withQuery("/feed/search", { q }), {
     headers: authHeaders(token),
   });
@@ -867,7 +840,7 @@ export async function searchCommunity(
   token: string | null,
   communityId: number,
   q: string,
-): Promise<FeedItem[]> {
+): Promise<Post[]> {
   const res = await api(withQuery(`/communities/${communityId}/posts/search`, { q }), {
     headers: authHeaders(token),
   });
@@ -880,7 +853,7 @@ export async function searchProfile(
   token: string | null,
   username: string,
   q: string,
-): Promise<FeedItem[]> {
+): Promise<Post[]> {
   const res = await api(withQuery(`/users/${encodeURIComponent(username)}/posts/search`, { q }), {
     headers: authHeaders(token),
   });
@@ -1352,77 +1325,6 @@ export async function deletePost(token: string, postId: number): Promise<void> {
   if (!res.ok) throw new Error(await errorMessage(res, "Could not delete the post."));
 }
 
-export async function updateThread(
-  token: string,
-  threadId: number,
-  thread: { title: string; content: string; linkUrl?: string },
-): Promise<Thread> {
-  const res = await api(`/threads/${threadId}`, {
-    method: "PATCH",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(thread),
-  });
-
-  if (!res.ok) throw new Error(await errorMessage(res, "Could not save the thread."));
-  return res.json();
-}
-
-export async function deleteThread(token: string, threadId: number): Promise<void> {
-  const res = await api(`/threads/${threadId}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  if (!res.ok) throw new Error(await errorMessage(res, "Could not delete the thread."));
-}
-
-export async function getThread(token: string | null, threadId: number): Promise<Thread> {
-  const res = await api(`/threads/${threadId}`, { headers: authHeaders(token) });
-
-  if (!res.ok) throw new Error("That thread isn’t available.");
-  return res.json();
-}
-
-export type ThreadRange = "day" | "week" | "month" | "year" | "all";
-
-export async function getThreads(
-  token: string | null,
-  communityId: number,
-  sort: ThreadSort,
-  cursor?: string,
-  range: ThreadRange = "all",
-): Promise<Page<Thread>> {
-  const res = await api(
-    withQuery(`/communities/${communityId}/threads`, { sort, cursor, range }),
-    { headers: authHeaders(token) },
-  );
-
-  if (!res.ok) throw new Error("Could not load threads.");
-  return res.json();
-}
-
-export async function createThread(
-  token: string,
-  communityId: number,
-  thread: { title: string; content: string; linkUrl?: string },
-): Promise<Thread> {
-  const res = await api(`/communities/${communityId}/threads`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(thread),
-  });
-
-  if (res.status === 400) throw new Error("Add a title for your thread.");
-  if (!res.ok) throw new Error("Could not post the thread. Please try again.");
-  return res.json();
-}
-
 export async function getComments(
   token: string | null,
   { type, id }: Commentable,
@@ -1502,29 +1404,10 @@ export async function setLike(
   return res.json();
 }
 
-export async function vote(
-  token: string,
-  { type, id }: Votable,
-  value: number,
-): Promise<VoteResult> {
-  const res = await api("/votes", {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ type, id, value }),
-  });
-
-  if (!res.ok) throw new Error("Could not save your vote.");
-  return res.json();
-}
-
 export type Stats = {
   members: number;
   communities: number;
   posts: number;
-  threads: number;
   comments: number;
 };
 
@@ -1560,7 +1443,7 @@ export type ReportAdmin = Author & {
   twitchLogin?: string | null;
 };
 
-export type ContentReportTarget = "post" | "thread" | "comment" | "user" | "community";
+export type ContentReportTarget = "post" | "comment" | "user" | "community";
 export type ContentReportReason = "spam" | "harassment" | "inappropriate" | "other";
 
 export type ReportedItem = {
@@ -1816,7 +1699,6 @@ export async function setReportHidden(
 
 export type NotificationType =
   | "post_comment"
-  | "thread_comment"
   | "comment_reply"
   | "friend_request"
   | "friend_accepted"
@@ -2498,14 +2380,13 @@ export type DiscordChannel = {
   channelId: string;
   isForum: boolean;
   sendPosts: boolean;
-  sendThreads: boolean;
   sendLibrary: boolean;
   lostAt: string | null;
   createdAt: string;
 };
 
 export type DiscordChannelSettings = Partial<
-  Pick<DiscordChannel, "sendPosts" | "sendThreads" | "sendLibrary">
+  Pick<DiscordChannel, "sendPosts" | "sendLibrary">
 >;
 
 export async function getDiscordChannel(

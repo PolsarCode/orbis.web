@@ -60,15 +60,12 @@ type PostComposerProps = {
   target?: ReactNode;
   placeholder?: string;
   submitLabel?: string;
-  allowEmpty?: boolean;
   autoFocus?: boolean;
   onCancel?: () => void;
   onPosted?: () => void;
   linkPreview?: boolean;
   initialContent?: string;
   initialLink?: string | null;
-  actions?: ReactNode;
-  submitDisabled?: boolean;
 };
 
 export function PostComposer({
@@ -76,15 +73,12 @@ export function PostComposer({
   target,
   placeholder = "Share something with the community…",
   submitLabel = "Post",
-  allowEmpty = false,
   autoFocus = false,
   onCancel,
   onPosted,
   linkPreview = false,
   initialContent,
   initialLink = null,
-  actions,
-  submitDisabled = false,
 }: PostComposerProps) {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -200,9 +194,8 @@ export function PostComposer({
   async function submit() {
     if (
       !editor ||
-      submitDisabled ||
       linkHeld ||
-      (editor.isEmpty && !allowEmpty && !attachment) ||
+      (editor.isEmpty && !attachment) ||
       pending
     ) {
       return;
@@ -283,7 +276,6 @@ export function PostComposer({
       <div className="flex items-center gap-3 rounded-lg border border-dashed border-divider bg-surface p-4 text-[13px] text-muted">
         <Lock size={16} aria-hidden className="shrink-0" />
         <p>Confirm your email to post, comment, and react. Until then, you can read everything.</p>
-        {actions && <div className="ml-auto shrink-0">{actions}</div>}
       </div>
     );
   }
@@ -344,7 +336,6 @@ export function PostComposer({
             ))}
           </div>
           <div className="flex items-center gap-2">
-            {actions}
             {onCancel && (
               <Atom.Button size="small" variant="secondary" onClick={onCancel}>
                 Cancel
@@ -354,9 +345,7 @@ export function PostComposer({
               size="small"
               onClick={submit}
               loading={pending}
-              disabled={
-                submitDisabled || linkHeld || (state?.empty && !allowEmpty && !attachment)
-              }
+              disabled={linkHeld || (state?.empty && !attachment)}
             >
               {submitLabel}
             </Atom.Button>

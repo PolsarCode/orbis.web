@@ -118,8 +118,7 @@ function GeneralSettings({ community }: { community: Community }) {
             <span className="text-[13px] font-semibold">Public community</span>
             <span className="text-xs text-muted">
               Anyone can find it in Explore and join. Turn this off to make the
-              community private; only existing members can see its posts and
-              threads.
+              community private; only existing members can see its posts.
             </span>
           </span>
           <Switch
@@ -413,7 +412,7 @@ function DangerZone({ community }: { community: Community }) {
     <Molecule.SettingsSection
       danger
       title="Delete community"
-      description="This permanently removes all posts, threads, and memberships. This action can’t be undone."
+      description="This permanently removes all posts and memberships. This action can’t be undone."
     >
       <Atom.Button
         danger

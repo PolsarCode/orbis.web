@@ -11,7 +11,7 @@ export default function GuidelinesPage() {
   return (
     <Template.LegalTemplate
       title="Community guidelines"
-      updated="October 22, 2026"
+      updated="October 29, 2026"
     >
       <p>
         Orbis is made up of many independent communities. Each one can set its
@@ -64,7 +64,7 @@ export default function GuidelinesPage() {
           advertising, or links meant to mislead.
         </li>
         <li>
-          Do not manipulate votes, create accounts to evade a ban, or use
+          Do not manipulate likes, create accounts to evade a ban, or use
           automated tools to post or interact on Orbis.
         </li>
         <li>

@@ -7,7 +7,7 @@ import type { FeedEntry } from "@/lib/api";
 import { displayName } from "@/lib/display-name";
 import { activityText, mediaPath, progressText } from "@/lib/library";
 import { timeAgo } from "@/lib/time";
-import { castVote, toggleLike } from "@/lib/votes";
+import { toggleLike } from "@/lib/votes";
 import { useLikeBlockedReason } from "./post-card";
 import { HiddenNotice, ReportButton } from "./report-content";
 
@@ -42,30 +42,17 @@ export function CompactFeedItem({
         if (!(event.target as HTMLElement).closest("a, button")) onOpen();
       }}
     >
-      {item.type === "thread" ? (
-        <Molecule.VoteControl
-          symbols="thumbs"
-          score={item.score}
-          myVote={item.myVote}
-          onVote={(value) =>
-            castVote({ type: "thread", id: item.id }, item, value, (result) =>
-              onChange({ ...item, ...result }),
-            )
-          }
-        />
-      ) : (
-        <Molecule.AuthorAvatar
-          author={item.author}
-          community={showCommunity && community ? community : undefined}
-          wallUser={wallUser ?? undefined}
-        />
-      )}
+      <Molecule.AuthorAvatar
+        author={item.author}
+        community={showCommunity && community ? community : undefined}
+        wallUser={wallUser ?? undefined}
+      />
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <header className="flex min-w-0 items-start justify-between gap-2">
           <p className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted">
             {showCommunity && community && (
               <Link
-                href={`/communities/${community.id}${item.type === "thread" ? "?tab=forum" : ""}`}
+                href={`/communities/${community.id}`}
                 className="focus-ring max-w-full truncate rounded-sm font-semibold text-foreground hover:underline"
               >
                 {community.name}
@@ -106,17 +93,7 @@ export function CompactFeedItem({
           )}
         </header>
         {item.type !== "activity" && item.hiddenAt && <HiddenNotice />}
-        {item.type === "thread" ? (
-          <h3 className="min-w-0 text-sm font-semibold">
-            <button
-              type="button"
-              onClick={onOpen}
-              className="focus-ring line-clamp-2 rounded-sm text-left hover:underline"
-            >
-              {item.title}
-            </button>
-          </h3>
-        ) : item.type === "activity" ? (
+        {item.type === "activity" ? (
           <p className="line-clamp-2 text-sm">
             {verb}{" "}
             <Link
@@ -134,18 +111,16 @@ export function CompactFeedItem({
           />
         )}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-0.5">
-          {item.type !== "thread" && (
-            <Molecule.LikeButton
-              liked={item.liked}
-              count={item.likeCount}
-              disabledReason={likeBlockedReason}
-              onToggle={() =>
-                toggleLike({ type: item.type, id: item.id }, item, (result) =>
-                  onChange({ ...item, ...result }),
-                )
-              }
-            />
-          )}
+          <Molecule.LikeButton
+            liked={item.liked}
+            count={item.likeCount}
+            disabledReason={likeBlockedReason}
+            onToggle={() =>
+              toggleLike({ type: item.type, id: item.id }, item, (result) =>
+                onChange({ ...item, ...result }),
+              )
+            }
+          />
           <Molecule.CommentsButton count={item.commentCount} onClick={onOpen} />
           {item.type === "activity" && item.steam && (
             <Molecule.SteamBadge steam={item.steam} title={item.media.title} />

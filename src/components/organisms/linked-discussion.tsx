@@ -9,14 +9,13 @@ import {
   getMediaPost,
   getProfileActivity,
   getProfilePost,
-  getThread,
   type FeedEntry,
   type MediaType,
 } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
 import { DiscussionModal } from "./discussion-modal";
 
-const linkTypes = ["post", "thread", "activity"] as const;
+const linkTypes = ["post", "activity"] as const;
 
 type LinkType = (typeof linkTypes)[number];
 
@@ -35,11 +34,7 @@ export function LinkedDiscussion({ communityId }: { communityId: number }) {
     (type, id) => {
       const { token } = useAuthStore.getState();
       if (type === "post") return getCommunityPost(token, communityId, id);
-      if (type === "activity") return getCommunityActivity(token, communityId, id);
-      return getThread(token, id).then((thread) => {
-        if (thread.communityId !== communityId) throw new Error("That thread isn’t available.");
-        return thread;
-      });
+      return getCommunityActivity(token, communityId, id);
     },
     [communityId],
   );
@@ -51,8 +46,7 @@ export function ProfileLinkedDiscussion({ username }: { username: string }) {
     (type, id) => {
       const { token } = useAuthStore.getState();
       if (type === "post") return getProfilePost(token, username, id);
-      if (type === "activity") return getProfileActivity(token, username, id);
-      return getThread(token, id);
+      return getProfileActivity(token, username, id);
     },
     [username],
   );

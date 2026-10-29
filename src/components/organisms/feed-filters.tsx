@@ -1,7 +1,6 @@
 "use client";
 
 import { Checkbox, Dropdown, Popover } from "antd";
-import type { ReactNode } from "react";
 import {
   ChevronDown,
   LayoutPanelTop,
@@ -15,19 +14,10 @@ import { shownTypes, useFeedPreferencesStore } from "@/stores/feed-preferences-s
 
 const labels = {
   post: "Posts",
-  thread: "Threads",
   activity: "Library updates",
 };
 
-export function FeedFilters({
-  types,
-  trailing,
-  filterControl,
-}: {
-  types: FeedContentType[];
-  trailing?: ReactNode;
-  filterControl?: ReactNode;
-}) {
+export function FeedFilters({ types }: { types: FeedContentType[] }) {
   const excluded = useFeedPreferencesStore((state) => state.excludedTypes);
   const setShown = useFeedPreferencesStore((state) => state.setShown);
   const showAll = useFeedPreferencesStore((state) => state.showAll);
@@ -75,9 +65,7 @@ export function FeedFilters({
         </Atom.Button>
       </Dropdown>
       <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-        {trailing}
-        {filterControl}
-        {!filterControl && types.length > 1 && (
+        {types.length > 1 && (
           <>
             {filtered && (
               <Atom.Button

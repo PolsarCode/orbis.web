@@ -37,7 +37,6 @@ import { SearchScope } from "./site-search";
 
 const typeIcons: Record<NotificationType, ReactNode> = {
   post_comment: <MessageSquare size={12} />,
-  thread_comment: <MessageSquare size={12} />,
   comment_reply: <Reply size={12} />,
   friend_request: <UserPlus size={12} />,
   friend_accepted: <UserCheck size={12} />,

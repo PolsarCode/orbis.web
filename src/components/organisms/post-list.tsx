@@ -12,25 +12,18 @@ import { FeedFilters } from "./feed-filters";
 import { ActivityCard } from "./activity-card";
 import { DiscussionModal } from "./discussion-modal";
 import { PostCard } from "./post-card";
-import { ThreadCard } from "./thread-card";
 
 type PostListProps<T extends FeedEntry> = {
   feed: Paged<T>;
-  trailing?: ReactNode;
   empty: { title: ReactNode; description: ReactNode; action?: ReactNode };
   end?: ReactNode;
   showCommunity?: boolean;
-  filterControl?: ReactNode;
 };
 
 export function PostList<T extends FeedEntry>(props: PostListProps<T>) {
   return (
     <div className="flex flex-col gap-3">
-      <FeedFilters
-        types={props.feed.contentTypes}
-        trailing={props.trailing}
-        filterControl={props.filterControl}
-      />
+      <FeedFilters types={props.feed.contentTypes} />
       <PostListContent {...props} />
     </div>
   );
@@ -122,15 +115,6 @@ function PostListContent<T extends FeedEntry>({
               activity={item}
               onOpenComments={() => setOpenKey(itemKey(item))}
               onChange={update}
-            />
-          ) : item.type === "thread" ? (
-            <ThreadCard
-              key={itemKey(item)}
-              thread={item}
-              showCommunity={showCommunity}
-              onOpen={() => setOpenKey(itemKey(item))}
-              onChange={update}
-              onDelete={remove}
             />
           ) : (
             <PostCard

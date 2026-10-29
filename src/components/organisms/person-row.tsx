@@ -97,7 +97,7 @@ export function PersonRow({
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`Watch ${label} on Twitch`}
-              className="icon-button text-[#9146FF]"
+              className="icon-button -mr-3 pr-0.5 text-[#9146FF]"
             >
               <TwitchFilled />
             </a>

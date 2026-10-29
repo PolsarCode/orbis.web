@@ -23,7 +23,7 @@ const siteTitle =
   process.env.NODE_ENV === "development" ? "Orbis (Development)" : "Orbis";
 
 const description =
-  "Orbis is a home for fan communities, with a feed for quick updates, a forum for the discussions worth keeping, and a library to track what you’re watching, reading, and playing.";
+  "Orbis is a home for fan communities, with a feed for quick updates and a library to track what you’re watching, reading, and playing.";
 
 export const metadata: Metadata = {
   title: { default: siteTitle, template: `%s · ${siteTitle}` },

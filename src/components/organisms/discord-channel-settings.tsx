@@ -21,7 +21,6 @@ import { OAuthIcon } from "./oauth-buttons";
 
 const sendOptions: { key: keyof Settings; label: string; description?: string }[] = [
   { key: "sendPosts", label: "Feed posts" },
-  { key: "sendThreads", label: "Threads" },
   {
     key: "sendLibrary",
     label: "Library updates",

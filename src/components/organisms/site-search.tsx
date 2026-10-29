@@ -7,7 +7,6 @@ import {
   Clock,
   Compass,
   Library,
-  MessagesSquare,
   Newspaper,
   Search,
   Settings,
@@ -34,11 +33,11 @@ import {
   searchReports,
   type CommunitySearchResult,
   type FeedEntry,
-  type FeedItem,
   type FriendUser,
   type LibraryEntry,
   type MediaResult,
   type MediaType,
+  type Post,
   type Report,
 } from "@/lib/api";
 import { displayName } from "@/lib/display-name";
@@ -435,26 +434,17 @@ function SearchPanel({
   }
 
   const rows: Record<SearchSource, Rows> = {
-    posts: rowsOf(posts, (item: FeedItem) => {
+    posts: rowsOf(posts, (item: Post) => {
       const text = plainText(item.content).trim();
-      const place =
-        item.type === "thread"
-          ? `Threads in ${item.community.name}`
-          : item.community
-            ? `In ${item.community.name}`
-            : `On ${displayName(item.wallUser ?? item.author)}’s wall`;
+      const place = item.community
+        ? `In ${item.community.name}`
+        : `On ${displayName(item.wallUser ?? item.author)}’s wall`;
       return (
         <ResultRow
           key={`${item.type}-${item.id}`}
           onSelect={() => openItem(item)}
-          icon={
-            item.type === "thread" ? (
-              <MessagesSquare size={18} className="text-muted" />
-            ) : (
-              <Newspaper size={18} className="text-muted" />
-            )
-          }
-          title={item.type === "thread" ? item.title : displayName(item.author)}
+          icon={<Newspaper size={18} className="text-muted" />}
+          title={displayName(item.author)}
           subtitle={text || undefined}
           detail={place}
         />

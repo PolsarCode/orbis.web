@@ -32,7 +32,7 @@ const tabs = [
   { value: "clips", label: "Clips", icon: <Clapperboard size={16} /> },
 ] as const;
 
-const pages = ["feed", "forum", "clips"] as const;
+const pages = ["feed", "clips"] as const;
 
 type Tab = (typeof pages)[number] | "members";
 
@@ -41,8 +41,7 @@ export function CommunityView({ members = false }: { members?: boolean }) {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const requested = useSearchParams().get("tab");
   const tab: Tab = members ? "members" : (pages.find((value) => value === requested) ?? "feed");
-  const section = tab === "forum" ? "feed" : tab;
-  const [tabsRef, tabsFade] = useTabScroller<HTMLElement>(section);
+  const [tabsRef, tabsFade] = useTabScroller<HTMLElement>(tab);
   const [collapsed, setCollapsed] = useState(false);
   const setCommunityImage = useCommunityStore(
     (state) => state.setCommunityImage,
@@ -201,9 +200,9 @@ export function CommunityView({ members = false }: { members?: boolean }) {
                   href={`/communities/${current.community!.id}${
                     value === "feed" ? "" : `?tab=${value}`
                   }`}
-                  aria-current={section === value ? "page" : undefined}
+                  aria-current={tab === value ? "page" : undefined}
                   className={`focus-ring -mb-px flex shrink-0 items-center gap-2 rounded-t-sm border-b-2 px-1 py-3 text-sm transition-colors ${
-                    section === value
+                    tab === value
                       ? "border-accent text-accent"
                       : "border-transparent font-semibold text-foreground hover:text-accent"
                   }`}
@@ -260,7 +259,6 @@ export function CommunityView({ members = false }: { members?: boolean }) {
                   key={`${current.community.id}-${tab}`}
                   communityId={current.community.id}
                   joinPrompt={joinPrompt}
-                  initialSort={tab === "forum" ? "hot" : "all"}
                 />
               )}
             </Template.PageColumn>

@@ -135,14 +135,14 @@ export function HomeFeed({ latestChangelog }: { latestChangelog: ChangelogDay | 
         empty={{
           title: "No posts yet.",
           description:
-            "Posts and threads from your communities will appear here.",
+            "Posts from your communities will appear here.",
         }}
         end={
           <Molecule.FeedState
             eyebrow="End of feed"
             icon={<CircleCheck size={24} strokeWidth={1.5} />}
             title="You’re all caught up."
-            description="You’ve seen all recent posts and threads from your communities. Explore other communities to find more discussions."
+            description="You’ve seen all recent posts from your communities. Explore other communities to find more discussions."
             action={
               <Atom.ButtonLink href="/explore" variant="secondary">
                 Explore communities

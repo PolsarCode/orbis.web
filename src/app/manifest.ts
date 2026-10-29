@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Orbis",
     short_name: "Orbis",
     description:
-      "A home for fan communities, with a feed, a forum, and a library to track what you’re watching, reading, and playing.",
+      "A home for fan communities, with a feed and a library to track what you’re watching, reading, and playing.",
     start_url: "/",
     scope: "/",
     display: "standalone",

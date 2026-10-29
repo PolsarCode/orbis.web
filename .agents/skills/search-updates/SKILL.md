@@ -10,7 +10,7 @@ Orbis has one search for the whole site: the modal in `src/components/organisms/
 ## How It Works
 
 - **Site-wide sources** are listed in `searchSources` in `src/stores/search-store.ts`. Each one has a loader, a result row, and a label in `site-search.tsx`, and data behind it:
-  - Posts and threads: `GET /feed/search` (`searchPosts`).
+  - Posts: `GET /feed/search` (`searchPosts`).
   - Titles: `GET /library/search` (`searchLibrary`).
   - People: `GET /friends/search` (`searchPeople`).
   - Communities: `GET /communities/search` (`searchCommunities`).

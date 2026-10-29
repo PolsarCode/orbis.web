@@ -13,7 +13,7 @@ import {
 } from "@/lib/api";
 import { displayName } from "@/lib/display-name";
 import { timeAgo } from "@/lib/time";
-import { castVote } from "@/lib/votes";
+import { toggleLike } from "@/lib/votes";
 import { useAuthStore } from "@/stores/auth-store";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { ContentActions } from "./content-actions";
@@ -124,13 +124,11 @@ function CommentItem({
             </>
           )}
           <div className="flex items-center gap-2">
-            <Molecule.VoteControl
-              symbols="thumbs"
-              orientation="horizontal"
-              score={node.score}
-              myVote={node.myVote}
-              onVote={(value) =>
-                castVote({ type: "comment", id: node.id }, node, value, (result) =>
+            <Molecule.LikeButton
+              liked={node.liked}
+              count={node.likeCount}
+              onToggle={() =>
+                toggleLike({ type: "comment", id: node.id }, node, (result) =>
                   onChange({ ...node, ...result }),
                 )
               }

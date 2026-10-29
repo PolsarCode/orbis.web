@@ -42,17 +42,17 @@ export const tips: Tip[] = [
   {
     id: "feed-view",
     title: "Make the feed yours",
-    body: "Use Filter feed to show or hide posts, threads, and library updates, and switch to Compact view to see more at a glance.",
+    body: "Use Filter feed to show or hide posts and library updates, and switch to Compact view to see more at a glance.",
   },
   {
     id: "mentions",
     title: "Mention people with @",
-    body: "Type @ and a username in a post, thread, or comment to tag someone. They get a notification if they can see where you posted it.",
+    body: "Type @ and a username in a post or comment to tag someone. They get a notification if they can see where you posted it.",
   },
   {
     id: "edit-delete",
     title: "Fix a typo or take something down",
-    body: "Open the ⋯ menu on your post or thread, or use Edit under your comment, to change or delete it. If you run a community, you can delete anything posted in it.",
+    body: "Open the ⋯ menu on your post, or use Edit under your comment, to change or delete it. If you run a community, you can delete anything posted in it.",
   },
   {
     id: "twitch-clips",
@@ -68,7 +68,7 @@ export const tips: Tip[] = [
   {
     id: "community-discord-channel",
     title: "Send your community’s posts to Discord",
-    body: "If you run a public community, connect a Discord channel in the community’s settings, under Connections. New posts, threads, and library updates show up there with a link back to Orbis.",
+    body: "If you run a public community, connect a Discord channel in the community’s settings, under Connections. New posts and library updates show up there with a link back to Orbis.",
   },
   {
     id: "community-links",

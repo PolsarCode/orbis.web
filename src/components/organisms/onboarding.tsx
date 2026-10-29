@@ -21,7 +21,7 @@ export const tourStops: TourStop[] = [
     placement: "right",
     title: "Your home feed",
     description:
-      "Posts and threads from every community you’re in, newest first. Click anyone’s name or picture to see their profile.",
+      "Posts from every community you’re in, newest first. Click anyone’s name or picture to see their profile.",
   },
   {
     target: "library",
@@ -35,7 +35,7 @@ export const tourStops: TourStop[] = [
     placement: "right",
     title: "Your communities",
     description:
-      "Every community you’ve joined lives in this rail. Drag them to reorder, drop one onto another to make a folder, and click one to open its feed, threads, and members.",
+      "Every community you’ve joined lives in this rail. Drag them to reorder, drop one onto another to make a folder, and click one to open its feed and members.",
   },
   {
     target: "create",
@@ -55,13 +55,13 @@ export const tourStops: TourStop[] = [
     placement: "bottom",
     title: "Share something",
     description:
-      "Write a post for your wall, or pick one of your communities to share it there. Use the Threads tab inside a community for longer discussions with votes.",
+      "Write a post for your wall, or pick one of your communities to share it there.",
   },
   {
     target: "feed-filters",
     placement: "bottom",
     title: "Choose your feed",
-    description: "Switch between Card and Compact view, and show or hide posts, threads, and library updates. Your choices are remembered across feeds on this browser.",
+    description: "Switch between Card and Compact view, and show or hide posts and library updates. Your choices are remembered across feeds on this browser.",
   },
   {
     target: "friend-requests",
@@ -153,8 +153,8 @@ export const checklistItems: ChecklistItem[] = [
       </>
     ),
   },
-  { key: "post", title: "Share your first post", hint: "Use the box below or a community’s Threads tab." },
-  { key: "comment", title: "Join a discussion", hint: "Open any post or thread and leave a comment." },
+  { key: "post", title: "Share your first post", hint: "Use the box below or post in one of your communities." },
+  { key: "comment", title: "Join a discussion", hint: "Open any post and leave a comment." },
   {
     key: "friend",
     title: "Add a friend",
@@ -299,13 +299,6 @@ export function OnboardingTour() {
 
 export const pageTours = {
   community: [
-    {
-      target: "community-tabs",
-      placement: "bottom",
-      title: "Posts and threads",
-      description:
-        "Turn on Thread to start a longer discussion with a title and votes. Under the composer, All shows everything, and Hot, New, and Top show just threads.",
-    },
     {
       target: "community-composer",
       placement: "bottom",

@@ -3,7 +3,6 @@
 import {
   Building2,
   FileText,
-  MessagesSquare,
   MessageCircle,
   Users,
   type LucideIcon,
@@ -18,7 +17,6 @@ const labels: { key: keyof Stats; label: string; icon: LucideIcon }[] = [
   { key: "members", label: "Members", icon: Users },
   { key: "communities", label: "Communities", icon: Building2 },
   { key: "posts", label: "Posts", icon: FileText },
-  { key: "threads", label: "Threads", icon: MessagesSquare },
   { key: "comments", label: "Comments", icon: MessageCircle },
 ];
 
@@ -76,7 +74,7 @@ export function SiteStats() {
           </p>
         </div>
         {stats ? (
-          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {labels.map(({ key, label, icon: Icon }) => (
               <div
                 key={key}

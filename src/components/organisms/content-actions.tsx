@@ -7,11 +7,10 @@ import { useReadOnly } from "@/lib/read-only";
 import { useAuthStore } from "@/stores/auth-store";
 import { ReportButton } from "./report-content";
 
-type EditableType = "post" | "thread" | "comment";
+type EditableType = "post" | "comment";
 
 const deleteNotes: Record<EditableType, string> = {
   post: "Its comments are deleted with it. This can’t be undone.",
-  thread: "Its comments are deleted with it. This can’t be undone.",
   comment: "This can’t be undone. If it has replies, they stay.",
 };
 

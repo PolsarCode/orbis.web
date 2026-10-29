@@ -1,6 +1,6 @@
 "use client";
 
-import { MessagesSquare, Newspaper } from "lucide-react";
+import { Newspaper } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import * as Atom from "@atom";
@@ -8,8 +8,8 @@ import {
   getMembers,
   searchCommunity,
   searchProfile,
-  type FeedItem,
   type Member,
+  type Post,
   type PublicProfile,
 } from "@/lib/api";
 import { displayName } from "@/lib/display-name";
@@ -44,18 +44,18 @@ function ResultSection({ title, children }: { title: string; children: ReactNode
 const rowClass =
   "focus-ring flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition-colors hover:bg-rail-item";
 
-function ContentRow({ item, onOpen }: { item: FeedItem; onOpen: () => void }) {
+function ContentRow({ item, onOpen }: { item: Post; onOpen: () => void }) {
   const text = plainText(item.content);
 
   return (
     <li>
       <button type="button" onClick={onOpen} className={`${rowClass} items-start`}>
         <span className="mt-0.5 shrink-0 text-muted" aria-hidden>
-          {item.type === "thread" ? <MessagesSquare size={16} /> : <Newspaper size={16} />}
+          <Newspaper size={16} />
         </span>
         <span className="flex min-w-0 flex-col">
           <span className="truncate text-sm font-semibold">
-            {item.type === "thread" ? item.title : displayName(item.author)}
+            {displayName(item.author)}
           </span>
           {text && <span className="line-clamp-2 text-xs text-muted">{text}</span>}
         </span>
@@ -101,12 +101,12 @@ function ContentResults({
   onOpen,
 }: {
   query: string;
-  search: (query: string) => Promise<FeedItem[]>;
+  search: (query: string) => Promise<Post[]>;
   sections: Section[];
   scope: string;
-  onOpen: (item: FeedItem) => void;
+  onOpen: (item: Post) => void;
 }) {
-  const [results, setResults] = useState<{ query: string; items: FeedItem[] | null } | null>(
+  const [results, setResults] = useState<{ query: string; items: Post[] | null } | null>(
     null,
   );
 
@@ -135,25 +135,15 @@ function ContentResults({
     return <Atom.ErrorMessage>Could not search {scope}.</Atom.ErrorMessage>;
   }
 
-  const threads = results.items.filter((item) => item.type === "thread");
-  const posts = results.items.filter((item) => item.type === "post");
+  const posts = results.items;
   const shown = sections.filter((section) => section.items.length > 0);
 
-  if (threads.length + posts.length + shown.length === 0) {
+  if (posts.length + shown.length === 0) {
     return <p className="py-4 text-center text-sm text-muted">Nothing in {scope} matches “{query}”.</p>;
   }
 
   return (
     <div className="flex flex-col gap-4">
-      {threads.length > 0 && (
-        <ResultSection title="Threads">
-          <ul>
-            {threads.map((item) => (
-              <ContentRow key={`thread-${item.id}`} item={item} onOpen={() => onOpen(item)} />
-            ))}
-          </ul>
-        </ResultSection>
-      )}
       {posts.length > 0 && (
         <ResultSection title="Posts">
           <ul>
@@ -180,7 +170,7 @@ function ContentSearchScope({
 }: {
   name: string;
   scope: string;
-  search: (query: string) => Promise<FeedItem[]>;
+  search: (query: string) => Promise<Post[]>;
   sections: (query: string) => Section[];
 }) {
   return (

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <Template.LegalTemplate title="Privacy policy" updated="October 22, 2026">
+    <Template.LegalTemplate title="Privacy policy" updated="October 29, 2026">
       <p>
         This policy explains what information Orbis collects when you use the
         service, how we use it, and the choices you have. We collect only what
@@ -23,8 +23,8 @@ export default function PrivacyPage() {
           password. Passwords are stored as a secure hash, never in plain text.
         </li>
         <li>
-          <strong>Content:</strong> the posts, forum threads, comments, and
-          votes you create, and the communities you create or join.
+          <strong>Content:</strong> the posts, comments, and likes you create,
+          and the communities you create or join.
         </li>
         <li>
           <strong>Connections:</strong> your friend requests and friendships.
@@ -94,7 +94,7 @@ export default function PrivacyPage() {
       <h2>Keeping and deleting your information</h2>
       <p>
         We keep your information for as long as your account exists. When a
-        community is deleted, its posts, threads, comments, and memberships are
+        community is deleted, its posts, comments, and memberships are
         deleted with it. To delete your account and the information associated
         with it, contact the Orbis team and we will process your request.
       </p>

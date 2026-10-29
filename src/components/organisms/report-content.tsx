@@ -18,7 +18,6 @@ export const reportReasons: { value: ContentReportReason; label: string; hint: s
 
 const nouns: Record<ContentReportTarget, string> = {
   post: "post",
-  thread: "thread",
   comment: "comment",
   user: "profile",
   community: "community",
