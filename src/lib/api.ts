@@ -1880,6 +1880,7 @@ export type PublicProfile = {
     sourceId: string;
     title: string;
     coverImage: string | null;
+    year: number | null;
     status: LibraryStatus;
     progress: number;
     total: number | null;

@@ -717,7 +717,7 @@ function ViewToggle() {
   );
 }
 
-function typeLabel(value: TypeFilter, compact = false) {
+export function typeLabel(value: TypeFilter, compact = false) {
   return (
     <span className="flex items-center gap-1.5">
       {value === "all" ? <Library size={12} /> : mediaTypes[value].icon}

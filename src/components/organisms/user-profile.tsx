@@ -854,7 +854,11 @@ export function UserProfile({ username }: { username: string }) {
         <Template.PageColumn onScroll={handleScroll}>
           {tab === "library" ? (
             profile.library.length > 0 ? (
-              <ProfileLibrary entries={profile.library} />
+              <ProfileLibrary
+                key={profile.username}
+                entries={profile.library}
+                compare={Boolean(me) && !isSelf}
+              />
             ) : (
               <EmptyTab
                 icon={<Library size={24} strokeWidth={1.5} />}
