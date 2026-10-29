@@ -107,7 +107,9 @@ export function FeedFilters({ types }: { types: FeedContentType[] }) {
                 variant="secondary"
                 icon={<SlidersHorizontal size={14} />}
               >
-                Filter<span className="hidden sm:inline"> feed</span>
+                <span>
+                  Filter<span className="hidden sm:inline"> feed</span>
+                </span>
               </Atom.Button>
             </Popover>
           </>
