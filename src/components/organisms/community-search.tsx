@@ -6,7 +6,6 @@ import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import {
   searchCommunities,
-  type CommunityPerson,
   type CommunitySearchResult,
 } from "@/lib/api";
 import { displayName } from "@/lib/display-name";
@@ -63,21 +62,6 @@ export function JoinAction({
   );
 }
 
-function AvatarStack({ people }: { people: CommunityPerson[] }) {
-  return (
-    <span className="flex shrink-0 items-center">
-      {people.map((person, index) => (
-        <span
-          key={person.id}
-          className={`rounded-full ring-2 ring-surface ${index > 0 ? "-ml-2" : ""}`}
-        >
-          <Atom.Avatar size="xs" label={displayName(person)} src={person.avatarUrl} seed={person.id} />
-        </span>
-      ))}
-    </span>
-  );
-}
-
 function mutualText({ mutuals, mutualCount }: CommunitySearchResult) {
   const names = mutuals.map(displayName);
   const others = mutualCount - names.length;
@@ -96,7 +80,7 @@ function CommunityDetails({ community }: { community: CommunitySearchResult }) {
       </p>
       {community.members.length > 0 && (
         <div className="flex items-center gap-2 text-xs text-muted">
-          <AvatarStack people={community.members} />
+          <Molecule.AvatarStack people={community.members} />
           {community.memberCount.toLocaleString()}{" "}
           {community.memberCount === 1 ? "member" : "members"}
         </div>
@@ -104,7 +88,7 @@ function CommunityDetails({ community }: { community: CommunitySearchResult }) {
       <div className="flex items-center gap-2 text-xs text-muted">
         {community.mutualCount > 0 ? (
           <>
-            <AvatarStack people={community.mutuals} />
+            <Molecule.AvatarStack people={community.mutuals} />
             <span className="min-w-0">{mutualText(community)}</span>
           </>
         ) : (

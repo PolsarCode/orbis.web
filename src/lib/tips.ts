@@ -17,6 +17,12 @@ export const tips: Tip[] = [
     used: "steam",
   },
   {
+    id: "people-you-may-know",
+    title: "Find people you may know",
+    body: "Orbis suggests people who share friends, communities, or titles with you. They’re at the top of the Friends panel, and all of them are on the friend requests page.",
+    action: { label: "See suggestions", href: "/requests" },
+  },
+  {
     id: "search",
     title: "Search everything from anywhere",
     body: "Press ⌘K (Ctrl+K on Windows) or / to search people, communities, posts, titles, and your library without leaving the page.",

@@ -1,7 +1,14 @@
 import { io, type Socket } from "socket.io-client";
 import { create } from "zustand";
 import * as api from "@/lib/api";
-import type { Friend, FriendTarget, FriendUser, Notification, PresenceStatus } from "@/lib/api";
+import type {
+  Friend,
+  FriendSuggestion,
+  FriendTarget,
+  FriendUser,
+  Notification,
+  PresenceStatus,
+} from "@/lib/api";
 import { useAuthStore } from "./auth-store";
 import { useCommunityStore } from "./community-store";
 import { useMessagesStore } from "./messages-store";
@@ -16,8 +23,11 @@ type FriendsState = {
   games: Record<number, string | null>;
   twitchLogins: Record<number, string | null>;
   loaded: boolean;
+  suggestions: FriendSuggestion[];
+  suggestionsLoaded: boolean;
   connect: () => void;
   fetchFriends: () => Promise<void>;
+  fetchSuggestions: () => Promise<void>;
   addFriend: (target: FriendTarget) => Promise<void>;
   removeFriend: (userId: number) => Promise<void>;
 };
@@ -31,9 +41,12 @@ const empty = {
   games: {},
   twitchLogins: {},
   loaded: false,
+  suggestions: [],
+  suggestionsLoaded: false,
 };
 
 let socket: Socket | null = null;
+let suggestionsRequest: Promise<void> | null = null;
 let stopIdleTracking: (() => void) | null = null;
 
 const IDLE_AFTER_MS = 5 * 60 * 1000;
@@ -153,12 +166,30 @@ export const useFriendsStore = create<FriendsState>()((set, get) => ({
     const list = await api.getFriends(token).catch(() => null);
     if (list) set({ ...list, loaded: true });
   },
+  fetchSuggestions: () => {
+    const { token } = useAuthStore.getState();
+    if (!token) return Promise.resolve();
+
+    suggestionsRequest ??= api
+      .getFriendSuggestions(token)
+      .catch(() => [])
+      .then((suggestions) => set({ suggestions, suggestionsLoaded: true }))
+      .finally(() => {
+        suggestionsRequest = null;
+      });
+    return suggestionsRequest;
+  },
   addFriend: async (target) => {
     const { token } = useAuthStore.getState();
     if (!token) throw new Error("Please log in again.");
 
     try {
       await api.addFriend(token, target);
+      set((state) => ({
+        suggestions: state.suggestions.filter((person) =>
+          "userId" in target ? person.userId !== target.userId : person.username !== target.username,
+        ),
+      }));
     } finally {
       await get().fetchFriends();
     }

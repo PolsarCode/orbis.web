@@ -67,7 +67,7 @@ export const tourStops: TourStop[] = [
     target: "friend-requests",
     placement: "bottom",
     title: "Friend requests",
-    description: "People who want to be your friend show up here. The number shows how many are waiting.",
+    description: "People who want to be your friend show up here, along with people you may know. The number shows how many are waiting.",
   },
   {
     target: "messages",
@@ -88,7 +88,7 @@ export const tourStops: TourStop[] = [
     placement: "left",
     title: "Friends",
     description:
-      "See which friends are online. Inside a community, this panel shows who’s online there.",
+      "See which friends are online, and people you may know. Inside a community, this panel shows who’s online there.",
   },
   {
     target: "notifications",

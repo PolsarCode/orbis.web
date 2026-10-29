@@ -1013,6 +1013,11 @@ export type FriendUser = {
   isVerified?: boolean;
 };
 
+export type FriendSuggestion = FriendUser & {
+  reason: string;
+  mutualFriends: FriendUser[];
+};
+
 export type Friend = FriendUser & {
   online: boolean;
   status: PresenceStatus;
@@ -1043,6 +1048,15 @@ export async function getFriends(token: string): Promise<FriendList> {
   });
 
   if (!res.ok) throw new Error("Could not load your friends.");
+  return res.json();
+}
+
+export async function getFriendSuggestions(token: string): Promise<FriendSuggestion[]> {
+  const res = await api("/friends/suggestions", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) throw new Error("Could not load suggestions.");
   return res.json();
 }
 

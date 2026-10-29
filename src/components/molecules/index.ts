@@ -1,4 +1,5 @@
 export * from "./author-avatar";
+export * from "./avatar-stack";
 export * from "./comment-preview";
 export * from "./comments-button";
 export * from "./community-card";

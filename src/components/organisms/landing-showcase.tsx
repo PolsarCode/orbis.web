@@ -185,7 +185,7 @@ const features = [
     icon: Users,
     label: "Friends and notifications",
     title: "Stay in the loop.",
-    text: "Connect with friends and get notified when someone replies or sends you a friend request.",
+    text: "Find people who share your fandoms, connect with friends, and get notified when someone replies or sends you a friend request.",
   },
   {
     id: "messages",
