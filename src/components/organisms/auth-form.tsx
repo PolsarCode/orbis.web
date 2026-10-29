@@ -3,14 +3,25 @@
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import { safeNext } from "@/lib/login";
 import { useAuthStore } from "@/stores/auth-store";
 import { OAuthButtons } from "./oauth-buttons";
+import { SUSPENSION_NOTICE_KEY } from "./suspended-account-watcher";
 
 type Mode = "login" | "signup";
+
+const subscribeToNothing = () => () => {};
+
+function readSuspensionNotice() {
+  try {
+    return sessionStorage.getItem(SUSPENSION_NOTICE_KEY);
+  } catch {
+    return null;
+  }
+}
 
 export function SignupTerms() {
   return (
@@ -67,12 +78,17 @@ export function AuthForm({
   const [checkFailed, setCheckFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const checking = Boolean(Molecule.turnstileSiteKey) && !token;
+  const notice = useSyncExternalStore(subscribeToNothing, readSuspensionNotice, () => null);
+  const shownError = error ?? (mode === "login" ? notice : null);
   const { title, submit, switchText, switchLabel, switchHref, footnote } =
     content[mode];
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    try {
+      sessionStorage.removeItem(SUSPENSION_NOTICE_KEY);
+    } catch {}
     setError(null);
     setPending(true);
 
@@ -193,8 +209,8 @@ export function AuthForm({
               onError={() => setCheckFailed(true)}
             />
           )}
-          {error && <Atom.ErrorMessage>{error}</Atom.ErrorMessage>}
-          {checkFailed && !error && (
+          {shownError && <Atom.ErrorMessage>{shownError}</Atom.ErrorMessage>}
+          {checkFailed && !shownError && (
             <Atom.ErrorMessage>
               We couldn’t check that you’re human. Refresh the page and try again.
             </Atom.ErrorMessage>

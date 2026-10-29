@@ -99,6 +99,7 @@ export type CommunitySearchResult = {
 };
 
 export const EMAIL_UNCONFIRMED_EVENT = "orbis:email-unconfirmed";
+export const ACCOUNT_SUSPENDED_EVENT = "orbis:account-suspended";
 
 export async function api(path: string, init?: RequestInit) {
   let res: Response;
@@ -111,13 +112,18 @@ export async function api(path: string, init?: RequestInit) {
     throw new Error(await errorMessage(res, "You’re doing that too often. Try again in a minute."));
   }
   if (res.status === 403 && typeof window !== "undefined") {
-    res
+    const body = await res
       .clone()
       .json()
-      .then((body) => {
-        if (body?.code === "email_unconfirmed") window.dispatchEvent(new Event(EMAIL_UNCONFIRMED_EVENT));
-      })
-      .catch(() => undefined);
+      .catch(() => null);
+    if (body?.code === "email_unconfirmed") window.dispatchEvent(new Event(EMAIL_UNCONFIRMED_EVENT));
+    if (body?.code === "account_suspended") {
+      window.dispatchEvent(
+        new CustomEvent(ACCOUNT_SUSPENDED_EVENT, {
+          detail: typeof body.message === "string" ? `${body.message}.` : null,
+        }),
+      );
+    }
   }
   return res;
 }
@@ -1843,6 +1849,30 @@ export async function updateOnboarding(
   return res.json();
 }
 
+export type SuspensionDuration = "1d" | "7d" | "30d" | "permanent";
+
+export type ProfileSuspension = { until: string | null; reason: string | null };
+
+export async function setAccountSuspension(
+  token: string,
+  username: string,
+  suspension: { duration: SuspensionDuration; reason?: string } | null,
+): Promise<ProfileSuspension | null> {
+  const res = await api(`/users/${encodeURIComponent(username)}/suspension`, {
+    method: suspension ? "PUT" : "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...(suspension && { "Content-Type": "application/json" }),
+    },
+    ...(suspension && { body: JSON.stringify(suspension) }),
+  });
+
+  if (!res.ok) {
+    throw new Error(await errorMessage(res, "Could not update the suspension. Please try again."));
+  }
+  return (await res.json()).suspension;
+}
+
 export type PublicProfile = {
   userId: number;
   username: string;
@@ -1855,6 +1885,7 @@ export type PublicProfile = {
   isVerified: boolean;
   isPublic: boolean;
   restricted: boolean;
+  suspension?: ProfileSuspension | null;
   hasClips: boolean;
   twitchLogin?: string | null;
   nextStream?: NextStream | null;

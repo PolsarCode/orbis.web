@@ -53,8 +53,7 @@ import { TwitchClips } from "./twitch-clips";
 import { PageTour } from "./onboarding";
 import { ProfileLinkedDiscussion } from "./linked-discussion";
 import { PersonRow } from "./person-row";
-import { VerifyToggle } from "./verify-toggle";
-import { AdminToggle } from "./admin-toggle";
+import { ProfileAdmin, SuspensionCountdown } from "./profile-admin";
 import type { PresenceStatus } from "@/lib/api";
 import { presenceDot, presenceLabel } from "@/lib/presence";
 import { pageTitle } from "@/lib/site-title";
@@ -129,6 +128,7 @@ function ProfileHeader({
   collapsed,
   actions,
   adminAction,
+  notice,
   social,
   images,
 }: {
@@ -138,6 +138,7 @@ function ProfileHeader({
   collapsed: boolean;
   actions: React.ReactNode;
   adminAction?: React.ReactNode;
+  notice?: React.ReactNode;
   social?: React.ReactNode;
   images?: ProfileImages;
 }) {
@@ -219,6 +220,7 @@ function ProfileHeader({
           </div>
         )}
         <div className="pointer-events-auto ml-auto flex shrink-0 items-center gap-2">
+          {!collapsed && notice}
           {adminAction && !collapsed && (
             <div className="flex items-center gap-1 rounded-lg bg-surface/85 p-0.5 backdrop-blur">
               {adminAction}
@@ -804,6 +806,12 @@ export function UserProfile({ username }: { username: string }) {
     );
   }
 
+  const canSuspend =
+    Boolean(me?.isAdmin) &&
+    !isSelf &&
+    !profile.isHeadAdmin &&
+    (!profile.isAdmin || Boolean(me?.isHeadAdmin));
+
   return (
     <main className="flex min-h-0 flex-1 flex-col">
       <ProfileSearchScope key={profile.username} profile={profile} />
@@ -816,24 +824,36 @@ export function UserProfile({ username }: { username: string }) {
         collapsed={collapsed}
         images={images}
         social={social}
+        notice={
+          profile.suspension ? <SuspensionCountdown suspension={profile.suspension} /> : null
+        }
         adminAction={
-          me?.isHeadAdmin ? (
-            <>
-              <VerifyToggle verified={profile.isVerified} onToggle={handleVerified} />
-              {!isSelf && (
-                <AdminToggle
-                  username={profile.username}
-                  isAdmin={profile.isAdmin}
-                  onChange={(isAdmin) =>
-                    setLoaded((current) =>
-                      current?.profile
-                        ? { ...current, profile: { ...current.profile, isAdmin } }
-                        : current,
-                    )
-                  }
-                />
-              )}
-            </>
+          me?.isHeadAdmin || canSuspend ? (
+            <ProfileAdmin
+              username={profile.username}
+              name={displayName(profile)}
+              isVerified={profile.isVerified}
+              isAdmin={profile.isAdmin}
+              suspension={profile.suspension ?? null}
+              canVerify={Boolean(me?.isHeadAdmin)}
+              canChangeAdmin={Boolean(me?.isHeadAdmin) && !isSelf && !profile.isHeadAdmin}
+              canSuspend={canSuspend}
+              onVerify={handleVerified}
+              onAdminChange={(isAdmin) =>
+                setLoaded((current) =>
+                  current?.profile
+                    ? { ...current, profile: { ...current.profile, isAdmin } }
+                    : current,
+                )
+              }
+              onSuspensionChange={(suspension) =>
+                setLoaded((current) =>
+                  current?.profile
+                    ? { ...current, profile: { ...current.profile, suspension } }
+                    : current,
+                )
+              }
+            />
           ) : null
         }
         actions={
