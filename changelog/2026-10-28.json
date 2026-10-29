@@ -1,0 +1,119 @@
+{
+  "date": "2026-10-28",
+  "versions": [
+    "v0.63.0",
+    "v0.64.0",
+    "v0.65.0",
+    "v0.66.0",
+    "v0.67.0",
+    "v0.67.1",
+    "v0.68.0",
+    "v0.69.0",
+    "v0.70.0",
+    "v0.71.0",
+    "v0.71.1",
+    "v0.71.2",
+    "v0.71.3",
+    "v0.72.0",
+    "v0.72.1",
+    "v0.73.0",
+    "v0.74.0",
+    "v0.75.0",
+    "v0.76.0",
+    "v0.77.0",
+    "v0.77.1",
+    "v0.77.2"
+  ],
+  "entries": [
+    {
+      "type": "new",
+      "title": "Edit or delete your posts, threads, and comments",
+      "description": "You can fix a typo or take something down from the ⋯ menu on your post or thread, or with Edit under your comment. Edited content is marked, and if you run a community, you can delete anything posted in it.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Mention people with @",
+      "description": "You can type @ and pick someone from the suggestions to tag them in a post, thread, or comment. They get a notification that opens the exact place you mentioned them.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Confirm your email",
+      "description": "You get an email to confirm your address, and you can resend it from the banner or your settings. Until you confirm, you can still browse, but posting, reacting, and joining are paused.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Connect your community’s Discord server",
+      "description": "If you run a community, you can connect its Discord server to show how many people are online there, with a button to join. A reminder on Home helps you finish the setup.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Send your community’s posts to a Discord channel",
+      "description": "If you run a public community, you can connect a Discord channel so new posts, threads, and library updates show up there with a link back to Orbis.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Watch Twitch clips on Orbis",
+      "description": "Communities and people with Twitch connected have a Clips tab with their most-watched clips. You can hide yours from Connections in your settings.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Link your community’s other places",
+      "description": "If you run a community, you can add its website, X, YouTube, Kick, and other links in the community’s settings. They show as icons on the cover photo.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Use your Discord or Twitch picture as your avatar",
+      "description": "You can set the picture from a connected Discord or Twitch account as your avatar, and new accounts that sign up with one start with it.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Add Orbis to your home screen",
+      "description": "You can install Orbis from your browser to open it like an app, with its own icon on your phone or computer.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "A weekly tip on Home",
+      "description": "You can find a tip of the week on your home feed that shows a feature you haven’t tried yet, skipping the ones you already use.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "improved",
+      "title": "Threads and posts together in community feeds",
+      "description": "You can see a community’s threads alongside its posts, switch between them with a toggle, and pick a time range to narrow them down. The Forum tab is now called Threads.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "improved",
+      "title": "Links open the exact post",
+      "description": "You can follow a link to a post or thread and land right on it, including on profile and media pages, and from Discord.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "improved",
+      "title": "Community members get their own page",
+      "description": "You can browse a community’s members on a dedicated page instead of a tab.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "improved",
+      "title": "Better layouts on phones",
+      "description": "You can use Orbis more comfortably on a phone, with tidier pages, menus, and panels sized for small screens. On touch screens, hover effects and most tooltips stay out of your way.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "fixed",
+      "title": "GIFs keep their shape in link previews",
+      "description": "You can see GIFs in link previews at their proper proportions instead of stretched or cropped.",
+      "platforms": ["web"]
+    }
+  ]
+}
