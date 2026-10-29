@@ -8,8 +8,7 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 export default async function OpengraphImage() {
-  const [illustration, regular, semiBold, bold, extraBold] = await Promise.all([
-    readFile(join(process.cwd(), "public/images/landing-illustration.jpg"), "base64"),
+  const [regular, semiBold, bold, extraBold] = await Promise.all([
     readFile(join(process.cwd(), "src/app/fonts/Inter-Regular.ttf")),
     readFile(join(process.cwd(), "src/app/fonts/Inter-SemiBold.ttf")),
     readFile(join(process.cwd(), "src/app/fonts/BarlowCondensed-Bold.ttf")),
@@ -80,13 +79,6 @@ export default async function OpengraphImage() {
             reading, and playing.
           </div>
         </div>
-        <img
-          src={`data:image/jpeg;base64,${illustration}`}
-          width={630}
-          height={630}
-          alt=""
-          style={{ objectFit: "cover" }}
-        />
       </div>
     ),
     {

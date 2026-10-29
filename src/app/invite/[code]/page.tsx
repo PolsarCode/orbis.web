@@ -48,12 +48,11 @@ export default function InvitePage() {
 
   const current = loaded?.code === code ? loaded : null;
   const community = current?.invite?.community;
-  const background =
-    community?.backgroundUrl ?? community?.coverUrl ?? "/images/login-illustration.jpg";
+  const background = community?.backgroundUrl ?? community?.coverUrl ?? null;
 
   return (
     <div className="relative isolate flex min-h-dvh flex-1 flex-col items-center gap-6 p-4 sm:p-6">
-      {current && (
+      {current && background && (
         <Image
           src={background}
           alt=""

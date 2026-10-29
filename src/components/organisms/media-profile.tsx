@@ -109,6 +109,12 @@ function LibraryAction({
   profile: Profile;
   onChange: (entry: LibraryEntry | null) => void;
 }) {
+  const signedIn = useAuthStore((state) => Boolean(state.token));
+
+  if (!signedIn) {
+    return <Molecule.LoginLink>Log in to add</Molecule.LoginLink>;
+  }
+
   if (!profile.entry) {
     return <AddToLibraryButton media={profile} onAdded={onChange} />;
   }
@@ -242,6 +248,7 @@ function YourLibrary({
   onChange: (entry: LibraryEntry | null) => void;
 }) {
   const entry = profile.entry;
+  const signedIn = useAuthStore((state) => Boolean(state.token));
 
   return (
     <section
@@ -251,7 +258,9 @@ function YourLibrary({
       <div className="flex min-w-0 flex-1 basis-48 flex-col gap-0.5">
         <h3 className="font-display text-xl font-bold">Your library</h3>
         <p className="flex items-center gap-1.5 text-xs text-muted">
-          {!entry ? (
+          {!signedIn ? (
+            "Log in to track it in your library."
+          ) : !entry ? (
             "Not in your library yet."
           ) : entry.isPublic ? (
             <>
@@ -285,8 +294,10 @@ function YourLibrary({
             }
           />
         </>
-      ) : (
+      ) : signedIn ? (
         <AddToLibraryButton media={profile} onAdded={onChange} size="middle" />
+      ) : (
+        <Molecule.LoginLink>Log in to add</Molecule.LoginLink>
       )}
     </section>
   );
@@ -299,8 +310,9 @@ function MediaWall({ profile }: { profile: Profile }) {
         getMediaPosts(token, profile.type, profile.sourceId, cursor, excluded),
       [profile.type, profile.sourceId],
     ),
-    { live: true, types: ["post"] },
+    { live: true, guest: true, types: ["post"] },
   );
+  const signedIn = useAuthStore((state) => Boolean(state.token));
 
   async function handlePost(content: string, linkUrl?: string) {
     const { token } = useAuthStore.getState();
@@ -310,20 +322,31 @@ function MediaWall({ profile }: { profile: Profile }) {
 
   return (
     <section data-tour="media-wall" className="flex min-w-0 flex-col gap-3 md:col-start-1">
-      <PostComposer
-        linkPreview
-        onPost={handlePost}
-        placeholder={`Share your thoughts on ${profile.title}…`}
-        target={
-          <div className="flex items-center gap-3">
-            <MediaCover src={profile.coverImage} className="w-8" />
-            <div className="flex min-w-0 flex-col">
-              <span className="text-xs text-muted uppercase">Post to</span>
-              <span className="truncate text-sm font-semibold">{profile.title}</span>
+      {signedIn ? (
+        <PostComposer
+          linkPreview
+          onPost={handlePost}
+          placeholder={`Share your thoughts on ${profile.title}…`}
+          target={
+            <div className="flex items-center gap-3">
+              <MediaCover src={profile.coverImage} className="w-8" />
+              <div className="flex min-w-0 flex-col">
+                <span className="text-xs text-muted uppercase">Post to</span>
+                <span className="truncate text-sm font-semibold">{profile.title}</span>
+              </div>
             </div>
+          }
+        />
+      ) : (
+        <section className="flex flex-col gap-4 rounded-lg border border-divider bg-surface p-5">
+          <p className="text-sm text-muted">
+            Log in to share your thoughts on {profile.title} and join the conversation.
+          </p>
+          <div>
+            <Molecule.LoginLink>Log in</Molecule.LoginLink>
           </div>
-        }
-      />
+        </section>
+      )}
       <PostList
         feed={feed}
         empty={{
@@ -336,6 +359,8 @@ function MediaWall({ profile }: { profile: Profile }) {
 }
 
 function People({ profile }: { profile: Profile }) {
+  const signedIn = useAuthStore((state) => Boolean(state.token));
+
   return (
     <>
       <PanelHeading
@@ -344,7 +369,9 @@ function People({ profile }: { profile: Profile }) {
       />
       {profile.members.length === 0 ? (
         <p className="text-xs text-muted">
-          No one in your communities has added this publicly yet.
+          {signedIn
+            ? "No one in your communities has added this publicly yet."
+            : "Log in to see who in your communities is watching."}
         </p>
       ) : (
         <ul className="flex flex-col">
@@ -372,9 +399,7 @@ export function MediaProfile({ type, sourceId }: { type: string; sourceId: strin
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
-    const { token } = useAuthStore.getState();
-    if (!token) return;
-    getMediaProfile(token, type, sourceId)
+    getMediaProfile(useAuthStore.getState().token, type, sourceId)
       .then((profile) => setLoaded({ key, profile }))
       .catch((e: Error) =>
         setLoaded(

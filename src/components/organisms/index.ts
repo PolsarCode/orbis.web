@@ -1,5 +1,6 @@
 export * from "./appear-offline-switch";
 export * from "./activity-card";
+export * from "./anime-spotlight";
 export * from "./auth-form";
 export * from "./invite-card-button";
 export * from "./chat-conversation";

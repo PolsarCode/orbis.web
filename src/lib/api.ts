@@ -876,6 +876,20 @@ export async function getUserPosts(
   return res.json();
 }
 
+export type AnimeSpotlight = {
+  type: "anime";
+  sourceId: string;
+  title: string;
+  coverImage: string | null;
+  bannerImage: string | null;
+};
+
+export async function getSpotlight(): Promise<AnimeSpotlight | null> {
+  const res = await api("/library/spotlight");
+  if (!res.ok) return null;
+  return res.json();
+}
+
 export async function getMediaPosts(
   token: string | null,
   type: MediaType,
@@ -2096,12 +2110,12 @@ export type MediaProfile = Omit<MediaResult, "inLibrary"> & {
 export class AdultTitleError extends Error {}
 
 export async function getMediaProfile(
-  token: string,
+  token: string | null,
   type: string,
   sourceId: string,
 ): Promise<MediaProfile | null> {
   const res = await api(`/library/media/${encodeURIComponent(type)}/${encodeURIComponent(sourceId)}`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: authHeaders(token),
   });
 
   if (res.status === 404 || res.status === 400) return null;
