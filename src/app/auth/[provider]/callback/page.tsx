@@ -7,6 +7,7 @@ import * as Atom from "@atom";
 import * as Template from "@template";
 import { completeOAuth } from "@/lib/api";
 import {
+  isMobileOAuthState,
   isOAuthProvider,
   oauthLabels,
   saveDiscordServers,
@@ -32,6 +33,19 @@ function Callback() {
     async function finish() {
       const code = params.get("code");
       const state = params.get("state");
+      if (isMobileOAuthState(state)) {
+        const callback = new URL("orbis://auth/callback");
+        callback.searchParams.set("provider", provider);
+        if (code) callback.searchParams.set("code", code);
+        if (state) callback.searchParams.set("state", state);
+        const oauthError = params.get("error");
+        if (oauthError) callback.searchParams.set("error", oauthError);
+        const errorDescription = params.get("error_description");
+        if (errorDescription) callback.searchParams.set("error_description", errorDescription);
+        window.location.replace(callback.toString());
+        return;
+      }
+
       const nonce = takeOAuthNonce();
       if (!isOAuthProvider(provider)) throw new Error("That login provider isn’t supported.");
       if (params.get("error") === "access_denied") throw new Error("Login was cancelled.");

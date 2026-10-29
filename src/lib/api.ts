@@ -2292,7 +2292,7 @@ export type OAuthResult = {
   access_token?: string;
   linked?: OAuthProvider;
   communityId?: number;
-  signup?: { token: string; username: string };
+  signup?: { token: string; username: string; avatarUrl: string | null };
   avatar?: { url: string; token: string };
   servers?: { token: string; options: DiscordServer[] };
 };
@@ -2309,9 +2309,11 @@ export async function getOAuthUrl(
   nonce: string,
   token?: string,
   communityId?: number,
+  client: "web" | "mobile" = "web",
   target?: "channel",
 ): Promise<string> {
   const params = new URLSearchParams({ nonce });
+  if (client !== "web") params.set("client", client);
   if (communityId !== undefined) params.set("communityId", String(communityId));
   if (target) params.set("target", target);
   const path = communityId !== undefined ? "community-url" : token ? "link-url" : "url";
@@ -2346,11 +2348,12 @@ export async function completeOAuth(
 export async function finishOAuthSignup(
   token: string,
   username: string,
+  useProviderAvatar = true,
 ): Promise<{ access_token: string }> {
   const res = await api("/auth/oauth/signup", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token, username }),
+    body: JSON.stringify({ token, username, useProviderAvatar }),
   });
 
   if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t create your account. Please try again."));

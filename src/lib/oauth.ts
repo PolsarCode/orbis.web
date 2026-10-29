@@ -9,6 +9,7 @@ export type PendingSignup = {
   provider: OAuthProvider;
   token: string;
   username: string;
+  avatarUrl?: string | null;
 };
 
 export type PendingAvatar = {
@@ -39,15 +40,36 @@ export function isOAuthProvider(value: string): value is OAuthProvider {
   return (OAUTH_PROVIDERS as string[]).includes(value);
 }
 
+export function isMobileOAuthState(state: string | null): boolean {
+  if (!state) return false;
+  try {
+    const payload = state.split(".")[1];
+    if (!payload) return false;
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const claims: unknown = JSON.parse(atob(normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=")));
+    return Boolean(
+      claims &&
+        typeof claims === "object" &&
+        "client" in claims &&
+        claims.client === "mobile",
+    );
+  } catch {
+    return false;
+  }
+}
+
 export async function startOAuth(
   provider: OAuthProvider,
   token?: string,
   communityId?: number,
   target?: "channel",
+  client: "web" | "mobile" = "web",
 ) {
   const nonce = crypto.randomUUID().replaceAll("-", "");
   sessionStorage.setItem(NONCE_KEY, nonce);
-  window.location.assign(await getOAuthUrl(provider, nonce, token, communityId, target));
+  window.location.assign(
+    await getOAuthUrl(provider, nonce, token, communityId, client, target),
+  );
 }
 
 export function savePendingSignup(signup: PendingSignup) {
@@ -68,7 +90,10 @@ export function parsePendingSignup(raw: string | null | undefined): PendingSignu
     const signup = JSON.parse(raw);
     return isOAuthProvider(signup.provider) &&
       typeof signup.token === "string" &&
-      typeof signup.username === "string"
+      typeof signup.username === "string" &&
+      (signup.avatarUrl === undefined ||
+        signup.avatarUrl === null ||
+        typeof signup.avatarUrl === "string")
       ? signup
       : null;
   } catch {

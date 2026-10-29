@@ -2,6 +2,7 @@
 
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import * as Atom from "@atom";
@@ -36,11 +37,16 @@ export function OAuthUsernameForm() {
     event.preventDefault();
     if (!signup) return;
     const username = String(new FormData(event.currentTarget).get("username")).trim();
+    const useProviderAvatar = new FormData(event.currentTarget).get("useProviderAvatar") === "on";
     setError(null);
     setPending(true);
 
     try {
-      const { access_token } = await finishOAuthSignup(signup.token, username);
+      const { access_token } = await finishOAuthSignup(
+        signup.token,
+        username,
+        useProviderAvatar,
+      );
       loginWithToken(access_token);
       clearPendingSignup();
       router.replace("/");
@@ -62,6 +68,25 @@ export function OAuthUsernameForm() {
           with {oauthLabels[signup.provider]}.
         </p>
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          {signup.avatarUrl && (
+            <label className="flex items-center gap-3 text-sm text-muted">
+              <Image
+                src={signup.avatarUrl}
+                alt=""
+                width={48}
+                height={48}
+                unoptimized
+                className="size-12 rounded-full object-cover"
+              />
+              <input
+                type="checkbox"
+                name="useProviderAvatar"
+                defaultChecked
+                className="size-4 accent-accent"
+              />
+              Use my {oauthLabels[signup.provider]} profile picture
+            </label>
+          )}
           <Molecule.FormField
             label="Username"
             name="username"
