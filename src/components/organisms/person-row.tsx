@@ -90,20 +90,24 @@ export function PersonRow({
             )}
           </div>
         </div>
-        {twitch && (
-          <Tooltip title="Watch on Twitch">
-            <a
-              href={`https://www.twitch.tv/${twitch}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`Watch ${label} on Twitch`}
-              className="icon-button -mr-1.5 text-[#9146FF]"
-            >
-              <TwitchFilled />
-            </a>
-          </Tooltip>
+        {(twitch || !self) && (
+          <div className="flex items-center gap-1">
+            {twitch && (
+              <Tooltip title="Watch on Twitch">
+                <a
+                  href={`https://www.twitch.tv/${twitch}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Watch ${label} on Twitch`}
+                  className="icon-button text-[#9146FF]"
+                >
+                  <TwitchFilled />
+                </a>
+              </Tooltip>
+            )}
+            {!self && <MessageButton person={person} compact />}
+          </div>
         )}
-        {!self && <MessageButton person={person} compact />}
         {trailing}
       </div>
       {actions && <div className="flex gap-2 pl-11">{actions}</div>}
