@@ -24,6 +24,7 @@ function Callback() {
   const loginWithToken = useAuthStore((state) => state.loginWithToken);
   const signedIn = useAuthStore((state) => Boolean(state.token));
   const [error, setError] = useState<string | null>(null);
+  const [appLink, setAppLink] = useState<string | null>(null);
   const started = useRef(false);
 
   useEffect(() => {
@@ -42,6 +43,7 @@ function Callback() {
         if (oauthError) callback.searchParams.set("error", oauthError);
         const errorDescription = params.get("error_description");
         if (errorDescription) callback.searchParams.set("error_description", errorDescription);
+        setAppLink(callback.toString());
         window.location.replace(callback.toString());
         return;
       }
@@ -89,6 +91,18 @@ function Callback() {
         >
           {signedIn ? "Back to settings" : "Back to log in"}
         </Link>
+      </div>
+    );
+  }
+
+  if (appLink) {
+    return (
+      <div className="flex max-w-sm flex-col items-center gap-3 text-center">
+        <Atom.Loader />
+        <p className="text-sm text-muted">Opening the Orbis app…</p>
+        <a href={appLink} className="focus-ring rounded-sm text-sm text-accent hover:underline">
+          Return to the Orbis app
+        </a>
       </div>
     );
   }
