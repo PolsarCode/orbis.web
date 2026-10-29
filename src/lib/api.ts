@@ -394,6 +394,7 @@ export type Member = {
   online: boolean;
   status: PresenceStatus;
   playing?: string | null;
+  twitchLogin?: string | null;
   nickname: string | null;
   joinedAt: string;
   isOwner: boolean;
@@ -1012,6 +1013,7 @@ export type Friend = FriendUser & {
   online: boolean;
   status: PresenceStatus;
   playing?: string | null;
+  twitchLogin?: string | null;
 };
 
 export type FriendList = {
@@ -1551,7 +1553,12 @@ export type Report = {
   author: Author;
 };
 
-export type ReportAdmin = Author & { isHeadAdmin: boolean; online: boolean };
+export type ReportAdmin = Author & {
+  isHeadAdmin: boolean;
+  online: boolean;
+  status?: PresenceStatus;
+  twitchLogin?: string | null;
+};
 
 export type ContentReportTarget = "post" | "thread" | "comment" | "user" | "community";
 export type ContentReportReason = "spam" | "harassment" | "inappropriate" | "other";
@@ -1969,6 +1976,7 @@ export type PublicProfile = {
     online: boolean;
     status: PresenceStatus;
     playing?: string | null;
+    twitchLogin?: string | null;
   }[];
   library: {
     id: number;

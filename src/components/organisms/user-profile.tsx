@@ -581,6 +581,11 @@ function SeeAll({ href, children }: { href: string; children: ReactNode }) {
   );
 }
 
+function presenceRank({ online, status }: { online: boolean; status: PresenceStatus }) {
+  if (!online) return 0;
+  return status === "streaming" ? 2 : 1;
+}
+
 function ProfileSidePanel({ profile }: { profile: Profile }) {
   const livePresence = useFriendsStore((state) => state.presence);
   const liveStatuses = useFriendsStore((state) => state.statuses);
@@ -590,7 +595,7 @@ function ProfileSidePanel({ profile }: { profile: Profile }) {
       online: livePresence[friend.userId] ?? friend.online,
       status: liveStatuses[friend.userId] ?? friend.status,
     }))
-    .sort((a, b) => Number(b.online) - Number(a.online));
+    .sort((a, b) => presenceRank(b) - presenceRank(a));
   const base = `/users/${profile.username}`;
 
   return (
@@ -607,6 +612,7 @@ function ProfileSidePanel({ profile }: { profile: Profile }) {
                 person={friend}
                 presence={friend.online ? friend.status : "offline"}
                 playing={friend.playing}
+                twitchLogin={friend.twitchLogin}
               />
             ))}
           </ul>

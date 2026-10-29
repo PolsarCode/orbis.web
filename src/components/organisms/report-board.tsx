@@ -41,6 +41,7 @@ import {
   setReportWebhook,
   updateReportStatus,
   type Report,
+  type PresenceStatus,
   type ReportAdmin,
   type ReportCategory,
   type ReportComment,
@@ -1132,6 +1133,7 @@ export function DiscordWebhookButton() {
 export function AdminsPanel({ admins }: { admins: ReportAdmin[] | null }) {
   const myId = useAuthStore((state) => state.profile?.userId);
   const presence = useFriendsStore((state) => state.presence);
+  const statuses = useFriendsStore((state) => state.statuses);
 
   if (!admins) {
     return (
@@ -1142,15 +1144,25 @@ export function AdminsPanel({ admins }: { admins: ReportAdmin[] | null }) {
   }
 
   const isOnline = (admin: ReportAdmin) => presence[admin.id] ?? admin.online;
-  const groups = [
-    { title: "Online", online: true, members: admins.filter(isOnline) },
-    { title: "Offline", online: false, members: admins.filter((admin) => !isOnline(admin)) },
+  const isStreaming = (admin: ReportAdmin) => (statuses[admin.id] ?? admin.status) === "streaming";
+  const groups: { title: string; presence: PresenceStatus; members: ReportAdmin[] }[] = [
+    { title: "Streaming", presence: "streaming", members: admins.filter(isStreaming) },
+    {
+      title: "Online",
+      presence: "online",
+      members: admins.filter((admin) => !isStreaming(admin) && isOnline(admin)),
+    },
+    {
+      title: "Offline",
+      presence: "offline",
+      members: admins.filter((admin) => !isStreaming(admin) && !isOnline(admin)),
+    },
   ];
 
   return (
     <>
       <PanelHeading title={`Admins / ${admins.length}`} label="Admins" />
-      {groups.map(({ title, online, members }) =>
+      {groups.map(({ title, presence: groupPresence, members }) =>
         members.length === 0 ? null : (
           <section key={title} className="flex flex-col gap-2">
             <h3 className="text-[11px] font-bold text-muted uppercase">
@@ -1166,7 +1178,8 @@ export function AdminsPanel({ admins }: { admins: ReportAdmin[] | null }) {
                     name: admin.name,
                     avatarUrl: admin.avatarUrl,
                   }}
-                  presence={online ? "online" : "offline"}
+                  presence={groupPresence}
+                  twitchLogin={admin.twitchLogin}
                   badge={<Atom.RoleBadge role={admin.isHeadAdmin ? "head-admin" : "site-admin"} />}
                   subtitle={`@${admin.username}${admin.id === myId ? " · you" : ""}`}
                 />

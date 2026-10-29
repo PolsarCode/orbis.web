@@ -25,10 +25,24 @@ export function FriendsPanel() {
   const friends = useFriendsStore((state) => state.friends);
   const loaded = useFriendsStore((state) => state.loaded);
 
-  const online = friends.filter((friend) => friend.online);
-  const offline = friends.filter((friend) => !friend.online);
+  const streaming = friends.filter((friend) => friend.status === "streaming");
+  const online = friends.filter((friend) => friend.online && friend.status !== "streaming");
+  const offline = friends.filter((friend) => !friend.online && friend.status !== "streaming");
 
   const sections = [
+    streaming.length > 0 && (
+      <Section key="streaming" title={`Streaming / ${streaming.length}`}>
+        {streaming.map((friend) => (
+          <PersonRow
+            key={friend.userId}
+            person={friend}
+            presence="streaming"
+            playing={friend.playing}
+            twitchLogin={friend.twitchLogin}
+          />
+        ))}
+      </Section>
+    ),
     online.length > 0 && (
       <Section key="online" title={`Online / ${online.length}`}>
         {online.map((friend) => (

@@ -1,5 +1,7 @@
 "use client";
 
+import { TwitchFilled } from "@ant-design/icons";
+import { Tooltip } from "antd";
 import { Gamepad2 } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -21,6 +23,7 @@ export function PersonRow({
   trailing,
   actions,
   playing,
+  twitchLogin,
 }: {
   person: ChatPerson;
   label?: string;
@@ -30,9 +33,11 @@ export function PersonRow({
   trailing?: ReactNode;
   actions?: ReactNode;
   playing?: string | null;
+  twitchLogin?: string | null;
 }) {
   const me = useAuthStore((state) => state.profile?.userId);
   const liveGame = useFriendsStore((state) => state.games[person.userId]);
+  const liveTwitch = useFriendsStore((state) => state.twitchLogins[person.userId]);
   const self = person.userId === me;
   const game =
     presence === undefined || presence === "offline"
@@ -40,6 +45,8 @@ export function PersonRow({
       : liveGame !== undefined
         ? liveGame
         : playing;
+  const twitch =
+    presence === "streaming" ? (liveTwitch !== undefined ? liveTwitch : twitchLogin) : null;
 
   return (
     <li className="group flex flex-col gap-2 py-2">
@@ -83,6 +90,19 @@ export function PersonRow({
             )}
           </div>
         </div>
+        {twitch && (
+          <Tooltip title="Watch on Twitch">
+            <a
+              href={`https://www.twitch.tv/${twitch}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Watch ${label} on Twitch`}
+              className="icon-button text-[#9146FF]"
+            >
+              <TwitchFilled />
+            </a>
+          </Tooltip>
+        )}
         {!self && <MessageButton person={person} compact />}
         {trailing}
       </div>
