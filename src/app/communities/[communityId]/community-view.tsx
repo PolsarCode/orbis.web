@@ -8,8 +8,8 @@ import {
   UserCog,
 } from "lucide-react";
 import Link from "next/link";
-import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useState, type UIEvent } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useEffectEvent, useState, type UIEvent } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import * as Organism from "@organism";
@@ -23,7 +23,7 @@ import {
 } from "@/lib/api";
 import { useTabScroller } from "@/lib/use-tab-scroller";
 import { useAuthStore } from "@/stores/auth-store";
-import { useCommunityStore } from "@/stores/community-store";
+import { COMMUNITY_LEFT_EVENT, useCommunityStore } from "@/stores/community-store";
 import { pageTitle } from "@/lib/site-title";
 import { useDocumentTitle } from "@/lib/use-document-title";
 
@@ -40,6 +40,7 @@ type Tab = (typeof pages)[number] | "members";
 
 export function CommunityView({ members = false }: { members?: boolean }) {
   const { communityId } = useParams<{ communityId: string }>();
+  const router = useRouter();
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const requested = useSearchParams().get("tab");
   const tab: Tab = members ? "members" : (pages.find((value) => value === requested) ?? "feed");
@@ -78,6 +79,24 @@ export function CommunityView({ members = false }: { members?: boolean }) {
     }
   }
 
+  function handleLeft() {
+    const community = loaded?.id === communityId ? loaded.community : null;
+    if (!community) return;
+    if (!community.isPublic) {
+      router.push("/");
+      return;
+    }
+    setLoaded({
+      id: communityId,
+      community: {
+        ...community,
+        role: null,
+        memberCount:
+          community.memberCount === undefined ? undefined : Math.max(0, community.memberCount - 1),
+      },
+    });
+  }
+
   async function handleVerified(isVerified: boolean) {
     const { token } = useAuthStore.getState();
     if (!token) throw new Error("Please log in again.");
@@ -97,6 +116,19 @@ export function CommunityView({ members = false }: { members?: boolean }) {
       current ? scrollTop > 0 : scrollTop > 32 && room > 240,
     );
   }
+
+  const onCommunityLeft = useEffectEvent((leftId: number) => {
+    if (leftId === Number(communityId)) handleLeft();
+  });
+
+  useEffect(() => {
+    function left(event: Event) {
+      onCommunityLeft((event as CustomEvent<number>).detail);
+    }
+
+    window.addEventListener(COMMUNITY_LEFT_EVENT, left);
+    return () => window.removeEventListener(COMMUNITY_LEFT_EVENT, left);
+  }, []);
 
   useEffect(() => {
     const { token } = useAuthStore.getState();
@@ -176,6 +208,7 @@ export function CommunityView({ members = false }: { members?: boolean }) {
                       />
                     </span>
                   )}
+                  <Organism.LeaveCommunityButton community={current.community} />
                 </>
               )
             }
@@ -279,7 +312,7 @@ export function CommunityView({ members = false }: { members?: boolean }) {
                 </div>
               )}
               <Organism.MemberPresence
-                key={current.community.id}
+                key={`${current.community.id}-${current.community.role ?? "visitor"}`}
                 communityId={current.community.id}
                 seeAllHref={`/communities/${current.community.id}/members`}
               />

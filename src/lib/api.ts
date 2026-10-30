@@ -698,6 +698,17 @@ export async function searchCommunities(
   return res.json();
 }
 
+export async function leaveCommunity(token: string, communityId: number): Promise<void> {
+  const res = await api(`/communities/${communityId}/leave`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    throw new Error(await errorMessage(res, "Could not leave the community. Please try again."));
+  }
+}
+
 export async function joinCommunity(
   token: string,
   communityId: number,

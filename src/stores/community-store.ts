@@ -8,6 +8,8 @@ import type {
 } from "@/lib/api";
 import { useAuthStore } from "./auth-store";
 
+export const COMMUNITY_LEFT_EVENT = "orbis:community-left";
+
 type CommunityState = {
   communities: Community[];
   layout: RailItem[];
@@ -15,6 +17,7 @@ type CommunityState = {
   fetchCommunities: () => Promise<void>;
   createCommunity: (name: string, isPublic: boolean) => Promise<Community>;
   joinCommunity: (communityId: number) => Promise<Community>;
+  leaveCommunity: (communityId: number) => Promise<void>;
   acceptInvite: (code: string) => Promise<Community>;
   updateCommunity: (
     communityId: number,
@@ -36,7 +39,7 @@ function withJoined(state: CommunityState, community: Community) {
   return state.communities.some(({ id }) => id === community.id)
     ? state
     : {
-        communities: [...state.communities, community],
+        communities: [...state.communities, { ...community, role: community.role ?? "member" }],
         layout: [...state.layout, { type: "community" as const, communityId: community.id }],
       };
 }
@@ -71,7 +74,7 @@ export const useCommunityStore = create<CommunityState>()((set, get) => ({
 
     const community = await api.createCommunity(token, name, isPublic);
     set((state) => ({
-      communities: [...state.communities, community],
+      communities: [...state.communities, { ...community, role: "owner" }],
       layout: [...state.layout, { type: "community", communityId: community.id }],
     }));
     return community;
@@ -83,6 +86,21 @@ export const useCommunityStore = create<CommunityState>()((set, get) => ({
     const community = await api.joinCommunity(token, communityId);
     set((state) => withJoined(state, community));
     return community;
+  },
+  leaveCommunity: async (communityId) => {
+    const { token } = useAuthStore.getState();
+    if (!token) throw new Error("Please log in again.");
+
+    await api.leaveCommunity(token, communityId);
+    set((state) => ({
+      communities: state.communities.filter(({ id }) => id !== communityId),
+      layout: state.layout.flatMap((item): RailItem[] => {
+        if (item.type === "community") return item.communityId === communityId ? [] : [item];
+        const communityIds = item.communityIds.filter((id) => id !== communityId);
+        return communityIds.length > 0 ? [{ ...item, communityIds }] : [];
+      }),
+    }));
+    window.dispatchEvent(new CustomEvent(COMMUNITY_LEFT_EVENT, { detail: communityId }));
   },
   acceptInvite: async (code) => {
     const { token } = useAuthStore.getState();

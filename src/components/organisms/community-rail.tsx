@@ -26,11 +26,14 @@ import {
   Folder,
   House,
   LibraryBig,
+  LogOut,
   Plus,
+  Settings,
+  UserCog,
 } from "lucide-react";
-import { Dropdown, Tooltip } from "antd";
+import { Dropdown, Tooltip, type MenuProps } from "antd";
 import Link from "next/link";
-import { useParams, usePathname } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import {
   useEffect,
   useMemo,
@@ -40,7 +43,7 @@ import {
   type ReactNode,
 } from "react";
 import * as Atom from "@atom";
-import type { Community, RailFolder, RailItem } from "@/lib/api";
+import { canManage, type Community, type RailFolder, type RailItem } from "@/lib/api";
 import { newAccountMessage, useNewAccountWait } from "@/lib/new-account";
 import { useReadOnly } from "@/lib/read-only";
 import { useIsPhone } from "@/lib/use-is-phone";
@@ -58,6 +61,7 @@ import { useFriendsStore } from "@/stores/friends-store";
 import { useLayoutStore } from "@/stores/layout-store";
 import { CreateCommunityModal } from "./create-community-modal";
 import { FolderSettingsModal } from "./folder-settings-modal";
+import { useLeaveCommunity } from "./leave-community-button";
 
 function itemClass(active: boolean) {
   return `focus-ring relative flex h-12 w-12 cursor-pointer items-center justify-center rounded-full font-display text-[23px] leading-none font-bold transition-colors motion-reduce:transition-none ${
@@ -157,6 +161,47 @@ function SortableCommunity({
     transition,
     isDragging,
   } = useSortable({ id: communityKey(community.id) });
+  const router = useRouter();
+  const pathname = usePathname();
+  const readOnly = useReadOnly();
+  const confirmLeave = useLeaveCommunity();
+  const base = `/communities/${community.id}`;
+
+  function leave() {
+    confirmLeave(community, () => {
+      if (pathname.startsWith(`${base}/me`) || pathname.startsWith(`${base}/settings`)) {
+        router.push(community.isPublic ? base : "/");
+      }
+    });
+  }
+
+  const items: MenuProps["items"] = [
+    {
+      key: "me",
+      label: "Your settings",
+      icon: <UserCog size={14} />,
+      onClick: () => router.push(`${base}/me`),
+    },
+    ...(canManage(community)
+      ? [
+          {
+            key: "settings",
+            label: "Community settings",
+            icon: <Settings size={14} />,
+            onClick: () => router.push(`${base}/settings`),
+          },
+        ]
+      : []),
+    { type: "divider" },
+    {
+      key: "leave",
+      label: "Leave community",
+      icon: <LogOut size={14} />,
+      danger: true,
+      disabled: readOnly,
+      onClick: leave,
+    },
+  ];
 
   return (
     <RailSlot
@@ -167,28 +212,30 @@ function SortableCommunity({
       indicator={drop === "combine" ? undefined : drop}
       style={{ transform: CSS.Translate.toString(transform), transition }}
     >
-      <Link
-        {...attributes}
-        {...listeners}
-        role={undefined}
-        href={`/communities/${community.id}`}
-        aria-label={community.live ? `${community.name}, live` : community.name}
-        aria-current={active ? "page" : undefined}
-        className={`${itemClass(active)} ${
-          active || target
-            ? "ring-2 ring-accent ring-offset-2 ring-offset-rail"
-            : community.live
-              ? "ring-2 ring-danger ring-offset-2 ring-offset-rail"
+      <Dropdown trigger={["contextMenu"]} menu={{ items }}>
+        <Link
+          {...attributes}
+          {...listeners}
+          role={undefined}
+          href={`/communities/${community.id}`}
+          aria-label={community.live ? `${community.name}, live` : community.name}
+          aria-current={active ? "page" : undefined}
+          className={`${itemClass(active)} ${
+            active || target
+              ? "ring-2 ring-accent ring-offset-2 ring-offset-rail"
+              : community.live
+                ? "ring-2 ring-danger ring-offset-2 ring-offset-rail"
+                : ""
+          } ${target ? "scale-110" : ""} ${
+            isDragging
+              ? "cursor-grabbing border-2 border-dashed border-accent opacity-50"
               : ""
-        } ${target ? "scale-110" : ""} ${
-          isDragging
-            ? "cursor-grabbing border-2 border-dashed border-accent opacity-50"
-            : ""
-        }`}
-      >
-        <Atom.CommunityIcon name={community.name} src={community.iconUrl} />
-        {community.live && <Atom.LiveTag />}
-      </Link>
+          }`}
+        >
+          <Atom.CommunityIcon name={community.name} src={community.iconUrl} />
+          {community.live && <Atom.LiveTag />}
+        </Link>
+      </Dropdown>
     </RailSlot>
   );
 }
