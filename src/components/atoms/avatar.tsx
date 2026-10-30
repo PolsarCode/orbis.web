@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { PresenceStatus } from "@/lib/api";
+import { avatarTone } from "@/lib/avatar-tone";
 import { presenceDot } from "@/lib/presence";
 
 const tones = ["bg-accent-soft", "bg-rail-item"];
@@ -12,14 +13,6 @@ const sizes = {
   rail: "h-8 w-8 text-[17.6px] sm:h-10 sm:w-10 sm:text-[22px]",
   lg: "h-[88px] w-[88px] text-[44px]",
 };
-
-function toneFor(seed: string | number) {
-  const hash = Array.from(String(seed)).reduce(
-    (total, char) => (total * 31 + char.codePointAt(0)!) >>> 0,
-    7,
-  );
-  return tones[hash % tones.length];
-}
 
 export function Avatar({
   label,
@@ -37,7 +30,7 @@ export function Avatar({
   return (
     <span
       aria-hidden
-      className={`relative flex shrink-0 items-center justify-center rounded-full border border-divider font-display leading-none font-bold text-foreground ${sizes[size]} ${toneFor(seed)}`}
+      className={`relative flex shrink-0 items-center justify-center rounded-full border border-divider font-display leading-none font-bold text-foreground ${sizes[size]} ${tones[avatarTone(seed)]}`}
     >
       {src ? (
         <Image
