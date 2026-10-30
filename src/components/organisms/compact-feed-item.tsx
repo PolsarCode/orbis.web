@@ -1,5 +1,6 @@
 "use client";
 
+import { Pin } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import * as Molecule from "@molecule";
@@ -50,6 +51,15 @@ export function CompactFeedItem({
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <header className="flex min-w-0 items-start justify-between gap-2">
           <p className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted">
+            {item.type === "post" && item.pinned && (
+              <>
+                <span className="flex items-center gap-1 font-semibold">
+                  <Pin size={12} aria-hidden />
+                  Pinned
+                </span>
+                <span aria-hidden>·</span>
+              </>
+            )}
             {showCommunity && community && (
               <Link
                 href={`/communities/${community.id}`}

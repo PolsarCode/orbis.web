@@ -1,9 +1,9 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Pin } from "lucide-react";
 import { useState } from "react";
 import * as Molecule from "@molecule";
-import { deletePost, updatePost, type Post } from "@/lib/api";
+import { deletePost, setPostPinned, updatePost, type Post } from "@/lib/api";
 import { toggleLike } from "@/lib/votes";
 import { displayName } from "@/lib/display-name";
 import { timeAgo } from "@/lib/time";
@@ -47,6 +47,7 @@ type PostCardProps = {
   onOpenComments?: () => void;
   onChange?: (post: Post) => void;
   onDelete?: (post: Post) => void;
+  onPinChange?: () => void;
   preview?: boolean;
 };
 
@@ -56,6 +57,7 @@ export function PostCard({
   onOpenComments,
   onChange,
   onDelete,
+  onPinChange,
   preview = true,
 }: PostCardProps) {
   const wallUser =
@@ -77,8 +79,22 @@ export function PostCard({
     onDelete?.(post);
   }
 
+  async function togglePin() {
+    const { token } = useAuthStore.getState();
+    if (!token) throw new Error("Please log in again.");
+    await setPostPinned(token, post.id, !post.pinned);
+    onChange?.({ ...post, pinned: !post.pinned });
+    onPinChange?.();
+  }
+
   return (
     <article className="flex flex-col gap-4 rounded-lg border border-divider bg-surface p-5">
+      {post.pinned && (
+        <p className="-mb-2 flex items-center gap-1.5 text-xs font-semibold text-muted">
+          <Pin size={13} aria-hidden />
+          Pinned
+        </p>
+      )}
       <header className="flex items-center gap-3">
         <Molecule.AuthorAvatar
           author={post.author}
@@ -122,6 +138,7 @@ export function PostCard({
           canDelete={post.canDelete}
           onEdit={() => setEditing(true)}
           onDelete={remove}
+          pin={post.canPin ? { pinned: Boolean(post.pinned), onToggle: togglePin } : undefined}
           className="-mr-1.5 self-start"
         />
       </header>

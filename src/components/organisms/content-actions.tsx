@@ -1,7 +1,7 @@
 "use client";
 
 import { App, Dropdown, type MenuProps } from "antd";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Pin, PinOff, Trash2 } from "lucide-react";
 import * as Molecule from "@molecule";
 import { useReadOnly } from "@/lib/read-only";
 import { useAuthStore } from "@/stores/auth-store";
@@ -21,6 +21,7 @@ export function ContentActions({
   canDelete = false,
   onEdit,
   onDelete,
+  pin,
   variant = "icon",
   className = "",
 }: {
@@ -30,6 +31,7 @@ export function ContentActions({
   canDelete?: boolean;
   onEdit?: () => void;
   onDelete: () => Promise<void>;
+  pin?: { pinned: boolean; onToggle: () => Promise<void> };
   variant?: "icon" | "text";
   className?: string;
 }) {
@@ -81,7 +83,23 @@ export function ContentActions({
     );
   }
 
+  function togglePin() {
+    pin?.onToggle().catch((error: Error) => {
+      message.error(error.message);
+    });
+  }
+
   const items: MenuProps["items"] = [
+    ...(pin
+      ? [
+          {
+            key: "pin",
+            label: pin.pinned ? "Unpin" : "Pin",
+            icon: pin.pinned ? <PinOff size={14} /> : <Pin size={14} />,
+            disabled: readOnly,
+          },
+        ]
+      : []),
     ...(own && onEdit
       ? [{ key: "edit", label: "Edit", icon: <Pencil size={14} />, disabled: readOnly }]
       : []),
@@ -100,7 +118,8 @@ export function ContentActions({
         placement="bottomRight"
         menu={{
           items,
-          onClick: ({ key }) => (key === "edit" ? onEdit?.() : confirmDelete()),
+          onClick: ({ key }) =>
+            key === "pin" ? togglePin() : key === "edit" ? onEdit?.() : confirmDelete(),
         }}
       >
         <button type="button" aria-label={`More options for this ${type}`} className="icon-button cursor-pointer">

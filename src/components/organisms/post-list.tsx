@@ -124,6 +124,7 @@ function PostListContent<T extends FeedEntry>({
               onOpenComments={() => setOpenKey(itemKey(item))}
               onChange={update}
               onDelete={remove}
+              onPinChange={feed.retry}
             />
           ),
         )}

@@ -238,6 +238,8 @@ export type Post = {
   hiddenAt?: string | null;
   editedAt?: string | null;
   canDelete?: boolean;
+  pinned?: boolean;
+  canPin?: boolean;
   createdAt: string;
   author: Author;
   community: CommunitySummary | null;
@@ -1378,6 +1380,23 @@ export async function deletePost(token: string, postId: number): Promise<void> {
   });
 
   if (!res.ok) throw new Error(await errorMessage(res, "Could not delete the post."));
+}
+
+export async function setPostPinned(
+  token: string,
+  postId: number,
+  pinned: boolean,
+): Promise<void> {
+  const res = await api(`/posts/${postId}/pin`, {
+    method: pinned ? "PUT" : "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    throw new Error(
+      await errorMessage(res, pinned ? "Could not pin the post." : "Could not unpin the post."),
+    );
+  }
 }
 
 export async function getComments(

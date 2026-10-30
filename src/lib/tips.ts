@@ -23,6 +23,12 @@ export const tips: Tip[] = [
     action: { label: "See suggestions", href: "/requests" },
   },
   {
+    id: "pins",
+    title: "Pin a post to the top",
+    body: "Open the … menu on a post on your profile and choose Pin to keep it at the top. Community owners and admins can pin a post in their community too, like its rules.",
+    action: { label: "Open your profile", href: "/profile" },
+  },
+  {
     id: "search",
     title: "Search everything from anywhere",
     body: "Press ⌘K (Ctrl+K on Windows) or / to search people, communities, posts, titles, and your library without leaving the page.",
