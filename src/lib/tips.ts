@@ -29,6 +29,13 @@ export const tips: Tip[] = [
     action: { label: "Open your profile", href: "/profile" },
   },
   {
+    id: "two-factor",
+    title: "Turn on two-factor sign-in",
+    body: "Ask for a code from an authenticator app on your phone whenever you log in with your password, so a leaked password isn’t enough to get into your account.",
+    action: { label: "Open Security", href: "/settings?tab=security" },
+    used: "twoFactor",
+  },
+  {
     id: "search",
     title: "Search everything from anywhere",
     body: "Press ⌘K (Ctrl+K on Windows) or / to search people, communities, posts, titles, and your library without leaving the page.",

@@ -90,7 +90,7 @@ export function PostCard({
   return (
     <article className="flex flex-col gap-4 rounded-lg border border-divider bg-surface p-5">
       {post.pinned && (
-        <p className="-mb-2 flex items-center gap-1.5 text-xs font-semibold text-muted">
+        <p className="-mb-2 flex items-center gap-1.5 text-xs font-semibold text-accent">
           <Pin size={13} aria-hidden />
           Pinned
         </p>

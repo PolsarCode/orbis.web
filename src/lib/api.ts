@@ -36,7 +36,13 @@ export type Profile = {
   isHeadAdmin: boolean;
   emailVerifiedAt: string | null;
   createdAt: string;
+  hasPassword: boolean;
+  twoFactorEnabled: boolean;
 };
+
+export type LoginResult = { token: string } | { twoFactorTicket: string };
+
+export type TwoFactorSetup = { secret: string; qrCode: string };
 
 export type CommunityRole = "owner" | "admin" | "member";
 
@@ -140,7 +146,7 @@ async function errorMessage(res: Response, fallback: string) {
 async function authenticate(
   path: string,
   credentials: Credentials,
-): Promise<string> {
+): Promise<{ access_token?: string; two_factor_ticket?: string }> {
   const res = await api(path, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -166,16 +172,73 @@ async function authenticate(
   }
   if (!res.ok) throw new Error("Something went wrong. Please try again.");
 
+  return res.json();
+}
+
+export async function signup(details: SignupDetails): Promise<string> {
+  const { access_token } = await authenticate("/auth/signup", details);
+  if (!access_token) throw new Error("Something went wrong. Please try again.");
+  return access_token;
+}
+
+export async function login(credentials: LoginCredentials): Promise<LoginResult> {
+  const { access_token, two_factor_ticket } = await authenticate("/auth/login", credentials);
+  if (two_factor_ticket) return { twoFactorTicket: two_factor_ticket };
+  if (!access_token) throw new Error("Something went wrong. Please try again.");
+  return { token: access_token };
+}
+
+export async function verifyTwoFactorLogin(ticket: string, code: string): Promise<string> {
+  const res = await api("/auth/login/two-factor", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ticket, code }),
+  });
+
+  if (!res.ok) throw new Error(await errorMessage(res, "That code didn’t work. Check it and try again."));
   const { access_token } = await res.json();
   return access_token;
 }
 
-export function signup(details: SignupDetails) {
-  return authenticate("/auth/signup", details);
+export async function setupTwoFactor(token: string): Promise<TwoFactorSetup> {
+  const res = await api("/users/me/two-factor/setup", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t start setting up two-factor sign-in."));
+  return res.json();
 }
 
-export function login(credentials: LoginCredentials) {
-  return authenticate("/auth/login", credentials);
+export async function enableTwoFactor(token: string, code: string): Promise<string[]> {
+  const res = await api("/users/me/two-factor/enable", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ code }),
+  });
+
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t turn on two-factor sign-in."));
+  const { recoveryCodes } = await res.json();
+  return recoveryCodes;
+}
+
+export async function disableTwoFactor(token: string, code: string): Promise<void> {
+  const res = await api("/users/me/two-factor/disable", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ code }),
+  });
+
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t turn off two-factor sign-in."));
+}
+
+export async function resetTwoFactor(token: string, username: string): Promise<void> {
+  const res = await api(`/users/${encodeURIComponent(username)}/two-factor`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t remove two-factor sign-in."));
 }
 
 export async function confirmEmail(token: string): Promise<void> {
@@ -1858,7 +1921,7 @@ export type Onboarding = {
   checklistDismissed: boolean;
   completedTours: string[];
   steps: Record<OnboardingStep, boolean>;
-  used: { steam: boolean; connections: boolean; folders: boolean };
+  used: { steam: boolean; connections: boolean; folders: boolean; twoFactor: boolean };
 };
 
 export async function getOnboarding(token: string): Promise<Onboarding> {
@@ -1929,6 +1992,7 @@ export type PublicProfile = {
   isPublic: boolean;
   restricted: boolean;
   suspension?: ProfileSuspension | null;
+  twoFactorEnabled?: boolean | null;
   hasClips: boolean;
   twitchLogin?: string | null;
   nextStream?: NextStream | null;
@@ -2229,6 +2293,7 @@ export type PublicUser = {
   coverUrl: string | null;
   isVerified: boolean;
   online: boolean;
+  status: PresenceStatus;
   activity: number;
 };
 

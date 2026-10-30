@@ -1,11 +1,12 @@
 "use client";
 
 import { App, Input, Modal, Popover, Radio, Switch } from "antd";
-import { Ban, ShieldCheck, Timer, UserCheck } from "lucide-react";
+import { Ban, ShieldCheck, ShieldOff, Timer, UserCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import {
+  resetTwoFactor,
   setAccountSuspension,
   setSiteAdmin,
   type ProfileSuspension,
@@ -183,30 +184,94 @@ function Suspension({
   );
 }
 
+function TwoFactor({
+  username,
+  name,
+  enabled,
+  onReset,
+}: {
+  username: string;
+  name: string;
+  enabled: boolean;
+  onReset: () => void;
+}) {
+  const { modal, message } = App.useApp();
+
+  function confirmRemove() {
+    modal.confirm({
+      title: `Remove ${name}’s two-factor sign-in?`,
+      content:
+        "They’ll log in with just their password until they set it up again in Settings. Use this when they’ve lost their phone and their recovery codes.",
+      okText: "Remove",
+      okButtonProps: { danger: true },
+      cancelText: "Cancel",
+      onOk: async () => {
+        try {
+          await resetTwoFactor(token(), username);
+          onReset();
+          message.success(`${name}’s two-factor sign-in is removed.`);
+        } catch (e) {
+          message.error(e instanceof Error ? e.message : "Something went wrong.");
+        }
+      },
+    });
+  }
+
+  if (!enabled) {
+    return <p className="text-xs text-muted">Off. They log in with just their password.</p>;
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-xs text-muted">
+        On. Remove it if they’ve lost their phone and their recovery codes.
+      </p>
+      <Molecule.ReadOnlyGate action="remove two-factor sign-in">
+        <Atom.Button
+          size="small"
+          variant="secondary"
+          danger
+          icon={<ShieldOff size={14} />}
+          onClick={confirmRemove}
+          className="w-fit"
+        >
+          Remove two-factor sign-in
+        </Atom.Button>
+      </Molecule.ReadOnlyGate>
+    </div>
+  );
+}
+
 export function ProfileAdmin({
   username,
   name,
   isVerified,
   isAdmin,
   suspension,
+  twoFactorEnabled,
   canVerify,
   canChangeAdmin,
   canSuspend,
+  canResetTwoFactor,
   onVerify,
   onAdminChange,
   onSuspensionChange,
+  onTwoFactorReset,
 }: {
   username: string;
   name: string;
   isVerified: boolean;
   isAdmin: boolean;
   suspension: ProfileSuspension | null;
+  twoFactorEnabled: boolean | null;
   canVerify: boolean;
   canChangeAdmin: boolean;
   canSuspend: boolean;
+  canResetTwoFactor: boolean;
   onVerify: (verified: boolean) => Promise<void>;
   onAdminChange: (isAdmin: boolean) => void;
   onSuspensionChange: (suspension: ProfileSuspension | null) => void;
+  onTwoFactorReset: () => void;
 }) {
   const { message } = App.useApp();
   const [open, setOpen] = useState(false);
@@ -284,6 +349,19 @@ export function ProfileAdmin({
                 name={name}
                 suspension={suspension}
                 onChange={onSuspensionChange}
+              />
+            </section>
+          )}
+          {canResetTwoFactor && twoFactorEnabled !== null && (
+            <section
+              className={`flex flex-col gap-3 ${canVerify || canChangeAdmin || canSuspend ? "border-t border-divider pt-6" : ""}`}
+            >
+              <h3 className="text-sm font-semibold">Two-factor sign-in</h3>
+              <TwoFactor
+                username={username}
+                name={name}
+                enabled={twoFactorEnabled}
+                onReset={onTwoFactorReset}
               />
             </section>
           )}

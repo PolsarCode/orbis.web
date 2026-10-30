@@ -835,9 +835,11 @@ export function UserProfile({ username }: { username: string }) {
               isVerified={profile.isVerified}
               isAdmin={profile.isAdmin}
               suspension={profile.suspension ?? null}
+              twoFactorEnabled={profile.twoFactorEnabled ?? null}
               canVerify={Boolean(me?.isHeadAdmin)}
               canChangeAdmin={Boolean(me?.isHeadAdmin) && !isSelf && !profile.isHeadAdmin}
               canSuspend={canSuspend}
+              canResetTwoFactor={canSuspend}
               onVerify={handleVerified}
               onAdminChange={(isAdmin) =>
                 setLoaded((current) =>
@@ -850,6 +852,13 @@ export function UserProfile({ username }: { username: string }) {
                 setLoaded((current) =>
                   current?.profile
                     ? { ...current, profile: { ...current.profile, suspension } }
+                    : current,
+                )
+              }
+              onTwoFactorReset={() =>
+                setLoaded((current) =>
+                  current?.profile
+                    ? { ...current, profile: { ...current.profile, twoFactorEnabled: false } }
                     : current,
                 )
               }

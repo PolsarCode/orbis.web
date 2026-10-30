@@ -149,7 +149,7 @@ export function LandingPeople() {
               avatarUrl={person.avatarUrl}
               coverUrl={person.coverUrl}
               isVerified={person.isVerified}
-              presence={person.online ? "online" : "offline"}
+              presence={person.online ? person.status : "offline"}
             />
           </li>
         ))}

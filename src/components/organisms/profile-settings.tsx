@@ -1,7 +1,15 @@
 "use client";
 
 import { App } from "antd";
-import { CircleCheck, Link2, Lock, RotateCcw, SlidersHorizontal, UserRound } from "lucide-react";
+import {
+  CircleCheck,
+  Link2,
+  Lock,
+  RotateCcw,
+  ShieldCheck,
+  SlidersHorizontal,
+  UserRound,
+} from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import * as Atom from "@atom";
@@ -19,6 +27,7 @@ import { SettingsTabs } from "./settings-tabs";
 import { SidePanel } from "./side-panel";
 import { SteamConnection } from "./steam-connection";
 import { ThemeToggle } from "./theme-toggle";
+import { TwoFactorSettings } from "./two-factor-settings";
 
 function RestartTours() {
   const { message } = App.useApp();
@@ -136,6 +145,19 @@ export function ProfileSettings({ profile }: { profile: Profile }) {
               </Molecule.SettingsSection>
               <SteamConnection />
             </>
+          ),
+        },
+        {
+          key: "security",
+          label: "Security",
+          icon: <ShieldCheck size={16} aria-hidden />,
+          content: (
+            <Molecule.SettingsSection
+              title="Two-factor sign-in"
+              description="When you log in with your password, Orbis also asks for a code from an authenticator app on your phone."
+            >
+              <TwoFactorSettings profile={profile} />
+            </Molecule.SettingsSection>
           ),
         },
         {

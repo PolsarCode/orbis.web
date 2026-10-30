@@ -53,7 +53,7 @@ export function CompactFeedItem({
           <p className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted">
             {item.type === "post" && item.pinned && (
               <>
-                <span className="flex items-center gap-1 font-semibold">
+                <span className="flex items-center gap-1 font-semibold text-accent">
                   <Pin size={12} aria-hidden />
                   Pinned
                 </span>

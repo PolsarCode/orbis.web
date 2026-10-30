@@ -1144,17 +1144,25 @@ export function AdminsPanel({ admins }: { admins: ReportAdmin[] | null }) {
   }
 
   const isOnline = (admin: ReportAdmin) => presence[admin.id] ?? admin.online;
-  const isStreaming = (admin: ReportAdmin) => (statuses[admin.id] ?? admin.status) === "streaming";
-  const groups: { title: string; presence: PresenceStatus; members: ReportAdmin[] }[] = [
-    { title: "Streaming", presence: "streaming", members: admins.filter(isStreaming) },
+  const statusOf = (admin: ReportAdmin) => statuses[admin.id] ?? admin.status;
+  const isStreaming = (admin: ReportAdmin) => statusOf(admin) === "streaming";
+  const groups: {
+    title: string;
+    presence: (admin: ReportAdmin) => PresenceStatus;
+    members: ReportAdmin[];
+  }[] = [
+    { title: "Streaming", presence: () => "streaming", members: admins.filter(isStreaming) },
     {
       title: "Online",
-      presence: "online",
+      presence: (admin) => {
+        const status = statusOf(admin);
+        return status && status !== "offline" ? status : "online";
+      },
       members: admins.filter((admin) => !isStreaming(admin) && isOnline(admin)),
     },
     {
       title: "Offline",
-      presence: "offline",
+      presence: () => "offline",
       members: admins.filter((admin) => !isStreaming(admin) && !isOnline(admin)),
     },
   ];
@@ -1178,7 +1186,7 @@ export function AdminsPanel({ admins }: { admins: ReportAdmin[] | null }) {
                     name: admin.name,
                     avatarUrl: admin.avatarUrl,
                   }}
-                  presence={groupPresence}
+                  presence={groupPresence(admin)}
                   twitchLogin={admin.twitchLogin}
                   badge={<Atom.RoleBadge role={admin.isHeadAdmin ? "head-admin" : "site-admin"} />}
                   subtitle={`@${admin.username}${admin.id === myId ? " · you" : ""}`}
