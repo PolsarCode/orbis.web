@@ -25,6 +25,7 @@ import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import * as Template from "@template";
 import {
+  addToLibrary,
   getLibrary,
   type LibraryEntry,
   type LibraryStatus,
@@ -246,14 +247,88 @@ const statusTones = {
   planned: "special",
 } as const satisfies Record<LibraryStatus, Atom.PillTone>;
 
-function StatusPill({
+function readOnlyTip(readOnly: boolean, action: string, control: ReactNode) {
+  return readOnly ? (
+    <Tooltip title={`Confirm your email first to ${action}.`} classNames={{ root: "touch-visible" }}>
+      {control}
+    </Tooltip>
+  ) : (
+    control
+  );
+}
+
+export function AddStatusPill({
+  media,
+  onAdded,
+}: {
+  media: { type: MediaType; sourceId: string; title: string };
+  onAdded: (entry: LibraryEntry) => void;
+}) {
+  const { message } = App.useApp();
+  const readOnly = useReadOnly();
+
+  async function add(status: LibraryStatus) {
+    const { token } = useAuthStore.getState();
+    if (!token) return;
+    try {
+      const entry = await addToLibrary(token, {
+        type: media.type,
+        sourceId: media.sourceId,
+        status,
+        isPublic: true,
+        ...(media.type !== "game" && { progress: 0 }),
+      });
+      onAdded(entry);
+      message.success(`Added ${media.title} to your library.`);
+    } catch (e) {
+      message.error(e instanceof Error ? e.message : "Something went wrong.");
+    }
+  }
+
+  return readOnlyTip(
+    readOnly,
+    "add to your library",
+    <Dropdown
+      disabled={readOnly}
+      trigger={["click"]}
+      menu={{
+        items: libraryStatuses.map((status) => {
+          const StatusIcon = statusIcons[status];
+          return {
+            key: status,
+            label: statusLabel(status, media.type),
+            icon: <StatusIcon size={14} />,
+          };
+        }),
+        onClick: ({ key }) => add(key as LibraryStatus),
+      }}
+    >
+      <button
+        type="button"
+        aria-label={`Add ${media.title} to your library`}
+        className="focus-ring w-full cursor-pointer rounded-full disabled:cursor-not-allowed"
+      >
+        <Atom.Pill className="h-7 w-full! justify-between px-3 pointer-coarse:h-9">
+          <span className="flex min-w-0 items-center gap-1.5">
+            <Plus size={13} aria-hidden className="shrink-0" />
+            <span className="truncate">Add</span>
+          </span>
+          <ChevronDown size={13} aria-hidden className="shrink-0" />
+        </Atom.Pill>
+      </button>
+    </Dropdown>,
+  );
+}
+
+export function StatusPill({
   entry,
   onChange,
 }: {
-  entry: LibraryEntry;
+  entry: Pick<LibraryEntry, "id" | "status" | "mediaType" | "title">;
   onChange: (entry: LibraryEntry) => void;
 }) {
   const { message } = App.useApp();
+  const readOnly = useReadOnly();
   const label = statusLabel(entry.status, entry.mediaType);
   const Icon = statusIcons[entry.status];
 
@@ -267,8 +342,11 @@ function StatusPill({
     }
   }
 
-  return (
+  return readOnlyTip(
+    readOnly,
+    "change your library",
     <Dropdown
+      disabled={readOnly}
       trigger={["click"]}
       menu={{
         items: libraryStatuses.map((status) => {
@@ -299,7 +377,7 @@ function StatusPill({
           <ChevronDown size={13} aria-hidden className="shrink-0" />
         </Atom.Pill>
       </button>
-    </Dropdown>
+    </Dropdown>,
   );
 }
 

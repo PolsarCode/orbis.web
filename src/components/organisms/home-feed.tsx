@@ -13,6 +13,7 @@ import type { ChangelogDay } from "@/lib/changelog";
 import { useCommunityStore } from "@/stores/community-store";
 import { ChangelogBanner, useChangelogShown } from "./changelog-banner";
 import { DiscordSetupReminder, useUnfinishedDiscord } from "./discord-setup";
+import { MediaShelf } from "./media-shelf";
 import { PostComposer } from "./post-composer";
 import { PostList } from "./post-list";
 import { OnboardingChecklist, OnboardingTour } from "./onboarding";
@@ -58,6 +59,12 @@ export function HomeFeed({ latestChangelog }: { latestChangelog: ChangelogDay | 
         ) : (
           <TipOfTheWeek />
         ))}
+      <div data-tour="discover">
+        <MediaShelf
+          cardClassName="w-32 sm:w-36"
+          className="rounded-lg border border-divider bg-surface p-4"
+        />
+      </div>
       {profile && (
         <div data-tour="composer">
         <PostComposer

@@ -2212,6 +2212,27 @@ export async function searchLibrary(
   return res.json();
 }
 
+export type MediaListName = "trending" | "season" | "top" | "upcoming";
+
+export type MediaListItem = MediaResult & {
+  bannerImage: string | null;
+  releaseStatus: string | null;
+  genres: string[];
+  details: Record<string, unknown>;
+  entry: { id: number; status: LibraryStatus; isPublic: boolean } | null;
+};
+
+export async function getMediaList(
+  token: string | null,
+  type: MediaType,
+  list: MediaListName,
+): Promise<MediaListItem[]> {
+  const res = await api(`/library/lists/${type}/${list}`, { headers: authHeaders(token) });
+
+  if (!res.ok) throw new Error(await errorMessage(res, "This list isn’t available right now."));
+  return res.json();
+}
+
 export async function getLibrary(token: string): Promise<LibraryEntry[]> {
   const res = await api("/library", {
     headers: { Authorization: `Bearer ${token}` },

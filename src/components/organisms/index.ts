@@ -30,6 +30,7 @@ export * from "./landing-hero";
 export * from "./library-controls";
 export * from "./library-view";
 export * from "./media-profile";
+export * from "./media-shelf";
 export * from "./member-list";
 export * from "./member-presence";
 export * from "./messages-view";

@@ -9,6 +9,7 @@ import {
 } from "./landing-showcase";
 import { AnimeSlideshow } from "./anime-spotlight";
 import { LandingReveal } from "./landing-reveal";
+import { MediaShelf } from "./media-shelf";
 import { SiteStats } from "./site-stats";
 
 export function LandingHero() {
@@ -41,6 +42,21 @@ export function LandingHero() {
         </div>
       </section>
       <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-20 overflow-x-clip px-5 pt-10 pb-20 sm:gap-28 sm:px-8 sm:pt-16 sm:pb-28 lg:gap-32 lg:pb-32">
+        <LandingReveal>
+          <MediaShelf
+            layout="grid"
+            heading={
+              <div className="mb-3 flex flex-col gap-3">
+                <h2 className="font-display text-4xl leading-[1.02] font-bold tracking-tight sm:text-5xl lg:text-6xl">
+                  What everyone’s into.
+                </h2>
+                <p className="max-w-xl text-[17px] text-muted">
+                  Trending, new, and top-rated anime, manga, and games, updated every day.
+                </p>
+              </div>
+            }
+          />
+        </LandingReveal>
         <LandingReveal>
           <LandingCommunities />
         </LandingReveal>
