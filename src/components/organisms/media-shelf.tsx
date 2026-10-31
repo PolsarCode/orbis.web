@@ -21,6 +21,7 @@ import {
   type MediaListName,
   type MediaType,
 } from "@/lib/api";
+import * as Atom from "@atom";
 import { mediaPath } from "@/lib/library";
 import { useAuthStore } from "@/stores/auth-store";
 import { useMediaShelfStore } from "@/stores/media-shelf-store";
@@ -121,6 +122,7 @@ function ShelfItems({
   cardClassName,
   onEntry,
   rowRef,
+  onScroll,
 }: {
   items: MediaListItem[] | null | undefined;
   list: MediaListName;
@@ -128,6 +130,7 @@ function ShelfItems({
   cardClassName: string;
   onEntry?: (id: string, entry: SavedEntry) => void;
   rowRef?: Ref<HTMLUListElement>;
+  onScroll?: () => void;
 }) {
   if (items === null) {
     return <p className="py-6 text-sm text-muted">This list isn’t available right now.</p>;
@@ -145,6 +148,7 @@ function ShelfItems({
   return (
     <ul
       ref={rowRef}
+      onScroll={onScroll}
       aria-busy={shown === undefined}
       className={
         grid
@@ -188,6 +192,7 @@ export function MediaShelf({
   const setType = useMediaShelfStore((state) => state.setType);
   const setList = useMediaShelfStore((state) => state.setList);
   const [ready, setReady] = useState(false);
+  const [edges, setEdges] = useState({ back: false, forward: false });
   const [results, setResults] = useState<Record<string, MediaListItem[] | null>>({});
   const requested = useRef(new Set<string>());
   const row = useRef<HTMLUListElement>(null);
@@ -215,9 +220,29 @@ export function MediaShelf({
     }
   }, [grid, list, ready, token, type]);
 
+  function updateEdges() {
+    const element = row.current;
+    if (!element) return;
+    const back = element.scrollLeft > 4;
+    const forward = element.scrollLeft + element.clientWidth < element.scrollWidth - 4;
+    setEdges((current) =>
+      current.back === back && current.forward === forward ? current : { back, forward },
+    );
+  }
+
   useEffect(() => {
     row.current?.scrollTo({ left: 0 });
   }, [list, type]);
+
+  const rowItems = results[`${type}:${list}`];
+
+  useEffect(() => {
+    const element = row.current;
+    if (!element) return;
+    const observer = new ResizeObserver(() => updateEdges());
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [rowItems]);
 
   function setEntry(id: string, entry: SavedEntry) {
     setResults((current) =>
@@ -297,24 +322,6 @@ export function MediaShelf({
                 label: sectionTitles[value],
               }))}
             />
-            <span className="flex max-sm:hidden">
-              <button
-                type="button"
-                aria-label="Scroll back"
-                onClick={() => scroll(-1)}
-                className="icon-button cursor-pointer"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <button
-                type="button"
-                aria-label="Scroll forward"
-                onClick={() => scroll(1)}
-                className="icon-button cursor-pointer"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </span>
           </div>
         )}
       </div>
@@ -344,15 +351,37 @@ export function MediaShelf({
           ))
         ) : (
           <ShelfItems
-            items={results[`${type}:${list}`]}
+            items={rowItems}
             list={list}
             grid={false}
             cardClassName={cardClassName}
             onEntry={onEntry}
             rowRef={row}
+            onScroll={updateEdges}
           />
         )}
       </div>
+      {!grid && (
+        <div className="flex items-center justify-between max-sm:hidden">
+          <Atom.Button
+            variant="secondary"
+            disabled={!edges.back}
+            onClick={() => scroll(-1)}
+            icon={<ChevronLeft size={16} />}
+          >
+            Previous
+          </Atom.Button>
+          <Atom.Button
+            variant="secondary"
+            disabled={!edges.forward}
+            onClick={() => scroll(1)}
+            icon={<ChevronRight size={16} />}
+            iconPlacement="end"
+          >
+            Next
+          </Atom.Button>
+        </div>
+      )}
     </section>
   );
 }
