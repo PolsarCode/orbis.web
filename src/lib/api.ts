@@ -361,6 +361,17 @@ export type Activity = {
 
 export type FeedEntry = Post | Activity;
 
+export type PublicLibraryUpdate = Pick<
+  Activity,
+  "id" | "createdAt" | "author" | "status" | "progress" | "media"
+>;
+
+export async function getPublicLibraryUpdates(): Promise<PublicLibraryUpdate[]> {
+  const res = await api("/public/library-updates", { cache: "no-store" });
+  if (!res.ok) throw new Error("Could not load library updates.");
+  return res.json();
+}
+
 export type FeedContentType = FeedEntry["type"];
 
 export type Page<T> = { items: T[]; nextCursor: string | null };

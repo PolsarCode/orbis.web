@@ -3,9 +3,8 @@ import * as Atom from "@atom";
 import {
   LandingCallToAction,
   LandingCommunities,
+  LandingLibraryUpdates,
   LandingPeople,
-  LandingExtras,
-  LandingShowcase,
 } from "./landing-showcase";
 import { AnimeSlideshow } from "./anime-spotlight";
 import { LandingReveal } from "./landing-reveal";
@@ -47,6 +46,9 @@ export function LandingHero() {
             layout="grid"
             heading={
               <div className="mb-3 flex flex-col gap-3">
+                <p className="text-xs font-bold tracking-wide text-accent uppercase">
+                  Popular right now
+                </p>
                 <h2 className="font-display text-4xl leading-[1.02] font-bold tracking-tight sm:text-5xl lg:text-6xl">
                   What everyone’s into.
                 </h2>
@@ -63,9 +65,8 @@ export function LandingHero() {
         <LandingReveal>
           <LandingPeople />
         </LandingReveal>
-        <LandingShowcase />
         <LandingReveal>
-          <LandingExtras />
+          <LandingLibraryUpdates />
         </LandingReveal>
       </div>
       <LandingReveal>

@@ -14,9 +14,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 Step-by-step instructions live in skills in `.agents/skills/`, linked as `.claude/skills/` for Claude Code. Any agent can also read them as plain files. Whenever one of these situations applies, follow its skill in the same change:
 
-- **Adding, changing, or removing a user-facing feature** (skip small tweaks and admin-only tools):
-  - `onboarding-updates` (`.agents/skills/onboarding-updates/SKILL.md`): add or update tour stops, checklist items, and tips of the week for anything people need to know about.
-  - `landing-page-updates` (`.agents/skills/landing-page-updates/SKILL.md`): show it on the landing page if it's something a visitor would sign up for.
+- **Adding, changing, or removing a user-facing feature** (skip small tweaks and admin-only tools) → `onboarding-updates` (`.agents/skills/onboarding-updates/SKILL.md`): add or update tour stops, checklist items, and tips of the week for anything people need to know about.
 - **Adding or changing anything people could look for by name or text** (new content, a page with its own items, or new names or text on existing items) → `search-updates` (`.agents/skills/search-updates/SKILL.md`): keep the site search covering it, with the same privacy rules as where it's shown.
 
 ## Rules

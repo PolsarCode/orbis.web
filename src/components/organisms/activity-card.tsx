@@ -17,16 +17,10 @@ export const mediaTypes: Record<MediaType, { label: string; icon: ReactNode }> =
   game: { label: "Game", icon: <Gamepad2 size={12} /> },
 };
 
-export function ActivityCard({
+export function ActivitySummary({
   activity,
-  onOpenComments,
-  onChange,
-  preview = true,
 }: {
-  activity: Activity;
-  onOpenComments?: () => void;
-  onChange?: (activity: Activity) => void;
-  preview?: boolean;
+  activity: Pick<Activity, "author" | "media" | "status" | "progress" | "createdAt" | "steam">;
 }) {
   const { author, media } = activity;
   const kind = mediaTypes[media.type];
@@ -36,8 +30,7 @@ export function ActivityCard({
   const href = mediaPath(media.type, media.sourceId);
 
   return (
-    <article className="flex flex-col gap-3 rounded-lg border border-divider bg-surface p-4">
-      <div className="flex items-start gap-4">
+    <div className="flex items-start gap-4">
       <Molecule.AuthorAvatar author={author} />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="text-sm">
@@ -80,7 +73,24 @@ export function ActivityCard({
           <Image src={media.coverImage} alt="" fill unoptimized className="object-cover" />
         )}
       </Link>
-      </div>
+    </div>
+  );
+}
+
+export function ActivityCard({
+  activity,
+  onOpenComments,
+  onChange,
+  preview = true,
+}: {
+  activity: Activity;
+  onOpenComments?: () => void;
+  onChange?: (activity: Activity) => void;
+  preview?: boolean;
+}) {
+  return (
+    <article className="flex flex-col gap-3 rounded-lg border border-divider bg-surface p-4">
+      <ActivitySummary activity={activity} />
       <div className="flex items-center gap-4 pl-[52px]">
         <Molecule.LikeButton
           liked={activity.liked}
