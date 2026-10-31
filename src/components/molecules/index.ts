@@ -1,4 +1,5 @@
 export * from "./author-avatar";
+export * from "./code-input";
 export * from "./avatar-stack";
 export * from "./comment-preview";
 export * from "./comments-button";
@@ -22,7 +23,6 @@ export * from "./modal-header";
 export * from "./page-intro";
 export * from "./page-wallpaper";
 export * from "./person-card";
-export * from "./settings-link";
 export * from "./settings-section";
 export * from "./settings-row";
 export * from "./user-link";

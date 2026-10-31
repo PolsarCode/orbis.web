@@ -1,9 +1,9 @@
 "use client";
 
-import { App } from "antd";
+import { App, Tooltip } from "antd";
 import { Copy, Download, ShieldCheck, ShieldOff } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import {
@@ -21,8 +21,38 @@ function token() {
   return token;
 }
 
-function groupSecret(secret: string) {
-  return secret.match(/.{1,4}/g)?.join(" ") ?? secret;
+function secretChunks(secret: string) {
+  return secret.match(/.{1,4}/g) ?? [secret];
+}
+
+function SetupStep({
+  number,
+  title,
+  description,
+  last = false,
+  children,
+}: {
+  number: number;
+  title: string;
+  description: string;
+  last?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <li className="relative flex gap-4">
+      {!last && <span aria-hidden className="absolute top-9 bottom-2 left-3.5 w-px bg-divider" />}
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft font-display text-sm font-bold text-accent">
+        {number}
+      </span>
+      <div className={`flex min-w-0 flex-1 flex-col gap-3 pt-0.5 ${last ? "" : "pb-8"}`}>
+        <div className="flex flex-col gap-1">
+          <h4 className="text-sm font-semibold">{title}</h4>
+          <p className="text-xs text-muted">{description}</p>
+        </div>
+        {children}
+      </div>
+    </li>
+  );
 }
 
 function RecoveryCodes({
@@ -60,24 +90,40 @@ function RecoveryCodes({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <p className="text-sm">
-        Two-factor sign-in is on. Save these recovery codes somewhere safe. Each one works once
-        if you lose your phone, and you won’t see them again.
-      </p>
-      <ul className="grid grid-cols-2 gap-2 rounded-lg border border-divider bg-background p-4 font-mono text-sm">
-        {codes.map((code) => (
-          <li key={code}>{code}</li>
+    <div className="flex flex-col gap-5">
+      <div className="flex items-start gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-success/15 text-success">
+          <ShieldCheck size={18} aria-hidden />
+        </span>
+        <div className="flex flex-col gap-1">
+          <p className="text-sm font-semibold">Two-factor sign-in is on</p>
+          <p className="text-xs text-muted">
+            Save these recovery codes somewhere safe. Each one works once if you lose your phone,
+            and you won’t see them again.
+          </p>
+        </div>
+      </div>
+      <ol
+        aria-label="Recovery codes"
+        className="grid gap-x-8 gap-y-2.5 rounded-lg border border-dashed border-divider bg-background px-5 py-4 sm:grid-cols-2"
+      >
+        {codes.map((code, index) => (
+          <li key={code} className="flex items-baseline gap-3 font-mono">
+            <span aria-hidden className="w-5 shrink-0 text-right text-[11px] text-muted tabular-nums">
+              {String(index + 1).padStart(2, "0")}
+            </span>
+            <span className="text-sm tracking-wider">{code}</span>
+          </li>
         ))}
-      </ul>
-      <div className="flex flex-wrap gap-2">
+      </ol>
+      <div className="flex flex-wrap items-center gap-2">
         <Atom.Button size="small" variant="secondary" icon={<Copy size={14} />} onClick={copy}>
           Copy
         </Atom.Button>
         <Atom.Button size="small" variant="secondary" icon={<Download size={14} />} onClick={download}>
           Download
         </Atom.Button>
-        <Atom.Button size="small" onClick={onDone}>
+        <Atom.Button size="small" onClick={onDone} className="sm:ml-auto">
           I’ve saved them
         </Atom.Button>
       </div>
@@ -133,13 +179,12 @@ export function TwoFactorSettings({ profile }: { profile: Profile }) {
     );
   }
 
-  const codeField = (label: string, numeric: boolean) => (
+  const codeField = (label: string) => (
     <Molecule.FormField
       label={label}
       name="two-factor-code"
       autoFocus
-      maxLength={numeric ? 7 : 32}
-      inputMode={numeric ? "numeric" : undefined}
+      maxLength={32}
       autoComplete="one-time-code"
       autoCapitalize="none"
       value={code}
@@ -168,7 +213,7 @@ export function TwoFactorSettings({ profile }: { profile: Profile }) {
               });
             }}
           >
-            {codeField("Code from your authenticator app, or a recovery code", false)}
+            {codeField("Code from your authenticator app, or a recovery code")}
             {error && <Atom.ErrorMessage>{error}</Atom.ErrorMessage>}
             <div className="flex gap-2">
               <Molecule.ReadOnlyGate action="turn off two-factor sign-in">
@@ -199,9 +244,15 @@ export function TwoFactorSettings({ profile }: { profile: Profile }) {
   }
 
   if (setup) {
+    const copyKey = () =>
+      navigator.clipboard
+        .writeText(setup.secret)
+        .then(() => message.success("Key copied."))
+        .catch(() => message.error("Couldn’t copy it. Select the key and copy it instead."));
+
     return (
       <form
-        className="flex flex-col gap-4"
+        className="flex flex-col gap-6"
         onSubmit={(event) => {
           event.preventDefault();
           run(async () => {
@@ -212,34 +263,62 @@ export function TwoFactorSettings({ profile }: { profile: Profile }) {
           });
         }}
       >
-        <ol className="flex list-decimal flex-col gap-4 pl-5 text-sm">
-          <li>
-            Scan this QR code with an authenticator app, like Google Authenticator, Microsoft
-            Authenticator, or 1Password.
-            <Image
-              src={setup.qrCode}
-              alt="QR code for your authenticator app"
-              width={180}
-              height={180}
-              unoptimized
-              className="mt-3 rounded-md bg-white p-2"
-            />
-            <p className="mt-2 text-xs text-muted">
-              Can’t scan it? Type this key into the app instead:
-            </p>
-            <code className="mt-1 block font-mono text-xs break-all select-all">
-              {groupSecret(setup.secret)}
-            </code>
-          </li>
-          <li>
-            Enter the 6-digit code the app shows.
-            <div className="mt-3">{codeField("Code", true)}</div>
-          </li>
+        <ol className="flex flex-col">
+          <SetupStep
+            number={1}
+            title="Scan the QR code"
+            description="Use an authenticator app, like Google Authenticator, Microsoft Authenticator, or 1Password."
+          >
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+              <Image
+                src={setup.qrCode}
+                alt="QR code for your authenticator app"
+                width={168}
+                height={168}
+                unoptimized
+                className="shrink-0 rounded-lg bg-white p-2.5 shadow-[0_10px_28px_-14px_rgb(0_0_0/0.6)] ring-1 ring-black/5"
+              />
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
+                <p className="text-xs text-muted">Can’t scan it? Type this key into the app instead.</p>
+                <div className="flex items-center gap-2 rounded-md border border-divider bg-background py-1.5 pr-1.5 pl-3">
+                  <code className="flex min-w-0 flex-1 flex-wrap gap-x-2.5 gap-y-1 font-mono text-[13px] tracking-wider select-all">
+                    {secretChunks(setup.secret).map((chunk, index) => (
+                      <span key={index}>{chunk}</span>
+                    ))}
+                  </code>
+                  <Tooltip title="Copy key">
+                    <button
+                      type="button"
+                      aria-label="Copy key"
+                      onClick={copyKey}
+                      className="icon-button shrink-0 cursor-pointer self-start"
+                    >
+                      <Copy size={16} />
+                    </button>
+                  </Tooltip>
+                </div>
+              </div>
+            </div>
+          </SetupStep>
+          <SetupStep
+            number={2}
+            title="Enter the 6-digit code"
+            description="Type the code your app shows for Orbis. It changes every 30 seconds."
+            last
+          >
+            <Molecule.CodeInput value={code} onChange={setCode} className="max-w-xs" />
+          </SetupStep>
         </ol>
         {error && <Atom.ErrorMessage>{error}</Atom.ErrorMessage>}
-        <div className="flex gap-2">
+        <div className="flex gap-2 border-t border-divider pt-5">
           <Molecule.ReadOnlyGate action="turn on two-factor sign-in">
-            <Atom.Button type="submit" size="small" loading={pending} disabled={!code.trim()}>
+            <Atom.Button
+              type="submit"
+              size="small"
+              icon={<ShieldCheck size={14} />}
+              loading={pending}
+              disabled={code.length < Molecule.CODE_LENGTH}
+            >
               Turn on
             </Atom.Button>
           </Molecule.ReadOnlyGate>

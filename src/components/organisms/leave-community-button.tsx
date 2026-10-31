@@ -1,9 +1,7 @@
 "use client";
 
-import { App, Tooltip } from "antd";
-import { LogOut } from "lucide-react";
+import { App } from "antd";
 import type { Community } from "@/lib/api";
-import { useReadOnly } from "@/lib/read-only";
 import { useCommunityStore } from "@/stores/community-store";
 
 export function useLeaveCommunity() {
@@ -40,28 +38,4 @@ export function useLeaveCommunity() {
           }),
     });
   };
-}
-
-export function LeaveCommunityButton({ community }: { community: Community }) {
-  const readOnly = useReadOnly();
-  const confirmLeave = useLeaveCommunity();
-
-  return (
-    <Tooltip
-      title={readOnly ? "Confirm your email first to leave communities." : "Leave community"}
-      classNames={{ root: "touch-visible" }}
-    >
-      <span className="inline-flex">
-        <button
-          type="button"
-          aria-label="Leave community"
-          disabled={readOnly}
-          onClick={() => confirmLeave(community)}
-          className="icon-button cursor-pointer disabled:pointer-events-none disabled:opacity-40"
-        >
-          <LogOut size={20} />
-        </button>
-      </span>
-    </Tooltip>
-  );
 }

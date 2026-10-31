@@ -328,7 +328,7 @@ export const pageTours = {
       target: "community-settings",
       placement: "bottom",
       title: "Community settings",
-      description: "Change the name, description, pictures and admins, or make the community public or private.",
+      description: "Open this menu for Community settings to change the name, description, pictures and admins, or make the community public or private.",
     },
   ],
   profile: [

@@ -72,8 +72,15 @@ function TwoFactorStep({
 }) {
   const loginWithToken = useAuthStore((state) => state.loginWithToken);
   const [code, setCode] = useState("");
+  const [recovery, setRecovery] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+
+  function switchCodeType() {
+    setRecovery((current) => !current);
+    setCode("");
+    setError(null);
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -91,38 +98,54 @@ function TwoFactorStep({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       <p className="text-sm leading-relaxed text-muted">
-        Enter the 6-digit code from your authenticator app, or one of your recovery codes.
+        {recovery
+          ? "Enter one of the recovery codes you saved when you turned on two-factor sign-in."
+          : "Enter the 6-digit code from your authenticator app."}
       </p>
-      <Molecule.FormField
-        label="Code"
-        name="code"
-        size="large"
-        required
-        autoFocus
-        maxLength={32}
-        autoCapitalize="none"
-        autoComplete="one-time-code"
-        value={code}
-        onChange={(event) => setCode(event.target.value)}
-      />
+      {recovery ? (
+        <Molecule.FormField
+          label="Recovery code"
+          name="code"
+          size="large"
+          required
+          autoFocus
+          maxLength={32}
+          autoCapitalize="none"
+          autoComplete="off"
+          value={code}
+          onChange={(event) => setCode(event.target.value)}
+        />
+      ) : (
+        <Molecule.CodeInput value={code} onChange={setCode} autoFocus />
+      )}
       {error && <Atom.ErrorMessage>{error}</Atom.ErrorMessage>}
       <Atom.Button
         type="submit"
         size="large"
         loading={pending}
+        disabled={!recovery && code.length < Molecule.CODE_LENGTH}
         className={compact ? "w-fit" : "mt-1 w-full"}
         icon={compact ? undefined : <ArrowRight size={17} />}
         iconPlacement="end"
       >
         Verify
       </Atom.Button>
-      <button
-        type="button"
-        onClick={onBack}
-        className="focus-ring w-fit cursor-pointer rounded-sm text-[13px] text-accent hover:underline"
-      >
-        Use a different account
-      </button>
+      <div className="flex flex-wrap gap-x-5 gap-y-2">
+        <button
+          type="button"
+          onClick={switchCodeType}
+          className="focus-ring w-fit cursor-pointer rounded-sm text-[13px] text-accent hover:underline"
+        >
+          {recovery ? "Use your authenticator app" : "Use a recovery code"}
+        </button>
+        <button
+          type="button"
+          onClick={onBack}
+          className="focus-ring w-fit cursor-pointer rounded-sm text-[13px] text-accent hover:underline"
+        >
+          Use a different account
+        </button>
+      </div>
     </form>
   );
 }

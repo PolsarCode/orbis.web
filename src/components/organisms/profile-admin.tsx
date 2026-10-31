@@ -1,7 +1,7 @@
 "use client";
 
 import { App, Input, Modal, Popover, Radio, Switch } from "antd";
-import { Ban, ShieldCheck, ShieldOff, Timer, UserCheck } from "lucide-react";
+import { Ban, ShieldOff, Timer, UserCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
@@ -257,6 +257,8 @@ export function ProfileAdmin({
   onAdminChange,
   onSuspensionChange,
   onTwoFactorReset,
+  open,
+  onClose,
 }: {
   username: string;
   name: string;
@@ -272,9 +274,10 @@ export function ProfileAdmin({
   onAdminChange: (isAdmin: boolean) => void;
   onSuspensionChange: (suspension: ProfileSuspension | null) => void;
   onTwoFactorReset: () => void;
+  open: boolean;
+  onClose: () => void;
 }) {
   const { message } = App.useApp();
-  const [open, setOpen] = useState(false);
   const [pending, setPending] = useState<"verified" | "admin" | null>(null);
 
   async function toggle(setting: "verified" | "admin", value: boolean) {
@@ -291,22 +294,13 @@ export function ProfileAdmin({
 
   return (
     <>
-      <Atom.Button
-        size="small"
-        variant="secondary"
-        icon={<ShieldCheck size={14} />}
-        onClick={() => setOpen(true)}
-        className="shrink-0"
-      >
-        Admin
-      </Atom.Button>
       <Modal
         open={open}
         title={null}
         footer={null}
         width={440}
         destroyOnHidden
-        onCancel={() => setOpen(false)}
+        onCancel={onClose}
         styles={{ container: { padding: 24 } }}
       >
         <div className="flex flex-col gap-6">

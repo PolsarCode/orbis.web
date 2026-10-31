@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Clapperboard,
-  Globe,
-  Lock,
-  Newspaper,
-  UserCog,
-} from "lucide-react";
+import { Clapperboard, Globe, Lock, Newspaper } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useEffectEvent, useState, type UIEvent } from "react";
@@ -17,7 +11,6 @@ import * as Template from "@template";
 import {
   canManage,
   getCommunity,
-  setCommunityVerified,
   type Community,
   type CommunityImage,
 } from "@/lib/api";
@@ -97,14 +90,10 @@ export function CommunityView({ members = false }: { members?: boolean }) {
     });
   }
 
-  async function handleVerified(isVerified: boolean) {
-    const { token } = useAuthStore.getState();
-    if (!token) throw new Error("Please log in again.");
-
-    const verified = await setCommunityVerified(token, Number(communityId), isVerified);
+  function handleVerified(isVerified: boolean) {
     setLoaded((current) =>
       current?.id === communityId && current.community
-        ? { ...current, community: { ...current.community, isVerified: verified } }
+        ? { ...current, community: { ...current.community, isVerified } }
         : current,
     );
   }
@@ -143,7 +132,6 @@ export function CommunityView({ members = false }: { members?: boolean }) {
   const current = loaded?.id === communityId ? loaded : null;
   useDocumentTitle(pageTitle(current?.community?.name, members ? "Members" : "Community"));
   const signedIn = useAuthStore((state) => Boolean(state.token));
-  const headAdmin = useAuthStore((state) => Boolean(state.profile?.isHeadAdmin));
   const joinPrompt =
     current?.community && !current.community.role ? (
       <Organism.JoinCommunityPrompt
@@ -183,35 +171,7 @@ export function CommunityView({ members = false }: { members?: boolean }) {
             community={current.community}
             collapsed={collapsed}
             onImage={canManage(current.community) ? handleImage : undefined}
-            adminAction={
-              headAdmin && (
-                <Organism.VerifyToggle
-                  compact
-                  verified={current.community.isVerified}
-                  onToggle={handleVerified}
-                />
-              )
-            }
-            actions={
-              current.community.role && (
-                <>
-                  <Molecule.SettingsLink
-                    href={`/communities/${current.community.id}/me`}
-                    label="Your settings"
-                    icon={<UserCog size={20} />}
-                  />
-                  {canManage(current.community) && (
-                    <span data-tour="community-settings" className="flex">
-                      <Molecule.SettingsLink
-                        href={`/communities/${current.community.id}/settings`}
-                        label="Community settings"
-                      />
-                    </span>
-                  )}
-                  <Organism.LeaveCommunityButton community={current.community} />
-                </>
-              )
-            }
+            onVerified={handleVerified}
           />
           {!joinPrompt && <Organism.PageTour name="community" />}
           <Organism.LinkedDiscussion

@@ -43,7 +43,6 @@ import { useFriendsStore } from "@/stores/friends-store";
 import { useLayoutStore } from "@/stores/layout-store";
 import { MessageButton } from "./chat-dock";
 import { FriendAction } from "./member-list";
-import { ReportButton } from "./report-content";
 import { PostComposer } from "./post-composer";
 import { PostList } from "./post-list";
 import { ProfileSearchScope } from "./content-search";
@@ -53,7 +52,8 @@ import { TwitchClips } from "./twitch-clips";
 import { PageTour } from "./onboarding";
 import { ProfileLinkedDiscussion } from "./linked-discussion";
 import { PersonRow } from "./person-row";
-import { ProfileAdmin, SuspensionCountdown } from "./profile-admin";
+import { SuspensionCountdown } from "./profile-admin";
+import { ProfileMenu } from "./profile-menu";
 import type { PresenceStatus } from "@/lib/api";
 import { presenceDot, presenceLabel } from "@/lib/presence";
 import { pageTitle } from "@/lib/site-title";
@@ -127,7 +127,6 @@ function ProfileHeader({
   live = false,
   collapsed,
   actions,
-  adminAction,
   notice,
   social,
   images,
@@ -137,7 +136,6 @@ function ProfileHeader({
   live?: boolean;
   collapsed: boolean;
   actions: React.ReactNode;
-  adminAction?: React.ReactNode;
   notice?: React.ReactNode;
   social?: React.ReactNode;
   images?: ProfileImages;
@@ -221,13 +219,8 @@ function ProfileHeader({
         )}
         <div className="pointer-events-auto ml-auto flex shrink-0 items-center gap-2">
           {!collapsed && notice}
-          {adminAction && !collapsed && (
-            <div className="flex items-center gap-1 rounded-lg bg-surface/85 p-0.5 backdrop-blur">
-              {adminAction}
-            </div>
-          )}
           {actions && (
-            <div className="flex items-center gap-1 rounded-lg bg-surface/85 p-0.5 backdrop-blur">
+            <div className="flex items-center gap-1 rounded-lg bg-surface/85 p-0.5 backdrop-blur empty:hidden">
               {actions}
             </div>
           )}
@@ -827,50 +820,47 @@ export function UserProfile({ username }: { username: string }) {
         notice={
           profile.suspension ? <SuspensionCountdown suspension={profile.suspension} /> : null
         }
-        adminAction={
-          me?.isHeadAdmin || canSuspend ? (
-            <ProfileAdmin
-              username={profile.username}
-              name={displayName(profile)}
-              isVerified={profile.isVerified}
-              isAdmin={profile.isAdmin}
-              suspension={profile.suspension ?? null}
-              twoFactorEnabled={profile.twoFactorEnabled ?? null}
-              canVerify={Boolean(me?.isHeadAdmin)}
-              canChangeAdmin={Boolean(me?.isHeadAdmin) && !isSelf && !profile.isHeadAdmin}
-              canSuspend={canSuspend}
-              canResetTwoFactor={canSuspend}
-              onVerify={handleVerified}
-              onAdminChange={(isAdmin) =>
-                setLoaded((current) =>
-                  current?.profile
-                    ? { ...current, profile: { ...current.profile, isAdmin } }
-                    : current,
-                )
-              }
-              onSuspensionChange={(suspension) =>
-                setLoaded((current) =>
-                  current?.profile
-                    ? { ...current, profile: { ...current.profile, suspension } }
-                    : current,
-                )
-              }
-              onTwoFactorReset={() =>
-                setLoaded((current) =>
-                  current?.profile
-                    ? { ...current, profile: { ...current.profile, twoFactorEnabled: false } }
-                    : current,
-                )
-              }
-            />
-          ) : null
-        }
         actions={
-          isSelf ? (
-            <Molecule.SettingsLink href="/settings" label="Profile settings" />
-          ) : (
-            me && <ReportButton type="user" id={profile.userId} ownerId={profile.userId} />
-          )
+          <ProfileMenu
+            userId={profile.userId}
+            isSelf={isSelf}
+            canReport={Boolean(me) && !isSelf}
+            admin={
+              me?.isHeadAdmin || canSuspend
+                ? {
+                    username: profile.username,
+                    name: displayName(profile),
+                    isVerified: profile.isVerified,
+                    isAdmin: profile.isAdmin,
+                    suspension: profile.suspension ?? null,
+                    twoFactorEnabled: profile.twoFactorEnabled ?? null,
+                    canVerify: Boolean(me?.isHeadAdmin),
+                    canChangeAdmin: Boolean(me?.isHeadAdmin) && !isSelf && !profile.isHeadAdmin,
+                    canSuspend,
+                    canResetTwoFactor: canSuspend,
+                    onVerify: handleVerified,
+                    onAdminChange: (isAdmin) =>
+                      setLoaded((current) =>
+                        current?.profile
+                          ? { ...current, profile: { ...current.profile, isAdmin } }
+                          : current,
+                      ),
+                    onSuspensionChange: (suspension) =>
+                      setLoaded((current) =>
+                        current?.profile
+                          ? { ...current, profile: { ...current.profile, suspension } }
+                          : current,
+                      ),
+                    onTwoFactorReset: () =>
+                      setLoaded((current) =>
+                        current?.profile
+                          ? { ...current, profile: { ...current.profile, twoFactorEnabled: false } }
+                          : current,
+                      ),
+                  }
+                : undefined
+            }
+          />
         }
       />
       <ProfileTabs profile={profile} tab={tab} />

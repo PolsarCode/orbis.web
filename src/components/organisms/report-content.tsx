@@ -23,7 +23,7 @@ const nouns: Record<ContentReportTarget, string> = {
   community: "community",
 };
 
-function ReportModal({
+export function ReportModal({
   type,
   id,
   open,

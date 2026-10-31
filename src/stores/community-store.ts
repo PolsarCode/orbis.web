@@ -33,6 +33,7 @@ type CommunityState = {
   deleteCommunity: (communityId: number) => Promise<void>;
   updateLayout: (layout: RailItem[]) => Promise<void>;
   setLive: (communityId: number, live: boolean) => void;
+  setVerified: (communityId: number, isVerified: boolean) => void;
 };
 
 function withJoined(state: CommunityState, community: Community) {
@@ -49,6 +50,12 @@ export const useCommunityStore = create<CommunityState>()((set, get) => ({
     set((state) => ({
       communities: state.communities.map((community) =>
         community.id === communityId ? { ...community, live } : community,
+      ),
+    })),
+  setVerified: (communityId, isVerified) =>
+    set((state) => ({
+      communities: state.communities.map((community) =>
+        community.id === communityId ? { ...community, isVerified } : community,
       ),
     })),
   communities: [],

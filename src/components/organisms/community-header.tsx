@@ -3,13 +3,13 @@
 import { DiscordFilled } from "@ant-design/icons";
 import { Tooltip } from "antd";
 import Image from "next/image";
-import { useRef, type ReactNode } from "react";
+import { useRef } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import type { Community, CommunityImage } from "@/lib/api";
 import { useCommunityStore } from "@/stores/community-store";
 import { CommunityLinkIcons } from "./community-links";
-import { ReportButton } from "./report-content";
+import { CommunityMenu, useCommunityVerified } from "./community-menu";
 
 type ImageChange = (image: CommunityImage, file: File | null) => Promise<unknown>;
 
@@ -111,20 +111,19 @@ function CommunityBadge({
 export function CommunityHeader({
   community,
   collapsed,
-  actions,
-  adminAction,
   onImage,
+  onVerified,
 }: {
   community: Community;
   collapsed: boolean;
-  actions: ReactNode;
-  adminAction?: ReactNode;
   onImage?: ImageChange;
+  onVerified?: (isVerified: boolean) => void;
 }) {
   const storeLive = useCommunityStore(
     (state) => state.communities.find((item) => item.id === community.id)?.live,
   );
   const live = storeLive ?? community.live ?? false;
+  const verified = useCommunityVerified(community);
   const header = useRef<HTMLElement>(null);
 
   function coverAspect() {
@@ -151,12 +150,11 @@ export function CommunityHeader({
           />
           <Atom.Heading className="flex min-w-0 items-center gap-1.5">
             <span className="truncate">{community.name}</span>
-            {community.isVerified && <Atom.VerifiedBadge size="heading" />}
+            {verified && <Atom.VerifiedBadge size="heading" />}
           </Atom.Heading>
           {live && <span className="sr-only">Live on Twitch</span>}
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          {adminAction}
           {onImage && (
             <Molecule.CoverButton
               hasImage={false}
@@ -165,10 +163,7 @@ export function CommunityHeader({
               onRemove={() => onImage("cover", null)}
             />
           )}
-          <div className="flex items-center gap-1">
-            <ReportButton type="community" id={community.id} ownerId={community.ownerId} />
-            {actions}
-          </div>
+          <CommunityMenu community={community} onVerified={onVerified} />
         </div>
       </header>
     );
@@ -213,7 +208,7 @@ export function CommunityHeader({
           <span className={collapsed ? "truncate" : "max-sm:line-clamp-2 sm:truncate"}>
             {community.name}
           </span>
-          {community.isVerified && <Atom.VerifiedBadge size="heading" />}
+          {verified && <Atom.VerifiedBadge size="heading" />}
         </Atom.Heading>
         {live && <span className="sr-only">Live on Twitch</span>}
       </div>
@@ -225,16 +220,8 @@ export function CommunityHeader({
             <CommunityLinkIcons name={community.name} links={community.links} />
           </div>
         )}
-        <div className="pointer-events-auto ml-auto flex shrink-0 items-center gap-2">
-          {adminAction && !collapsed && (
-            <div className="flex items-center gap-1 rounded-lg bg-surface/85 p-0.5 backdrop-blur">
-              {adminAction}
-            </div>
-          )}
-          <div className="flex items-center gap-1 rounded-lg bg-surface/85 p-0.5 backdrop-blur empty:hidden">
-            <ReportButton type="community" id={community.id} ownerId={community.ownerId} />
-            {actions}
-          </div>
+        <div className="pointer-events-auto ml-auto flex shrink-0 items-center rounded-lg bg-surface/85 p-0.5 backdrop-blur empty:hidden">
+          <CommunityMenu community={community} onVerified={onVerified} />
         </div>
       </div>
       {onImage && !collapsed && (
