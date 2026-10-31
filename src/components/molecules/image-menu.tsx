@@ -1,8 +1,10 @@
 "use client";
 
 import { App, Dropdown } from "antd";
-import { ImageUp, Trash2 } from "lucide-react";
+import { ImageUp, MailCheck, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useRef, useState, type ChangeEvent, type ReactNode } from "react";
+import { useReadOnly } from "@/lib/read-only";
 import { ImageCropModal } from "./image-crop-modal";
 
 export type ImageCrop = {
@@ -27,6 +29,7 @@ export function ImageMenu({
   children: (busy: boolean) => ReactNode;
 }) {
   const { message } = App.useApp();
+  const readOnly = useReadOnly();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<{ file: File; aspect: number } | null>(null);
@@ -70,26 +73,38 @@ export function ImageMenu({
         trigger={["click"]}
         disabled={busy}
         menu={{
-          items: [
-            {
-              key: "upload",
-              icon: <ImageUp size={16} />,
-              label: hasImage ? `Change ${noun}` : `Upload ${noun}`,
-            },
-            ...(hasImage
-              ? [
-                  {
-                    key: "remove",
-                    icon: <Trash2 size={16} />,
-                    label: `Remove ${noun}`,
-                    danger: true,
-                  },
-                ]
-              : []),
-          ],
+          items: readOnly
+            ? [
+                {
+                  key: "confirm",
+                  icon: <MailCheck size={16} />,
+                  label: (
+                    <Link href="/settings?tab=account">
+                      Confirm your email first to change images
+                    </Link>
+                  ),
+                },
+              ]
+            : [
+                {
+                  key: "upload",
+                  icon: <ImageUp size={16} />,
+                  label: hasImage ? `Change ${noun}` : `Upload ${noun}`,
+                },
+                ...(hasImage
+                  ? [
+                      {
+                        key: "remove",
+                        icon: <Trash2 size={16} />,
+                        label: `Remove ${noun}`,
+                        danger: true,
+                      },
+                    ]
+                  : []),
+              ],
           onClick: ({ key }) => {
             if (key === "upload") input.current?.click();
-            else run(onRemove);
+            else if (key === "remove") run(onRemove);
           },
         }}
       >
