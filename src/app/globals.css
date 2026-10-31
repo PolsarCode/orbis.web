@@ -69,6 +69,17 @@
   --animate-logo-squish: logo-squish 900ms ease-out;
   --animate-logo-orbit-loop: logo-orbit 1200ms cubic-bezier(0.65, 0, 0.35, 1) infinite;
   --animate-logo-squish-loop: logo-squish 1200ms ease-out infinite;
+  --animate-float: float 6s ease-in-out infinite;
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
 
   @keyframes logo-orbit {
     from {

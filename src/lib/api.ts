@@ -983,6 +983,12 @@ export async function getSpotlight(): Promise<AnimeSpotlight | null> {
   return res.json();
 }
 
+export async function getSpotlights(): Promise<AnimeSpotlight[]> {
+  const res = await api("/library/spotlights");
+  if (!res.ok) return [];
+  return res.json();
+}
+
 export async function getMediaPosts(
   token: string | null,
   type: MediaType,

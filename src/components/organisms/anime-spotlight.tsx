@@ -3,8 +3,11 @@
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { getSpotlight, type AnimeSpotlight as Spotlight } from "@/lib/api";
+import { useEffect, useRef, useState } from "react";
+import { getSpotlight, getSpotlights, type AnimeSpotlight as Spotlight } from "@/lib/api";
+
+const SLIDE_MS = 8000;
+const DRIFT_MS = 14000;
 
 export function useAnimeSpotlight() {
   const [spotlight, setSpotlight] = useState<Spotlight | null>(null);
@@ -89,19 +92,109 @@ export function AnimeSpotlightLink({
   );
 }
 
-export function AnimeSpotlight({
+function slideImage(spotlight: Spotlight) {
+  return spotlight.bannerImage ?? spotlight.coverImage;
+}
+
+const drift: Keyframe[] = [
+  { transform: "scale(1.08) translateX(2.5%)" },
+  { transform: "scale(1.16) translateX(-2.5%)" },
+];
+
+export function AnimeSlideshow({
   overlay,
-  linkClassName,
+  linkClassName = "",
 }: {
   overlay: string;
   linkClassName?: string;
 }) {
-  const spotlight = useAnimeSpotlight();
+  const [slides, setSlides] = useState<Spotlight[]>([]);
+  const [index, setIndex] = useState(0);
+  const [loaded, setLoaded] = useState<string[]>([]);
+  const frames = useRef(new Map<string, HTMLDivElement>());
+  const count = slides.length;
+  const next = count > 0 ? (index + 1) % count : 0;
+  const previous = count > 0 ? (index - 1 + count) % count : 0;
+  const nextImage = count > 1 ? slideImage(slides[next]) : null;
+  const nextReady = nextImage !== null && loaded.includes(nextImage);
+
+  useEffect(() => {
+    let active = true;
+    getSpotlights()
+      .then((list) => {
+        const usable = list.filter((spotlight) => slideImage(spotlight));
+        if (!active || usable.length === 0) return;
+        setSlides(usable);
+        setIndex(Math.floor(Math.random() * usable.length));
+      })
+      .catch(() => null);
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const current = slides[index];
+    const frame = current && frames.current.get(current.sourceId);
+    if (!frame || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    frame.animate(drift, { duration: DRIFT_MS, easing: "linear", fill: "forwards" });
+  }, [index, slides]);
+
+  useEffect(() => {
+    if (!nextReady) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = setTimeout(() => setIndex(next), SLIDE_MS);
+    return () => clearTimeout(timer);
+  }, [index, next, nextReady]);
+
+  const shown = slides.flatMap((spotlight, position) => {
+    const src = slideImage(spotlight);
+    if (!src || ![previous, index, next].includes(position)) return [];
+    return [{ spotlight, src, visible: position === index && loaded.includes(src) }];
+  });
 
   return (
     <>
-      <AnimeBackdrop spotlight={spotlight} overlay={overlay} />
-      <AnimeSpotlightLink spotlight={spotlight} className={linkClassName} />
+      <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden">
+        {shown.map(({ spotlight, src, visible }) => (
+          <div
+            key={spotlight.sourceId}
+            ref={(element) => {
+              if (element) frames.current.set(spotlight.sourceId, element);
+              else frames.current.delete(spotlight.sourceId);
+            }}
+            style={{ transform: "scale(1.08) translateX(2.5%)" }}
+            className={`absolute inset-0 transition-opacity duration-[1500ms] ease-in-out motion-reduce:transition-none ${
+              visible ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            <Image
+              src={src}
+              alt=""
+              fill
+              unoptimized
+              loading="eager"
+              sizes="100vw"
+              onLoad={() =>
+                setLoaded((current) => (current.includes(src) ? current : [...current, src]))
+              }
+              className="object-cover"
+            />
+          </div>
+        ))}
+        <div className={`absolute inset-0 ${overlay}`} />
+      </div>
+      {shown.map(({ spotlight, visible }) => (
+        <div
+          key={spotlight.sourceId}
+          inert={!visible}
+          className={`transition-opacity duration-[1500ms] ease-in-out motion-reduce:transition-none ${linkClassName} ${
+            visible ? "opacity-100" : "pointer-events-none opacity-0"
+          }`}
+        >
+          <AnimeSpotlightLink spotlight={spotlight} />
+        </div>
+      ))}
     </>
   );
 }

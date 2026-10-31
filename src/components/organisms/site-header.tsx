@@ -6,7 +6,6 @@ import * as Atom from "@atom";
 import { SidePanelOpener } from "./side-panel";
 
 const sections = [
-  { id: "statistics", label: "Statistics" },
   { id: "communities", label: "Communities" },
   { id: "people", label: "People" },
   { id: "features", label: "Features" },
