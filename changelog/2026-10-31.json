@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-31",
+  "versions": ["v0.91.0", "v0.92.0", "v0.92.1", "v0.93.0", "v0.94.0", "v0.94.1", "v0.94.2"],
+  "entries": [
+    {
+      "type": "new",
+      "title": "Two-factor sign-in",
+      "description": "You can turn on two-factor sign-in in Security settings, so logging in with your password also asks for a code from an authenticator app. Recovery codes let you get back in if you lose your phone.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Discover trending anime, manga, and games",
+      "description": "Browse what’s trending, new this season, top rated, and coming soon right from Home and the landing page, and add titles to your library straight from the list.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Leave a community",
+      "description": "You can leave a community from its header or the community menu in the sidebar. If it’s private, you’ll need a new invite to join again.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "improved",
+      "title": "A fresh landing page",
+      "description": "The landing page now opens with a slideshow of featured anime and shows live stats about the Orbis community.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "improved",
+      "title": "Clearer note when you can’t change images yet",
+      "description": "If you haven’t confirmed your email, the image menu now tells you to confirm it first and links you to your account settings, instead of letting an upload fail.",
+      "platforms": ["web"]
+    }
+  ]
+}
