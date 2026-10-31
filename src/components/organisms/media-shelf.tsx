@@ -350,38 +350,45 @@ export function MediaShelf({
             </section>
           ))
         ) : (
-          <ShelfItems
-            items={rowItems}
-            list={list}
-            grid={false}
-            cardClassName={cardClassName}
-            onEntry={onEntry}
-            rowRef={row}
-            onScroll={updateEdges}
-          />
+          <div className="relative">
+            <ShelfItems
+              items={rowItems}
+              list={list}
+              grid={false}
+              cardClassName={cardClassName}
+              onEntry={onEntry}
+              rowRef={row}
+              onScroll={updateEdges}
+            />
+            {edges.back && (
+              <span className="absolute top-1/2 left-1 -translate-y-1/2 max-sm:hidden">
+                <Atom.Button
+                  variant="secondary"
+                  shape="circle"
+                  size="small"
+                  aria-label="Previous"
+                  onClick={() => scroll(-1)}
+                  icon={<ChevronLeft size={14} />}
+                  className="shadow-md"
+                />
+              </span>
+            )}
+            {edges.forward && (
+              <span className="absolute top-1/2 right-1 -translate-y-1/2 max-sm:hidden">
+                <Atom.Button
+                  variant="secondary"
+                  shape="circle"
+                  size="small"
+                  aria-label="Next"
+                  onClick={() => scroll(1)}
+                  icon={<ChevronRight size={14} />}
+                  className="shadow-md"
+                />
+              </span>
+            )}
+          </div>
         )}
       </div>
-      {!grid && (
-        <div className="flex items-center justify-between max-sm:hidden">
-          <Atom.Button
-            variant="secondary"
-            disabled={!edges.back}
-            onClick={() => scroll(-1)}
-            icon={<ChevronLeft size={16} />}
-          >
-            Previous
-          </Atom.Button>
-          <Atom.Button
-            variant="secondary"
-            disabled={!edges.forward}
-            onClick={() => scroll(1)}
-            icon={<ChevronRight size={16} />}
-            iconPlacement="end"
-          >
-            Next
-          </Atom.Button>
-        </div>
-      )}
     </section>
   );
 }
