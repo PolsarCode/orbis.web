@@ -1,0 +1,30 @@
+{
+  "date": "2026-11-01",
+  "versions": ["v0.95.0", "v0.95.1", "v0.96.0"],
+  "entries": [
+    {
+      "type": "new",
+      "title": "Community forums",
+      "description": "Communities now have a forum with categories, where you can start threads and reply to others. Community managers can set up the categories in community settings.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "improved",
+      "title": "See the latest library updates on the landing page",
+      "description": "The landing page now shows what people on Orbis just started, finished, or caught up on, so you can see what everyone's into right now.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "improved",
+      "title": "Community and profile options in one menu",
+      "description": "Settings, reporting, and leaving a community are now gathered in a single options menu on community pages and profiles, keeping the header tidy.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "improved",
+      "title": "Easier sign-in code entry",
+      "description": "When you enter a two-factor code, each digit gets its own box, so it's easier to type or paste the code from your authenticator app.",
+      "platforms": ["web"]
+    }
+  ]
+}
