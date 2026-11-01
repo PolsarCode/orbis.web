@@ -1,6 +1,6 @@
 "use client";
 
-import { MessagesSquare, Settings2 } from "lucide-react";
+import { MessagesSquare, Settings2, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import * as Atom from "@atom";
@@ -12,7 +12,15 @@ import { useDocumentTitle } from "@/lib/use-document-title";
 import { useAuthStore } from "@/stores/auth-store";
 import { categoryHref, sectionAnchor, threadHref, useForum } from "./forum-shared";
 
-function CategoryRow({ category, communityId }: { category: ForumCategory; communityId: number }) {
+function CategoryRow({
+  category,
+  communityId,
+  adminOnly,
+}: {
+  category: ForumCategory;
+  communityId: number;
+  adminOnly: boolean;
+}) {
   const threads = `${category.threadCount} ${category.threadCount === 1 ? "thread" : "threads"}`;
 
   return (
@@ -33,6 +41,12 @@ function CategoryRow({ category, communityId }: { category: ForumCategory; commu
           </Link>
           {category.description && (
             <span className="line-clamp-2 text-xs text-muted">{category.description}</span>
+          )}
+          {adminOnly && (
+            <span className="flex items-center gap-1 text-xs text-muted">
+              <ShieldCheck size={12} aria-hidden className="text-accent" />
+              Only admins start threads
+            </span>
           )}
           <span className="text-xs text-muted sm:hidden">{threads}</span>
         </span>
@@ -60,11 +74,13 @@ function CategoryList({
   title,
   categories,
   communityId,
+  sectionAdminOnly = false,
 }: {
   id?: string;
   title?: string;
   categories: ForumCategory[];
   communityId: number;
+  sectionAdminOnly?: boolean;
 }) {
   return (
     <section
@@ -79,7 +95,12 @@ function CategoryList({
       )}
       <ul className="flex flex-col divide-y divide-divider">
         {categories.map((category) => (
-          <CategoryRow key={category.id} category={category} communityId={communityId} />
+          <CategoryRow
+            key={category.id}
+            category={category}
+            communityId={communityId}
+            adminOnly={sectionAdminOnly || category.adminOnly}
+          />
         ))}
       </ul>
     </section>
@@ -180,6 +201,7 @@ export function ForumIndex() {
           title={section.name}
           categories={items}
           communityId={community.id}
+          sectionAdminOnly={section.adminOnly}
         />
       ))}
     </div>

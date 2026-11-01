@@ -2743,13 +2743,14 @@ export async function disconnectSteam(token: string): Promise<void> {
   if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t disconnect Steam. Please try again."));
 }
 
-export type ForumSection = { id: number; name: string };
+export type ForumSection = { id: number; name: string; adminOnly: boolean };
 
 export type ForumCategory = {
   id: number;
   sectionId: number | null;
   name: string;
   description: string;
+  adminOnly: boolean;
   threadCount: number;
   latest: { id: number; title: string; lastPostAt: string } | null;
 };
@@ -2769,10 +2770,14 @@ export type ForumThreadSummary = {
 
 export type ForumIndex = { sections: ForumSection[]; categories: ForumCategory[] };
 
-export type ForumCategoryRef = { id: number; name: string; section: ForumSection | null };
+export type ForumCategoryRef = {
+  id: number;
+  name: string;
+  section: Pick<ForumSection, "id" | "name"> | null;
+};
 
 export type ForumThreadPage = NumberedPage<ForumThreadSummary> & {
-  category: ForumCategoryRef & { description: string };
+  category: ForumCategoryRef & { description: string; adminOnly: boolean };
   pinned: ForumThreadSummary[];
   canPost: boolean;
   canManage: boolean;
@@ -2870,14 +2875,14 @@ export async function updateForumSection(
   token: string,
   communityId: number,
   sectionId: number,
-  name: string,
+  changes: { name?: string; adminOnly?: boolean },
 ): Promise<ForumSection> {
   const res = await forumWrite(
     token,
     forumPath(communityId, `sections/${sectionId}`),
     "PATCH",
     "Could not save the section.",
-    { name },
+    changes,
   );
   return res.json();
 }
@@ -2928,8 +2933,8 @@ export async function updateForumCategory(
   token: string,
   communityId: number,
   categoryId: number,
-  changes: { name?: string; description?: string; sectionId?: number | null },
-): Promise<Pick<ForumCategory, "id" | "sectionId" | "name" | "description">> {
+  changes: { name?: string; description?: string; sectionId?: number | null; adminOnly?: boolean },
+): Promise<Pick<ForumCategory, "id" | "sectionId" | "name" | "description" | "adminOnly">> {
   const res = await forumWrite(
     token,
     forumPath(communityId, `categories/${categoryId}`),

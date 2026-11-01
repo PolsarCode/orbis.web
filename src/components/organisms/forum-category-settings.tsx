@@ -24,7 +24,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { App, Input, Select, Tooltip } from "antd";
-import { GripVertical, Lock, Pencil, Plus, Trash2 } from "lucide-react";
+import { GripVertical, Lock, Pencil, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
@@ -161,12 +161,14 @@ function IconButton({
   label,
   disabled,
   danger = false,
+  active,
   onClick,
   children,
 }: {
   label: string;
   disabled?: boolean;
   danger?: boolean;
+  active?: boolean;
   onClick: () => void;
   children: ReactNode;
 }) {
@@ -175,11 +177,12 @@ function IconButton({
       <button
         type="button"
         aria-label={label}
+        aria-pressed={active}
         disabled={disabled}
         onClick={onClick}
         className={`icon-button h-8 w-8 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 ${
           danger ? "hover:text-danger" : ""
-        }`}
+        } ${active ? "bg-accent-soft text-accent" : ""}`}
       >
         {children}
       </button>
@@ -187,17 +190,42 @@ function IconButton({
   );
 }
 
+function AdminOnlyBadge({ from }: { from?: string }) {
+  return (
+    <span className="inline-flex w-fit items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-semibold text-accent">
+      <ShieldCheck size={12} aria-hidden />
+      {from ? `Admins only, from ${from}` : "Admins only"}
+    </span>
+  );
+}
+
 function RowActions({
   readOnly,
+  adminOnly,
+  onToggleAdminOnly,
   onEdit,
   onDelete,
 }: {
   readOnly: boolean;
+  adminOnly: boolean;
+  onToggleAdminOnly: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
   return (
     <div className="flex shrink-0 items-center">
+      <IconButton
+        label={
+          adminOnly
+            ? "Only owners and admins can start threads here. Click to let members start them too."
+            : "Only let owners and admins start threads here"
+        }
+        active={adminOnly}
+        disabled={readOnly}
+        onClick={onToggleAdminOnly}
+      >
+        <ShieldCheck size={16} />
+      </IconButton>
       <IconButton label="Edit" disabled={readOnly} onClick={onEdit}>
         <Pencil size={16} />
       </IconButton>
@@ -297,7 +325,9 @@ function SectionSettings({
     setPending(true);
     setError(null);
     try {
-      const updated = await updateForumSection(forumToken(), communityId, editing.id, editing.name);
+      const updated = await updateForumSection(forumToken(), communityId, editing.id, {
+        name: editing.name,
+      });
       onChange({
         ...forum,
         sections: sections.map((section) => (section.id === updated.id ? updated : section)),
@@ -307,6 +337,20 @@ function SectionSettings({
       setError(errorText(reason));
     } finally {
       setPending(false);
+    }
+  }
+
+  async function toggleAdminOnly(section: ForumSection) {
+    const adminOnly = !section.adminOnly;
+    onChange({
+      ...forum,
+      sections: sections.map((item) => (item.id === section.id ? { ...item, adminOnly } : item)),
+    });
+    try {
+      await updateForumSection(forumToken(), communityId, section.id, { adminOnly });
+    } catch (reason) {
+      onChange(forum);
+      message.error(errorText(reason));
     }
   }
 
@@ -403,11 +447,14 @@ function SectionSettings({
                     </form>
                   ) : (
                     <>
-                      <span className="min-w-0 flex-1 self-center truncate text-sm font-semibold">
-                        {section.name}
-                      </span>
+                      <div className="flex min-w-0 flex-1 flex-col gap-1 self-center">
+                        <span className="truncate text-sm font-semibold">{section.name}</span>
+                        {section.adminOnly && <AdminOnlyBadge />}
+                      </div>
                       <RowActions
                         readOnly={readOnly}
+                        adminOnly={section.adminOnly}
+                        onToggleAdminOnly={() => toggleAdminOnly(section)}
                         onEdit={() => setEditing({ id: section.id, name: section.name })}
                         onDelete={() => remove(section)}
                       />
@@ -578,6 +625,20 @@ function CategorySettings({
     }
   }
 
+  async function toggleAdminOnly(category: ForumCategory) {
+    const adminOnly = !category.adminOnly;
+    onChange({
+      ...forum,
+      categories: categories.map((item) => (item.id === category.id ? { ...item, adminOnly } : item)),
+    });
+    try {
+      await updateForumCategory(forumToken(), communityId, category.id, { adminOnly });
+    } catch (reason) {
+      onChange(forum);
+      message.error(errorText(reason));
+    }
+  }
+
   async function add(event: FormEvent) {
     event.preventDefault();
     if (!adding.name.trim()) return;
@@ -713,9 +774,16 @@ function CategorySettings({
                         <span className="text-xs text-muted">
                           {category.threadCount} {category.threadCount === 1 ? "thread" : "threads"}
                         </span>
+                        {category.adminOnly ? (
+                          <AdminOnlyBadge />
+                        ) : (
+                          group.section?.adminOnly && <AdminOnlyBadge from={group.section.name} />
+                        )}
                       </div>
                       <RowActions
                         readOnly={readOnly}
+                        adminOnly={category.adminOnly}
+                        onToggleAdminOnly={() => toggleAdminOnly(category)}
                         onEdit={() =>
                           setEditing({
                             id: category.id,
