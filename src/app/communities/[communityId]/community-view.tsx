@@ -1,9 +1,9 @@
 "use client";
 
-import { Clapperboard, Globe, Lock, Newspaper } from "lucide-react";
+import { Clapperboard, Globe, Lock, MessagesSquare, Newspaper } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useEffectEvent, useState, type UIEvent } from "react";
+import { useEffect, useEffectEvent, useState, type ReactNode, type UIEvent } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import * as Organism from "@organism";
@@ -24,19 +24,37 @@ type Loaded = { id: string; community: Community | null; failed?: boolean };
 
 const tabs = [
   { value: "feed", label: "Posts", icon: <Newspaper size={16} /> },
+  { value: "forum", label: "Forum", icon: <MessagesSquare size={16} /> },
   { value: "clips", label: "Clips", icon: <Clapperboard size={16} /> },
 ] as const;
 
 const pages = ["feed", "clips"] as const;
 
-type Tab = (typeof pages)[number] | "members";
+type Tab = (typeof pages)[number] | "members" | "forum";
 
-export function CommunityView({ members = false }: { members?: boolean }) {
+function tabHref(communityId: number, tab: Tab) {
+  const base = `/communities/${communityId}`;
+  if (tab === "feed") return base;
+  if (tab === "forum") return `${base}/forum`;
+  return `${base}?tab=${tab}`;
+}
+
+export function CommunityView({
+  members = false,
+  forum,
+}: {
+  members?: boolean;
+  forum?: ReactNode;
+}) {
   const { communityId } = useParams<{ communityId: string }>();
   const router = useRouter();
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const requested = useSearchParams().get("tab");
-  const tab: Tab = members ? "members" : (pages.find((value) => value === requested) ?? "feed");
+  const tab: Tab = members
+    ? "members"
+    : forum
+      ? "forum"
+      : (pages.find((value) => value === requested) ?? "feed");
   const [tabsRef, tabsFade] = useTabScroller<HTMLElement>(tab);
   const [collapsed, setCollapsed] = useState(false);
   const setCommunityImage = useCommunityStore(
@@ -130,7 +148,9 @@ export function CommunityView({ members = false }: { members?: boolean }) {
   }, [communityId]);
 
   const current = loaded?.id === communityId ? loaded : null;
-  useDocumentTitle(pageTitle(current?.community?.name, members ? "Members" : "Community"));
+  useDocumentTitle(
+    forum ? null : pageTitle(current?.community?.name, members ? "Members" : "Community"),
+  );
   const signedIn = useAuthStore((state) => Boolean(state.token));
   const joinPrompt =
     current?.community && !current.community.role ? (
@@ -174,10 +194,12 @@ export function CommunityView({ members = false }: { members?: boolean }) {
             onVerified={handleVerified}
           />
           {!joinPrompt && <Organism.PageTour name="community" />}
-          <Organism.LinkedDiscussion
-            key={`linked-${current.community.id}`}
-            communityId={current.community.id}
-          />
+          {!forum && (
+            <Organism.LinkedDiscussion
+              key={`linked-${current.community.id}`}
+              communityId={current.community.id}
+            />
+          )}
           <nav
             ref={tabsRef}
             style={tabsFade}
@@ -193,9 +215,8 @@ export function CommunityView({ members = false }: { members?: boolean }) {
               .map(({ value, label, icon }) => (
                 <Link
                   key={value}
-                  href={`/communities/${current.community!.id}${
-                    value === "feed" ? "" : `?tab=${value}`
-                  }`}
+                  href={tabHref(current.community!.id, value)}
+                  data-tour={value === "forum" ? "community-forum" : undefined}
                   aria-current={tab === value ? "page" : undefined}
                   className={`focus-ring -mb-px flex shrink-0 items-center gap-2 rounded-t-sm border-b-2 px-1 py-3 text-sm transition-colors ${
                     tab === value
@@ -237,7 +258,11 @@ export function CommunityView({ members = false }: { members?: boolean }) {
               }
             />
             <Template.PageColumn onScroll={handleScroll}>
-              {tab === "clips" &&
+              {forum ? (
+                <Organism.ForumProvider community={current.community} joinPrompt={joinPrompt}>
+                  {forum}
+                </Organism.ForumProvider>
+              ) : tab === "clips" &&
               current.community.twitchLogin &&
               current.community.showTwitchClips !== false ? (
                 <Organism.TwitchClips

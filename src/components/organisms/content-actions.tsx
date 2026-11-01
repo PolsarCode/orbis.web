@@ -7,11 +7,18 @@ import { useReadOnly } from "@/lib/read-only";
 import { useAuthStore } from "@/stores/auth-store";
 import { ReportButton } from "./report-content";
 
-type EditableType = "post" | "comment";
+type EditableType = "post" | "comment" | "forum_post";
+
+const nouns: Record<EditableType, string> = {
+  post: "post",
+  comment: "comment",
+  forum_post: "post",
+};
 
 const deleteNotes: Record<EditableType, string> = {
   post: "Its comments are deleted with it. This can’t be undone.",
   comment: "This can’t be undone. If it has replies, they stay.",
+  forum_post: "This can’t be undone.",
 };
 
 export function ContentActions({
@@ -21,6 +28,7 @@ export function ContentActions({
   canDelete = false,
   onEdit,
   onDelete,
+  deleteNote,
   pin,
   variant = "icon",
   className = "",
@@ -31,6 +39,7 @@ export function ContentActions({
   canDelete?: boolean;
   onEdit?: () => void;
   onDelete: () => Promise<void>;
+  deleteNote?: string;
   pin?: { pinned: boolean; onToggle: () => Promise<void> };
   variant?: "icon" | "text";
   className?: string;
@@ -49,8 +58,8 @@ export function ContentActions({
 
   function confirmDelete() {
     modal.confirm({
-      title: `Delete this ${type}?`,
-      content: deleteNotes[type],
+      title: `Delete this ${nouns[type]}?`,
+      content: deleteNote ?? deleteNotes[type],
       okText: "Delete",
       okButtonProps: { danger: true },
       cancelText: "Cancel",
@@ -122,7 +131,7 @@ export function ContentActions({
             key === "pin" ? togglePin() : key === "edit" ? onEdit?.() : confirmDelete(),
         }}
       >
-        <button type="button" aria-label={`More options for this ${type}`} className="icon-button cursor-pointer">
+        <button type="button" aria-label={`More options for this ${nouns[type]}`} className="icon-button cursor-pointer">
           <MoreHorizontal size={16} />
         </button>
       </Dropdown>

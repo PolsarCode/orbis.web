@@ -1,7 +1,7 @@
 "use client";
 
 import { Input, Modal, Switch } from "antd";
-import { Link2, ShieldCheck, SlidersHorizontal, Ticket } from "lucide-react";
+import { Link2, MessagesSquare, ShieldCheck, SlidersHorizontal, Ticket } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import * as Atom from "@atom";
@@ -37,6 +37,7 @@ import { useCommunityStore } from "@/stores/community-store";
 import { linkPlatforms, normalizeLink } from "./community-links";
 import { DiscordChannelSettings } from "./discord-channel-settings";
 import { DISCORD_CHECK_MS, DiscordWidgetSteps } from "./discord-setup";
+import { ForumCategorySettings } from "./forum-category-settings";
 import { OAuthIcon } from "./oauth-buttons";
 import { SettingsTabs } from "./settings-tabs";
 
@@ -885,6 +886,12 @@ export function CommunitySettings({
               {community.role === "owner" && <DangerZone community={community} />}
             </>
           ),
+        },
+        {
+          key: "forum",
+          label: "Forum",
+          icon: <MessagesSquare size={16} aria-hidden />,
+          content: <ForumCategorySettings community={community} />,
         },
         {
           key: "admins",

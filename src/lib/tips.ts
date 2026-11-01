@@ -10,6 +10,11 @@ export type Tip = {
 
 export const tips: Tip[] = [
   {
+    id: "community-forums",
+    title: "Talk it through in the forum",
+    body: "Every community has a Forum tab for longer conversations. Pick a category, start a thread, and quote a reply to answer someone directly.",
+  },
+  {
     id: "steam",
     title: "Bring your Steam games into Orbis",
     body: "Connect Steam to add your games, playtime, and achievements to your library. Friends and community members can also see what you’re playing.",

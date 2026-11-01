@@ -59,6 +59,7 @@ type PostComposerProps = {
   onPost: (content: string, linkUrl?: string) => Promise<void>;
   target?: ReactNode;
   placeholder?: string;
+  label?: string;
   submitLabel?: string;
   autoFocus?: boolean;
   onCancel?: () => void;
@@ -72,6 +73,7 @@ export function PostComposer({
   onPost,
   target,
   placeholder = "Share something with the community…",
+  label = "Write a post",
   submitLabel = "Post",
   autoFocus = false,
   onCancel,
@@ -113,7 +115,7 @@ export function PostComposer({
       handleKeyDown: (_view, event) => mentionKeys.current(event),
       attributes: {
         class: "rich-text min-h-12 outline-none",
-        "aria-label": "Write a post",
+        "aria-label": label,
         role: "textbox",
         "aria-multiline": "true",
       },

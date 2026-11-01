@@ -1,0 +1,153 @@
+"use client";
+
+import { Pagination } from "antd";
+import { ChevronRight } from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { createContext, useContext, type ReactNode } from "react";
+import type { Community, ForumCategoryRef } from "@/lib/api";
+import { useAuthStore } from "@/stores/auth-store";
+
+type ForumContextValue = { community: Community; joinPrompt?: ReactNode };
+
+const ForumContext = createContext<ForumContextValue | null>(null);
+
+export function ForumProvider({
+  community,
+  joinPrompt,
+  children,
+}: ForumContextValue & { children: ReactNode }) {
+  return <ForumContext value={{ community, joinPrompt }}>{children}</ForumContext>;
+}
+
+export function useForum() {
+  const value = useContext(ForumContext);
+  if (!value) throw new Error("useForum needs a ForumProvider.");
+  return value;
+}
+
+export function forumHref(communityId: number) {
+  return `/communities/${communityId}/forum`;
+}
+
+export function categoryHref(communityId: number, categoryId: number) {
+  return `${forumHref(communityId)}/${categoryId}`;
+}
+
+export function sectionAnchor(sectionId: number) {
+  return `section-${sectionId}`;
+}
+
+export function categoryCrumbs(
+  communityId: number,
+  category: ForumCategoryRef,
+  linkCategory: boolean,
+) {
+  return [
+    { label: "Forum", href: forumHref(communityId) },
+    ...(category.section
+      ? [
+          {
+            label: category.section.name,
+            href: `${forumHref(communityId)}#${sectionAnchor(category.section.id)}`,
+          },
+        ]
+      : []),
+    {
+      label: category.name,
+      href: linkCategory ? categoryHref(communityId, category.id) : undefined,
+    },
+  ];
+}
+
+export function threadHref(communityId: number, threadId: number, postId?: number) {
+  const href = `${forumHref(communityId)}/threads/${threadId}`;
+  return postId === undefined ? href : `${href}?post=${postId}`;
+}
+
+export function forumToken() {
+  const { token } = useAuthStore.getState();
+  if (!token) throw new Error("Please log in again.");
+  return token;
+}
+
+export function scrollColumnToTop(element: HTMLElement | null) {
+  let node = element?.parentElement ?? null;
+  while (node) {
+    const { overflowY } = getComputedStyle(node);
+    if ((overflowY === "auto" || overflowY === "scroll") && node.scrollHeight > node.clientHeight) {
+      node.scrollTop = 0;
+      return;
+    }
+    node = node.parentElement;
+  }
+}
+
+export function positiveParam(value: string | null) {
+  const number = Number(value);
+  return Number.isInteger(number) && number > 0 ? number : undefined;
+}
+
+export function ForumBreadcrumb({ items }: { items: { label: string; href?: string }[] }) {
+  return (
+    <nav aria-label="Breadcrumb">
+      <ol className="flex min-w-0 flex-wrap items-center gap-1 text-xs text-muted">
+        {items.map((item, index) => (
+          <li key={`${index}-${item.label}`} className="flex min-w-0 items-center gap-1">
+            {index > 0 && <ChevronRight size={12} aria-hidden className="shrink-0" />}
+            {item.href ? (
+              <Link
+                href={item.href}
+                className="focus-ring truncate rounded-sm font-semibold transition-colors hover:text-accent"
+              >
+                {item.label}
+              </Link>
+            ) : (
+              <span aria-current="page" className="truncate">
+                {item.label}
+              </span>
+            )}
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
+}
+
+export function ForumPagination({
+  page,
+  pageSize,
+  total,
+}: {
+  page: number;
+  pageSize: number;
+  total: number;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  if (total <= pageSize) return null;
+
+  return (
+    <div className="flex justify-center">
+      <div className="rounded-lg border border-divider bg-surface px-2 py-1">
+        <Pagination
+          align="center"
+          current={page}
+          pageSize={pageSize}
+          total={total}
+          showSizeChanger={false}
+          onChange={(next) => router.push(next === 1 ? pathname : `${pathname}?page=${next}`)}
+        />
+      </div>
+    </div>
+  );
+}
+
+export function ForumEmpty({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="flex flex-col items-center gap-1.5 rounded-lg border border-dashed border-divider bg-surface px-6 py-10 text-center">
+      <p className="font-display text-xl font-bold">{title}</p>
+      <p className="max-w-sm text-[13px] text-muted">{description}</p>
+    </div>
+  );
+}

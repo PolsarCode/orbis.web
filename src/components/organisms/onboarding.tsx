@@ -313,6 +313,12 @@ export const pageTours = {
       description: "Share something with everyone in the community.",
     },
     {
+      target: "community-forum",
+      placement: "bottom",
+      title: "Forum",
+      description: "Start longer conversations by topic. Replies stay in order, and you can quote someone to answer them directly.",
+    },
+    {
       target: "invite",
       placement: "left",
       title: "Invite",

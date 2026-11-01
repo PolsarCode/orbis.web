@@ -446,7 +446,7 @@ export type Comment = {
 
 export type Commentable = { type: FeedEntry["type"]; id: number };
 
-export type Likeable = { type: "post" | "activity" | "comment"; id: number };
+export type Likeable = { type: "post" | "activity" | "comment" | "forum_post"; id: number };
 
 export type LikeResult = { likeCount: number; liked: boolean };
 
@@ -1608,7 +1608,7 @@ export type ReportAdmin = Author & {
   twitchLogin?: string | null;
 };
 
-export type ContentReportTarget = "post" | "comment" | "user" | "community";
+export type ContentReportTarget = "post" | "comment" | "user" | "community" | "forum_post";
 export type ContentReportReason = "spam" | "harassment" | "inappropriate" | "other";
 
 export type ReportedItem = {
@@ -1871,7 +1871,9 @@ export type NotificationType =
   | "report_assigned"
   | "report_comment"
   | "wall_post"
-  | "mention";
+  | "mention"
+  | "forum_reply"
+  | "forum_quote";
 
 export type Notification = {
   id: number;
@@ -2739,4 +2741,381 @@ export async function disconnectSteam(token: string): Promise<void> {
   });
 
   if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t disconnect Steam. Please try again."));
+}
+
+export type ForumSection = { id: number; name: string };
+
+export type ForumCategory = {
+  id: number;
+  sectionId: number | null;
+  name: string;
+  description: string;
+  threadCount: number;
+  latest: { id: number; title: string; lastPostAt: string } | null;
+};
+
+export type ForumThreadSummary = {
+  id: number;
+  categoryId: number;
+  title: string;
+  replyCount: number;
+  lastPostAt: string;
+  createdAt: string;
+  author: Author;
+  pinned: boolean;
+  locked: boolean;
+  lastReply: { author: Author; createdAt: string } | null;
+};
+
+export type ForumIndex = { sections: ForumSection[]; categories: ForumCategory[] };
+
+export type ForumCategoryRef = { id: number; name: string; section: ForumSection | null };
+
+export type ForumThreadPage = NumberedPage<ForumThreadSummary> & {
+  category: ForumCategoryRef & { description: string };
+  pinned: ForumThreadSummary[];
+  canPost: boolean;
+  canManage: boolean;
+};
+
+export type ForumQuote =
+  | { id: number; available: false }
+  | { id: number; available: true; content: string; createdAt: string; author: Author };
+
+export type ForumPost = {
+  id: number;
+  threadId: number;
+  opening: boolean;
+  content: string;
+  likeCount: number;
+  liked: boolean;
+  hiddenAt: string | null;
+  editedAt: string | null;
+  createdAt: string;
+  author: Author;
+  quote: ForumQuote | null;
+  canEdit: boolean;
+  canDelete: boolean;
+};
+
+export type ForumThread = {
+  id: number;
+  categoryId: number;
+  title: string;
+  replyCount: number;
+  lastPostAt: string;
+  createdAt: string;
+  author: Author;
+  category: ForumCategoryRef;
+  pinned: boolean;
+  locked: boolean;
+  canEdit: boolean;
+  canModerate: boolean;
+  canReply: boolean;
+};
+
+export type ForumThreadDetail = NumberedPage<ForumPost> & { thread: ForumThread };
+
+export type ForumSearchResult = Omit<ForumThreadSummary, "lastReply"> & {
+  category: { id: number; name: string };
+};
+
+function forumPath(communityId: number, path: string) {
+  return `/communities/${communityId}/forum/${path}`;
+}
+
+async function forumWrite(
+  token: string,
+  path: string,
+  method: "POST" | "PATCH" | "PUT" | "DELETE",
+  fallback: string,
+  body?: unknown,
+) {
+  const res = await api(path, {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...(body !== undefined && { "Content-Type": "application/json" }),
+    },
+    ...(body !== undefined && { body: JSON.stringify(body) }),
+  });
+  if (!res.ok) throw new Error(await errorMessage(res, fallback));
+  return res;
+}
+
+export async function getForum(token: string | null, communityId: number): Promise<ForumIndex> {
+  const res = await api(`/communities/${communityId}/forum`, {
+    headers: authHeaders(token),
+  });
+  if (!res.ok) throw new Error("Could not load the forum.");
+  return res.json();
+}
+
+export async function createForumSection(
+  token: string,
+  communityId: number,
+  name: string,
+): Promise<ForumSection> {
+  const res = await forumWrite(
+    token,
+    forumPath(communityId, "sections"),
+    "POST",
+    "Could not add the section.",
+    { name },
+  );
+  return res.json();
+}
+
+export async function updateForumSection(
+  token: string,
+  communityId: number,
+  sectionId: number,
+  name: string,
+): Promise<ForumSection> {
+  const res = await forumWrite(
+    token,
+    forumPath(communityId, `sections/${sectionId}`),
+    "PATCH",
+    "Could not save the section.",
+    { name },
+  );
+  return res.json();
+}
+
+export async function reorderForumSections(
+  token: string,
+  communityId: number,
+  ids: number[],
+): Promise<void> {
+  await forumWrite(
+    token,
+    forumPath(communityId, "sections/order"),
+    "PUT",
+    "Could not reorder the sections.",
+    { ids },
+  );
+}
+
+export async function deleteForumSection(
+  token: string,
+  communityId: number,
+  sectionId: number,
+): Promise<void> {
+  await forumWrite(
+    token,
+    forumPath(communityId, `sections/${sectionId}`),
+    "DELETE",
+    "Could not delete the section.",
+  );
+}
+
+export async function createForumCategory(
+  token: string,
+  communityId: number,
+  category: { name: string; description: string; sectionId: number | null },
+): Promise<ForumCategory> {
+  const res = await forumWrite(
+    token,
+    forumPath(communityId, "categories"),
+    "POST",
+    "Could not add the category.",
+    category,
+  );
+  return res.json();
+}
+
+export async function updateForumCategory(
+  token: string,
+  communityId: number,
+  categoryId: number,
+  changes: { name?: string; description?: string; sectionId?: number | null },
+): Promise<Pick<ForumCategory, "id" | "sectionId" | "name" | "description">> {
+  const res = await forumWrite(
+    token,
+    forumPath(communityId, `categories/${categoryId}`),
+    "PATCH",
+    "Could not save the category.",
+    changes,
+  );
+  return res.json();
+}
+
+export async function reorderForumCategories(
+  token: string,
+  communityId: number,
+  ids: number[],
+): Promise<void> {
+  await forumWrite(
+    token,
+    forumPath(communityId, "categories/order"),
+    "PUT",
+    "Could not reorder the categories.",
+    { ids },
+  );
+}
+
+export async function deleteForumCategory(
+  token: string,
+  communityId: number,
+  categoryId: number,
+): Promise<void> {
+  await forumWrite(
+    token,
+    forumPath(communityId, `categories/${categoryId}`),
+    "DELETE",
+    "Could not delete the category.",
+  );
+}
+
+export async function getForumThreads(
+  token: string | null,
+  communityId: number,
+  categoryId: number,
+  page: number,
+): Promise<ForumThreadPage> {
+  const res = await api(
+    withQuery(forumPath(communityId, `categories/${categoryId}/threads`), {
+      page: String(page),
+    }),
+    { headers: authHeaders(token) },
+  );
+  if (res.status === 404) throw new Error("This category doesn’t exist anymore.");
+  if (!res.ok) throw new Error("Could not load the threads.");
+  return res.json();
+}
+
+export async function createForumThread(
+  token: string,
+  communityId: number,
+  categoryId: number,
+  thread: { title: string; content: string },
+): Promise<{ id: number }> {
+  const res = await forumWrite(
+    token,
+    forumPath(communityId, `categories/${categoryId}/threads`),
+    "POST",
+    "Could not start the thread.",
+    thread,
+  );
+  return res.json();
+}
+
+export async function getForumThread(
+  token: string | null,
+  communityId: number,
+  threadId: number,
+  { page, post }: { page?: number; post?: number },
+): Promise<ForumThreadDetail> {
+  const res = await api(
+    withQuery(forumPath(communityId, `threads/${threadId}`), {
+      page: page === undefined ? undefined : String(page),
+      post: post === undefined ? undefined : String(post),
+    }),
+    { headers: authHeaders(token) },
+  );
+  if (res.status === 404) throw new Error("This thread doesn’t exist anymore.");
+  if (!res.ok) throw new Error("Could not load the thread.");
+  return res.json();
+}
+
+export async function updateForumThread(
+  token: string,
+  communityId: number,
+  threadId: number,
+  changes: { title?: string; categoryId?: number },
+): Promise<{ id: number; title: string; categoryId: number }> {
+  const res = await forumWrite(
+    token,
+    forumPath(communityId, `threads/${threadId}`),
+    "PATCH",
+    "Could not save the thread.",
+    changes,
+  );
+  return res.json();
+}
+
+export async function setForumThreadFlag(
+  token: string,
+  communityId: number,
+  threadId: number,
+  flag: "pin" | "lock",
+  on: boolean,
+): Promise<void> {
+  await forumWrite(
+    token,
+    forumPath(communityId, `threads/${threadId}/${flag}`),
+    on ? "PUT" : "DELETE",
+    `Could not ${on ? flag : `un${flag}`} the thread.`,
+  );
+}
+
+export async function deleteForumThread(
+  token: string,
+  communityId: number,
+  threadId: number,
+): Promise<void> {
+  await forumWrite(
+    token,
+    forumPath(communityId, `threads/${threadId}`),
+    "DELETE",
+    "Could not delete the thread.",
+  );
+}
+
+export async function createForumPost(
+  token: string,
+  communityId: number,
+  threadId: number,
+  content: string,
+  quoteId?: number,
+): Promise<{ id: number }> {
+  const res = await forumWrite(
+    token,
+    forumPath(communityId, `threads/${threadId}/posts`),
+    "POST",
+    "Could not post your reply.",
+    { content, quoteId },
+  );
+  return res.json();
+}
+
+export async function updateForumPost(
+  token: string,
+  communityId: number,
+  postId: number,
+  content: string,
+): Promise<ForumPost> {
+  const res = await forumWrite(
+    token,
+    forumPath(communityId, `posts/${postId}`),
+    "PATCH",
+    "Could not save the post.",
+    { content },
+  );
+  return res.json();
+}
+
+export async function deleteForumPost(
+  token: string,
+  communityId: number,
+  postId: number,
+): Promise<void> {
+  await forumWrite(
+    token,
+    forumPath(communityId, `posts/${postId}`),
+    "DELETE",
+    "Could not delete the post.",
+  );
+}
+
+export async function searchForum(
+  token: string | null,
+  communityId: number,
+  query: string,
+): Promise<ForumSearchResult[]> {
+  const res = await api(withQuery(forumPath(communityId, "search"), { q: query }), {
+    headers: authHeaders(token),
+  });
+  if (!res.ok) throw new Error("Could not search the forum.");
+  return res.json();
 }

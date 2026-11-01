@@ -9,7 +9,9 @@ import {
   Inbox,
   CloudOff,
   MessageSquare,
+  MessagesSquare,
   PenLine,
+  Quote,
   Reply,
   UserCheck,
   UserPlus,
@@ -45,6 +47,8 @@ const typeIcons: Record<NotificationType, ReactNode> = {
   report_comment: <MessageSquare size={12} />,
   wall_post: <PenLine size={12} />,
   mention: <AtSign size={12} />,
+  forum_reply: <MessagesSquare size={12} />,
+  forum_quote: <Quote size={12} />,
 };
 
 const filters: { value: NotificationFilter; label: string; icon: ReactNode }[] = [

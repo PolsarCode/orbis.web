@@ -21,6 +21,7 @@ const nouns: Record<ContentReportTarget, string> = {
   comment: "comment",
   user: "profile",
   community: "community",
+  forum_post: "post",
 };
 
 export function ReportModal({

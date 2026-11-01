@@ -1,7 +1,15 @@
 "use client";
 
 import { App } from "antd";
-import { Boxes, CloudOff, Flag, MessageSquare, Newspaper, UserRound } from "lucide-react";
+import {
+  Boxes,
+  CloudOff,
+  Flag,
+  MessageSquare,
+  MessagesSquare,
+  Newspaper,
+  UserRound,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import * as Atom from "@atom";
@@ -23,6 +31,7 @@ const targetStyle: Record<ContentReportTarget, { label: string; icon: ReactNode 
   comment: { label: "Comment", icon: <MessageSquare size={12} /> },
   user: { label: "Profile", icon: <UserRound size={12} /> },
   community: { label: "Community", icon: <Boxes size={12} /> },
+  forum_post: { label: "Forum post", icon: <MessagesSquare size={12} /> },
 };
 
 const reasonLabel = (reason: string) =>

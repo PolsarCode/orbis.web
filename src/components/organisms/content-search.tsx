@@ -1,12 +1,13 @@
 "use client";
 
-import { Newspaper } from "lucide-react";
+import { MessagesSquare, Newspaper } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import * as Atom from "@atom";
 import {
   getMembers,
   searchCommunity,
+  searchForum,
   searchProfile,
   type Member,
   type Post,
@@ -96,33 +97,37 @@ function LinkRow({
 function ContentResults({
   query,
   search,
+  extra,
   sections,
   scope,
   onOpen,
 }: {
   query: string;
   search: (query: string) => Promise<Post[]>;
+  extra?: (query: string) => Promise<Section[]>;
   sections: Section[];
   scope: string;
   onOpen: (item: Post) => void;
 }) {
-  const [results, setResults] = useState<{ query: string; items: Post[] | null } | null>(
-    null,
-  );
+  const [results, setResults] = useState<{
+    query: string;
+    items: Post[] | null;
+    extra: Section[];
+  } | null>(null);
 
   useEffect(() => {
     let ignore = false;
-    search(query)
-      .then((items) => {
-        if (!ignore) setResults({ query, items });
+    Promise.all([search(query), extra ? extra(query).catch(() => []) : []])
+      .then(([items, extraSections]) => {
+        if (!ignore) setResults({ query, items, extra: extraSections });
       })
       .catch(() => {
-        if (!ignore) setResults({ query, items: null });
+        if (!ignore) setResults({ query, items: null, extra: [] });
       });
     return () => {
       ignore = true;
     };
-  }, [search, query]);
+  }, [search, extra, query]);
 
   if (!results || results.query !== query) {
     return (
@@ -136,7 +141,7 @@ function ContentResults({
   }
 
   const posts = results.items;
-  const shown = sections.filter((section) => section.items.length > 0);
+  const shown = [...results.extra, ...sections].filter((section) => section.items.length > 0);
 
   if (posts.length + shown.length === 0) {
     return <p className="py-4 text-center text-sm text-muted">Nothing in {scope} matches “{query}”.</p>;
@@ -166,11 +171,13 @@ function ContentSearchScope({
   name,
   scope,
   search,
+  extra,
   sections,
 }: {
   name: string;
   scope: string;
   search: (query: string) => Promise<Post[]>;
+  extra?: (query: string) => Promise<Section[]>;
   sections: (query: string) => Section[];
 }) {
   return (
@@ -181,6 +188,7 @@ function ContentSearchScope({
           <ContentResults
             query={query}
             search={search}
+            extra={extra}
             sections={sections(query)}
             scope={scope}
             onOpen={openItem}
@@ -203,6 +211,32 @@ export function CommunitySearchScope({
     (query: string) => searchCommunity(useAuthStore.getState().token, communityId, query),
     [communityId],
   );
+  const forumThreads = useCallback(
+    async (query: string): Promise<Section[]> => {
+      const threads = await searchForum(useAuthStore.getState().token, communityId, query);
+      return [
+        {
+          title: "Forum threads",
+          items: threads.map((thread) => (
+            <LinkRow
+              key={thread.id}
+              href={`/communities/${communityId}/forum/threads/${thread.id}`}
+              icon={
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rail-item text-muted">
+                  <MessagesSquare size={16} aria-hidden />
+                </span>
+              }
+              title={thread.title}
+              subtitle={`${thread.category.name} · ${thread.replyCount} ${
+                thread.replyCount === 1 ? "reply" : "replies"
+              }`}
+            />
+          )),
+        },
+      ];
+    },
+    [communityId],
+  );
 
   useEffect(() => {
     const { token } = useAuthStore.getState();
@@ -216,6 +250,7 @@ export function CommunitySearchScope({
       name={communityName}
       scope="this community"
       search={search}
+      extra={forumThreads}
       sections={(query) => [
         {
           title: "Members",
