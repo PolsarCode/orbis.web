@@ -2,7 +2,6 @@ import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, Inter } from "next/font/google";
 import { TopLoadingBar } from "@/components/organisms/top-loading-bar";
-import { wakeServerScript } from "@/lib/api";
 import { desktopScript } from "@/lib/desktop";
 import { authScript } from "@/stores/auth-store";
 import { themeScript } from "@/stores/theme-store";
@@ -59,7 +58,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <head>
         <script
-          dangerouslySetInnerHTML={{ __html: themeScript + authScript + desktopScript + wakeServerScript }}
+          dangerouslySetInnerHTML={{ __html: themeScript + authScript + desktopScript }}
         />
       </head>
       <body className="min-h-full flex flex-col">

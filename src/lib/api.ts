@@ -2,8 +2,6 @@ import type { ThemeMode } from "@/stores/theme-store";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-export const wakeServerScript = `fetch(${JSON.stringify(`${API_URL}/health`)}).catch(function(){});`;
-
 export type LoginCredentials = { identifier: string; password: string; turnstileToken?: string };
 
 export type SignupDetails = {
