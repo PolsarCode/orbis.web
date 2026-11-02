@@ -78,10 +78,14 @@ function QuoteCard({ quote, href }: { quote: ForumQuote; href: string }) {
         </Link>{" "}
         wrote:
       </figcaption>
-      <blockquote
-        className="rich-text line-clamp-4 text-[13px]"
-        dangerouslySetInnerHTML={{ __html: quote.content }}
-      />
+      {quote.content ? (
+        <blockquote
+          className="rich-text line-clamp-4 text-[13px]"
+          dangerouslySetInnerHTML={{ __html: quote.content }}
+        />
+      ) : (
+        quote.linkUrl && <p className="truncate text-[13px] text-muted">{quote.linkUrl}</p>
+      )}
     </figure>
   );
 }
@@ -120,8 +124,8 @@ function ForumPostCard({
   });
   const target = { communityId, userId: post.author.id, name: authorName };
 
-  async function save(content: string) {
-    onChange(await updateForumPost(forumToken(), communityId, post.id, content));
+  async function save(content: string, linkUrl?: string) {
+    onChange(await updateForumPost(forumToken(), communityId, post.id, content, linkUrl));
   }
 
   async function remove() {
@@ -196,15 +200,22 @@ function ForumPostCard({
       {editing ? (
         <PostComposer
           autoFocus
+          linkPreview
           label="Edit your post"
           initialContent={post.content}
+          initialLink={post.linkUrl}
           submitLabel="Save"
           onPost={save}
           onPosted={() => setEditing(false)}
           onCancel={() => setEditing(false)}
         />
       ) : (
-        <div className="rich-text" dangerouslySetInnerHTML={{ __html: post.content }} />
+        <>
+          {post.content && (
+            <div className="rich-text" dangerouslySetInnerHTML={{ __html: post.content }} />
+          )}
+          {post.linkUrl && <Molecule.LinkPreview url={post.linkUrl} />}
+        </>
       )}
       <div className="flex items-center gap-4">
         <Molecule.LikeButton
@@ -613,8 +624,15 @@ export function ForumThreadView() {
     composer.current?.scrollIntoView({ block: "center", behavior: "smooth" });
   }
 
-  async function reply(content: string) {
-    const { id } = await createForumPost(forumToken(), community.id, thread.id, content, quoting?.id);
+  async function reply(content: string, linkUrl?: string) {
+    const { id } = await createForumPost(
+      forumToken(),
+      community.id,
+      thread.id,
+      content,
+      quoting?.id,
+      linkUrl,
+    );
     setQuoting(null);
     router.push(threadHref(community.id, thread.id, id));
   }
@@ -690,6 +708,7 @@ export function ForumThreadView() {
       <div ref={composer} className="scroll-mt-4">
         {thread.canReply ? (
           <PostComposer
+            linkPreview
             label="Write a reply"
             placeholder="Write a reply…"
             submitLabel="Reply"

@@ -1,7 +1,7 @@
 "use client";
 
 import { Pagination, Tooltip } from "antd";
-import { ChevronRight, MessagesSquare, ShieldCheck } from "lucide-react";
+import { ChevronRight, Megaphone, MessagesSquare, ShieldCheck } from "lucide-react";
 import { DynamicIcon, iconNames, type IconName } from "lucide-react/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -125,7 +125,9 @@ export function CategoryIcon({
 export const ADMIN_ONLY_NOTE =
   "Only owners and admins can start threads here. Members can still reply.";
 
-export function AdminOnlyMark({ label = ADMIN_ONLY_NOTE, size = 14 }: { label?: string; size?: number }) {
+export const FEED_NOTE = "New threads here are also posted to the community feed.";
+
+function CategoryMark({ label, children }: { label: string; children: ReactNode }) {
   return (
     <Tooltip title={label} classNames={{ root: "touch-visible" }}>
       <span
@@ -134,9 +136,25 @@ export function AdminOnlyMark({ label = ADMIN_ONLY_NOTE, size = 14 }: { label?: 
         tabIndex={0}
         className="focus-ring relative z-10 inline-flex shrink-0 cursor-help rounded-sm text-accent"
       >
-        <ShieldCheck size={size} aria-hidden />
+        {children}
       </span>
     </Tooltip>
+  );
+}
+
+export function AdminOnlyMark({ label = ADMIN_ONLY_NOTE, size = 14 }: { label?: string; size?: number }) {
+  return (
+    <CategoryMark label={label}>
+      <ShieldCheck size={size} aria-hidden />
+    </CategoryMark>
+  );
+}
+
+export function FeedMark({ size = 14 }: { size?: number }) {
+  return (
+    <CategoryMark label={FEED_NOTE}>
+      <Megaphone size={size} aria-hidden />
+    </CategoryMark>
   );
 }
 

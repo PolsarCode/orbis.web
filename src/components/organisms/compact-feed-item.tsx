@@ -3,6 +3,7 @@
 import { Pin } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import * as Molecule from "@molecule";
 import type { FeedEntry } from "@/lib/api";
 import { displayName } from "@/lib/display-name";
@@ -11,6 +12,7 @@ import { timeAgo } from "@/lib/time";
 import { toggleLike } from "@/lib/votes";
 import { useLikeBlockedReason } from "./post-card";
 import { ContentActions } from "./content-actions";
+import { threadHref } from "./forum-shared";
 import { HiddenNotice } from "./report-content";
 
 export function CompactFeedItem({
@@ -24,7 +26,12 @@ export function CompactFeedItem({
   onOpen: () => void;
   onChange: (item: FeedEntry) => void;
 }) {
+  const router = useRouter();
   const community = item.type !== "activity" ? item.community : null;
+  const thread =
+    item.type === "post" && item.forumThread && item.communityId !== null
+      ? { ...item.forumThread, href: threadHref(item.communityId, item.forumThread.id) }
+      : null;
   const likeBlockedReason = useLikeBlockedReason(item.type === "post" ? item : null);
   const wallUser =
     item.type === "post" && item.wallUser?.id !== item.author.id
@@ -41,7 +48,9 @@ export function CompactFeedItem({
     <article
       className="flex min-w-0 cursor-pointer items-start gap-3 px-3 py-3 transition-colors hover:bg-rail-item/30 sm:px-4"
       onClick={(event) => {
-        if (!(event.target as HTMLElement).closest("a, button")) onOpen();
+        if ((event.target as HTMLElement).closest("a, button")) return;
+        if (thread) router.push(thread.href);
+        else onOpen();
       }}
     >
       <Molecule.AuthorAvatar
@@ -116,36 +125,60 @@ export function CompactFeedItem({
             {suffix && ` ${suffix}`}
           </p>
         ) : (
-          <div
-            className="rich-text line-clamp-2 max-h-10 overflow-hidden text-sm [&_blockquote]:my-0 [&_img]:hidden [&_ol]:my-0 [&_p]:my-0 [&_pre]:my-0 [&_ul]:my-0"
-            dangerouslySetInnerHTML={{ __html: item.content }}
-          />
+          <>
+            {thread && (
+              <Link
+                href={thread.href}
+                className="focus-ring w-fit rounded-sm text-sm font-semibold hover:underline"
+              >
+                {thread.title}
+              </Link>
+            )}
+            <div
+              className="rich-text line-clamp-2 max-h-10 overflow-hidden text-sm [&_blockquote]:my-0 [&_img]:hidden [&_ol]:my-0 [&_p]:my-0 [&_pre]:my-0 [&_ul]:my-0"
+              dangerouslySetInnerHTML={{ __html: item.content }}
+            />
+          </>
         )}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-0.5">
-          <Molecule.LikeButton
-            liked={item.liked}
-            count={item.likeCount}
-            disabledReason={likeBlockedReason}
-            onToggle={() =>
-              toggleLike({ type: item.type, id: item.id }, item, (result) =>
-                onChange({ ...item, ...result }),
-              )
-            }
-          />
-          <Molecule.CommentsButton count={item.commentCount} onClick={onOpen} />
-          {item.type === "activity" && item.steam && (
-            <Molecule.SteamBadge steam={item.steam} title={item.media.title} />
-          )}
-          {item.type === "post" && (
-            <button
-              type="button"
-              onClick={onOpen}
-              className="focus-ring rounded-sm text-xs text-muted hover:text-foreground"
+        {thread ? (
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5 text-xs text-muted">
+            <Link
+              href={thread.href}
+              className="focus-ring rounded-sm font-semibold hover:text-foreground"
             >
-              Open post
-            </button>
-          )}
-        </div>
+              Read the thread
+            </Link>
+            <span>
+              {thread.replyCount} {thread.replyCount === 1 ? "reply" : "replies"}
+            </span>
+          </p>
+        ) : (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-0.5">
+            <Molecule.LikeButton
+              liked={item.liked}
+              count={item.likeCount}
+              disabledReason={likeBlockedReason}
+              onToggle={() =>
+                toggleLike({ type: item.type, id: item.id }, item, (result) =>
+                  onChange({ ...item, ...result }),
+                )
+              }
+            />
+            <Molecule.CommentsButton count={item.commentCount} onClick={onOpen} />
+            {item.type === "activity" && item.steam && (
+              <Molecule.SteamBadge steam={item.steam} title={item.media.title} />
+            )}
+            {item.type === "post" && (
+              <button
+                type="button"
+                onClick={onOpen}
+                className="focus-ring rounded-sm text-xs text-muted hover:text-foreground"
+              >
+                Open post
+              </button>
+            )}
+          </div>
+        )}
       </div>
       {item.type === "activity" && (
         <Link

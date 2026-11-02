@@ -29,6 +29,7 @@ import {
   ChevronDown,
   GripVertical,
   Lock,
+  Megaphone,
   Pencil,
   Plus,
   Search,
@@ -61,6 +62,7 @@ import {
   AdminOnlyMark,
   CategoryGlyph,
   CategoryIcon,
+  FeedMark,
   SUGGESTED_ICONS,
   forumToken,
   iconLabel,
@@ -219,12 +221,14 @@ function RowActions({
   readOnly,
   adminOnly,
   onToggleAdminOnly,
+  feed,
   onEdit,
   onDelete,
 }: {
   readOnly: boolean;
   adminOnly: boolean;
   onToggleAdminOnly: () => void;
+  feed?: { on: boolean; onToggle: () => void };
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -242,6 +246,20 @@ function RowActions({
       >
         <ShieldCheck size={16} />
       </IconButton>
+      {feed && (
+        <IconButton
+          label={
+            feed.on
+              ? "New threads here are also posted to the community feed. Click to stop."
+              : "Also post new threads here to the community feed"
+          }
+          active={feed.on}
+          disabled={readOnly}
+          onClick={feed.onToggle}
+        >
+          <Megaphone size={16} />
+        </IconButton>
+      )}
       <IconButton label="Edit" disabled={readOnly} onClick={onEdit}>
         <Pencil size={16} />
       </IconButton>
@@ -778,14 +796,14 @@ function CategorySettings({
     }
   }
 
-  async function toggleAdminOnly(category: ForumCategory) {
-    const adminOnly = !category.adminOnly;
+  async function toggle(category: ForumCategory, setting: "adminOnly" | "postToFeed") {
+    const changes = { [setting]: !category[setting] };
     onChange({
       ...forum,
-      categories: categories.map((item) => (item.id === category.id ? { ...item, adminOnly } : item)),
+      categories: categories.map((item) => (item.id === category.id ? { ...item, ...changes } : item)),
     });
     try {
-      await updateForumCategory(forumToken(), communityId, category.id, { adminOnly });
+      await updateForumCategory(forumToken(), communityId, category.id, changes);
     } catch (reason) {
       onChange(forum);
       message.error(errorText(reason));
@@ -932,6 +950,7 @@ function CategorySettings({
                               />
                             )
                           )}
+                          {category.postToFeed && <FeedMark />}
                         </span>
                         {category.description && (
                           <span className="line-clamp-2 text-xs text-muted">{category.description}</span>
@@ -943,7 +962,11 @@ function CategorySettings({
                       <RowActions
                         readOnly={readOnly}
                         adminOnly={category.adminOnly}
-                        onToggleAdminOnly={() => toggleAdminOnly(category)}
+                        onToggleAdminOnly={() => toggle(category, "adminOnly")}
+                        feed={{
+                          on: category.postToFeed,
+                          onToggle: () => toggle(category, "postToFeed"),
+                        }}
                         onEdit={() =>
                           setEditing({
                             id: category.id,

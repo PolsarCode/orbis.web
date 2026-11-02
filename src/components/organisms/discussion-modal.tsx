@@ -79,20 +79,22 @@ export function DiscussionModal({
               preview={false}
             />
           )}
-          <CommentSection
-            key={`${item.type}-${item.id}`}
-            target={{ type: item.type, id: item.id }}
-            canComment={canComment}
-            onCommentsChange={(comments) =>
-              onChange({
-                ...item,
-                commentCount: comments.length,
-                previewComments: comments
-                  .filter((comment) => comment.parentId === null)
-                  .slice(-3),
-              })
-            }
-          />
+          {!(item.type === "post" && item.forumThread) && (
+            <CommentSection
+              key={`${item.type}-${item.id}`}
+              target={{ type: item.type, id: item.id }}
+              canComment={canComment}
+              onCommentsChange={(comments) =>
+                onChange({
+                  ...item,
+                  commentCount: comments.length,
+                  previewComments: comments
+                    .filter((comment) => comment.parentId === null)
+                    .slice(-3),
+                })
+              }
+            />
+          )}
         </div>
       )}
     </Modal>

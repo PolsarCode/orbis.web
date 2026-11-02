@@ -13,6 +13,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import {
   AdminOnlyMark,
   CategoryIcon,
+  FeedMark,
   categoryHref,
   sectionAnchor,
   threadHref,
@@ -43,6 +44,7 @@ function CategoryRow({
               {category.name}
             </Link>
             {adminOnly && <AdminOnlyMark />}
+            {category.postToFeed && <FeedMark />}
           </span>
           {category.description && (
             <span className="line-clamp-2 text-xs text-muted">{category.description}</span>

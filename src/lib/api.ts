@@ -305,6 +305,7 @@ export type Post = {
   pinned?: boolean;
   canPin?: boolean;
   moderation?: AuthorModeration | null;
+  forumThread?: { id: number; title: string; replyCount: number } | null;
   createdAt: string;
   author: Author;
   community: CommunitySummary | null;
@@ -2810,6 +2811,7 @@ export type ForumCategory = {
   icon: string | null;
   color: string | null;
   adminOnly: boolean;
+  postToFeed: boolean;
   threadCount: number;
   latest: { id: number; title: string; lastPostAt: string } | null;
 };
@@ -2836,7 +2838,7 @@ export type ForumCategoryRef = {
 };
 
 export type ForumThreadPage = NumberedPage<ForumThreadSummary> & {
-  category: ForumCategoryRef & { description: string; adminOnly: boolean };
+  category: ForumCategoryRef & { description: string; adminOnly: boolean; postToFeed: boolean };
   pinned: ForumThreadSummary[];
   canPost: boolean;
   canManage: boolean;
@@ -2844,13 +2846,21 @@ export type ForumThreadPage = NumberedPage<ForumThreadSummary> & {
 
 export type ForumQuote =
   | { id: number; available: false }
-  | { id: number; available: true; content: string; createdAt: string; author: Author };
+  | {
+      id: number;
+      available: true;
+      content: string;
+      linkUrl: string | null;
+      createdAt: string;
+      author: Author;
+    };
 
 export type ForumPost = {
   id: number;
   threadId: number;
   opening: boolean;
   content: string;
+  linkUrl: string | null;
   likeCount: number;
   liked: boolean;
   hiddenAt: string | null;
@@ -3004,11 +3014,15 @@ export async function updateForumCategory(
     description?: string;
     sectionId?: number | null;
     adminOnly?: boolean;
+    postToFeed?: boolean;
     icon?: string | null;
     color?: string | null;
   },
 ): Promise<
-  Pick<ForumCategory, "id" | "sectionId" | "name" | "description" | "icon" | "color" | "adminOnly">
+  Pick<
+    ForumCategory,
+    "id" | "sectionId" | "name" | "description" | "icon" | "color" | "adminOnly" | "postToFeed"
+  >
 > {
   const res = await forumWrite(
     token,
@@ -3068,7 +3082,7 @@ export async function createForumThread(
   token: string,
   communityId: number,
   categoryId: number,
-  thread: { title: string; content: string },
+  thread: { title: string; content: string; linkUrl?: string },
 ): Promise<{ id: number }> {
   const res = await forumWrite(
     token,
@@ -3148,13 +3162,14 @@ export async function createForumPost(
   threadId: number,
   content: string,
   quoteId?: number,
+  linkUrl?: string,
 ): Promise<{ id: number }> {
   const res = await forumWrite(
     token,
     forumPath(communityId, `threads/${threadId}/posts`),
     "POST",
     "Could not post your reply.",
-    { content, quoteId },
+    { content, quoteId, linkUrl },
   );
   return res.json();
 }
@@ -3164,13 +3179,14 @@ export async function updateForumPost(
   communityId: number,
   postId: number,
   content: string,
+  linkUrl?: string,
 ): Promise<ForumPost> {
   const res = await forumWrite(
     token,
     forumPath(communityId, `posts/${postId}`),
     "PATCH",
     "Could not save the post.",
-    { content },
+    { content, linkUrl },
   );
   return res.json();
 }

@@ -1,7 +1,9 @@
 "use client";
 
-import { ChevronRight, Pin } from "lucide-react";
+import { ChevronRight, MessagesSquare, Pin } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
+import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import { deletePost, setPostPinned, updatePost, type Post } from "@/lib/api";
 import { toggleLike } from "@/lib/votes";
@@ -11,6 +13,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useCommunityStore } from "@/stores/community-store";
 import { useFriendsStore } from "@/stores/friends-store";
 import { ContentActions } from "./content-actions";
+import { threadHref } from "./forum-shared";
 import { useMemberModeration } from "./member-moderation";
 import { PostComposer } from "./post-composer";
 import { HiddenNotice } from "./report-content";
@@ -69,6 +72,10 @@ export function PostCard({
     post.wallUser && post.wallUser.id !== post.author.id ? post.wallUser : null;
   const likeBlockedReason = useLikeBlockedReason(post);
   const [editing, setEditing] = useState(false);
+  const thread =
+    post.forumThread && post.communityId !== null
+      ? { ...post.forumThread, href: threadHref(post.communityId, post.forumThread.id) }
+      : null;
   const authorName = displayName(post.author);
   const moderation = useMemberModeration({
     onRemoved: () =>
@@ -153,8 +160,9 @@ export function PostCard({
           id={post.id}
           ownerId={post.author.id}
           canDelete={post.canDelete}
-          onEdit={() => setEditing(true)}
+          onEdit={thread ? undefined : () => setEditing(true)}
           onDelete={remove}
+          deleteNote={thread ? "It’s taken off the feed. The thread stays in the forum." : undefined}
           pin={post.canPin ? { pinned: Boolean(post.pinned), onToggle: togglePin } : undefined}
           moderation={
             target
@@ -183,31 +191,55 @@ export function PostCard({
         />
       ) : (
         <>
+          {thread && (
+            <Link
+              href={thread.href}
+              className="focus-ring w-fit rounded-sm font-display text-xl leading-tight font-bold transition-colors hover:text-accent"
+            >
+              {thread.title}
+            </Link>
+          )}
           {post.content && (
             <div
-              className="rich-text"
+              className={`rich-text ${thread ? "line-clamp-6" : ""}`}
               dangerouslySetInnerHTML={{ __html: post.content }}
             />
           )}
           {post.linkUrl && <Molecule.LinkPreview url={post.linkUrl} />}
         </>
       )}
-      <div className="flex items-center gap-4">
-        <Molecule.LikeButton
-          liked={post.liked}
-          count={post.likeCount}
-          disabledReason={likeBlockedReason}
-          onToggle={() =>
-            toggleLike({ type: "post", id: post.id }, post, (result) =>
-              onChange?.({ ...post, ...result }),
-            )
-          }
-        />
-        {onOpenComments && (
-          <Molecule.CommentsButton count={post.commentCount} onClick={onOpenComments} />
-        )}
-      </div>
-      {preview && onOpenComments && (
+      {thread ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <Atom.ButtonLink
+            href={thread.href}
+            size="small"
+            variant="secondary"
+            icon={<MessagesSquare size={14} />}
+          >
+            Read the thread
+          </Atom.ButtonLink>
+          <span className="text-xs text-muted">
+            {thread.replyCount} {thread.replyCount === 1 ? "reply" : "replies"}
+          </span>
+        </div>
+      ) : (
+        <div className="flex items-center gap-4">
+          <Molecule.LikeButton
+            liked={post.liked}
+            count={post.likeCount}
+            disabledReason={likeBlockedReason}
+            onToggle={() =>
+              toggleLike({ type: "post", id: post.id }, post, (result) =>
+                onChange?.({ ...post, ...result }),
+              )
+            }
+          />
+          {onOpenComments && (
+            <Molecule.CommentsButton count={post.commentCount} onClick={onOpenComments} />
+          )}
+        </div>
+      )}
+      {preview && onOpenComments && !thread && (
         <Molecule.CommentPreview
           comments={post.previewComments}
           total={post.commentCount}

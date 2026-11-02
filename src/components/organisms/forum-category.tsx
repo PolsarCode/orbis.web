@@ -19,6 +19,7 @@ import { useDocumentTitle } from "@/lib/use-document-title";
 import { useAuthStore } from "@/stores/auth-store";
 import {
   AdminOnlyMark,
+  FeedMark,
   ForumBreadcrumb,
   ForumEmpty,
   categoryCrumbs,
@@ -97,6 +98,7 @@ function NewThread({
 
   return (
     <PostComposer
+      linkPreview
       label="Thread body"
       placeholder="What do you want to talk about?"
       submitLabel="Post thread"
@@ -111,11 +113,12 @@ function NewThread({
           className="w-full border-b border-divider bg-transparent pb-3 font-display text-xl font-bold outline-none placeholder:text-muted"
         />
       }
-      onPost={async (content) => {
+      onPost={async (content, linkUrl) => {
         if (!title.trim()) throw new Error("Give your thread a title.");
         const { id } = await createForumThread(forumToken(), communityId, categoryId, {
           title,
           content,
+          linkUrl,
         });
         router.push(threadHref(communityId, id));
       }}
@@ -200,6 +203,7 @@ export function ForumCategoryView() {
                 {data.category.name}
               </h2>
               {data.category.adminOnly && <AdminOnlyMark size={18} />}
+              {data.category.postToFeed && <FeedMark size={18} />}
             </div>
             {data.category.description && (
               <p className="max-w-xl text-[13px] text-muted">{data.category.description}</p>
