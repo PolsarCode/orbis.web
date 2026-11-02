@@ -2,7 +2,7 @@
 
 import { Modal } from "antd";
 import * as Molecule from "@molecule";
-import type { FeedEntry } from "@/lib/api";
+import type { FeedEntry, Post } from "@/lib/api";
 import { displayName } from "@/lib/display-name";
 import { useAuthStore } from "@/stores/auth-store";
 import { useCommunityStore } from "@/stores/community-store";
@@ -15,14 +15,23 @@ export function DiscussionModal({
   onClose,
   onChange,
   onDelete,
+  onAuthorRemoved,
+  onAuthorBanned,
 }: {
   item: FeedEntry | null;
   onClose: () => void;
   onChange: (item: FeedEntry) => void;
   onDelete?: (item: FeedEntry) => void;
+  onAuthorRemoved?: (post: Post) => void;
+  onAuthorBanned?: (post: Post) => void;
 }) {
   function deleted(entry: FeedEntry) {
     onDelete?.(entry);
+    onClose();
+  }
+
+  function authorBanned(post: Post) {
+    (onAuthorBanned ?? onDelete)?.(post);
     onClose();
   }
 
@@ -65,6 +74,8 @@ export function DiscussionModal({
               showCommunity
               onChange={onChange}
               onDelete={deleted}
+              onAuthorRemoved={onAuthorRemoved}
+              onAuthorBanned={authorBanned}
               preview={false}
             />
           )}

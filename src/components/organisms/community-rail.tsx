@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import { Dropdown, Tooltip } from "antd";
 import Link from "next/link";
-import { useParams, usePathname } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import {
   useEffect,
   useMemo,
@@ -53,7 +53,7 @@ import {
   ungroup,
   type RailDrop,
 } from "@/lib/rail-layout";
-import { useCommunityStore } from "@/stores/community-store";
+import { COMMUNITY_REMOVED_EVENT, useCommunityStore } from "@/stores/community-store";
 import { useFriendsStore } from "@/stores/friends-store";
 import { useLayoutStore } from "@/stores/layout-store";
 import { CreateCommunityModal } from "./create-community-modal";
@@ -307,6 +307,7 @@ function RailEndDrop({ highlighted }: { highlighted: boolean }) {
 
 export function CommunityRail() {
   const { communityId } = useParams<{ communityId?: string }>();
+  const router = useRouter();
   const pathname = usePathname();
   const inLibrary = pathname === "/library" || pathname.startsWith("/library/");
   const communities = useCommunityStore((state) => state.communities);
@@ -590,6 +591,17 @@ export function CommunityRail() {
     fetchCommunities();
     useFriendsStore.getState().connect();
   }, [fetchCommunities]);
+
+  useEffect(() => {
+    function removed(event: Event) {
+      const base = `/communities/${(event as CustomEvent<number>).detail}`;
+      const path = window.location.pathname;
+      if (path === base || path.startsWith(`${base}/`)) router.push("/");
+    }
+
+    window.addEventListener(COMMUNITY_REMOVED_EVENT, removed);
+    return () => window.removeEventListener(COMMUNITY_REMOVED_EVENT, removed);
+  }, [router]);
 
   return (
     <nav

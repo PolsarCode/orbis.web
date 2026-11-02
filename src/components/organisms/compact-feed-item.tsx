@@ -10,7 +10,8 @@ import { activityText, mediaPath, progressText } from "@/lib/library";
 import { timeAgo } from "@/lib/time";
 import { toggleLike } from "@/lib/votes";
 import { useLikeBlockedReason } from "./post-card";
-import { HiddenNotice, ReportButton } from "./report-content";
+import { ContentActions } from "./content-actions";
+import { HiddenNotice } from "./report-content";
 
 export function CompactFeedItem({
   item,
@@ -94,11 +95,11 @@ export function CompactFeedItem({
             </time>
           </p>
           {item.type !== "activity" && (
-            <ReportButton
+            <ContentActions
               type={item.type}
               id={item.id}
               ownerId={item.author.id}
-              className="-mt-1 -mr-1 shrink-0"
+              className="-mt-1 -mr-1"
             />
           )}
         </header>

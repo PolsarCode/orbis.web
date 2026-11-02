@@ -3,6 +3,7 @@ import * as Molecule from "@molecule";
 
 type JoinCommunityPromptProps = {
   guest?: boolean;
+  banned?: boolean;
   description?: string | null;
   joining: boolean;
   error: string | null;
@@ -11,6 +12,7 @@ type JoinCommunityPromptProps = {
 
 export function JoinCommunityPrompt({
   guest = false,
+  banned = false,
   description,
   joining,
   error,
@@ -22,25 +24,31 @@ export function JoinCommunityPrompt({
         <p className="whitespace-pre-wrap text-sm">{description}</p>
       )}
       <div className={description ? "border-t border-divider pt-4" : undefined}>
-        <h2 className="font-display text-xl font-bold">Join to participate</h2>
+        <h2 className="font-display text-xl font-bold">
+          {banned ? "You can’t join this community" : "Join to participate"}
+        </h2>
         <p className="mt-1 text-sm text-muted">
-          {guest
-            ? "Log in to join this community, post, comment, and take part in discussions."
-            : "Join this community to post, comment, and take part in discussions."}
+          {banned
+            ? "You can still read what’s public here."
+            : guest
+              ? "Log in to join this community, post, comment, and take part in discussions."
+              : "Join this community to post, comment, and take part in discussions."}
         </p>
       </div>
       {error && <Atom.ErrorMessage>{error}</Atom.ErrorMessage>}
-      <div>
-        {guest ? (
-          <Molecule.LoginLink>Log in to join</Molecule.LoginLink>
-        ) : (
-          <Molecule.ReadOnlyGate action="join">
-            <Atom.Button loading={joining} onClick={onJoin}>
-              Join community
-            </Atom.Button>
-          </Molecule.ReadOnlyGate>
-        )}
-      </div>
+      {!banned && (
+        <div>
+          {guest ? (
+            <Molecule.LoginLink>Log in to join</Molecule.LoginLink>
+          ) : (
+            <Molecule.ReadOnlyGate action="join">
+              <Atom.Button loading={joining} onClick={onJoin}>
+                Join community
+              </Atom.Button>
+            </Molecule.ReadOnlyGate>
+          )}
+        </div>
+      )}
     </section>
   );
 }

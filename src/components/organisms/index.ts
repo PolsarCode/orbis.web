@@ -76,4 +76,5 @@ export * from "./forum-index";
 export * from "./forum-category";
 export * from "./forum-thread";
 export * from "./forum-category-settings";
+export * from "./community-ban-settings";
 export * from "./leave-community-button";

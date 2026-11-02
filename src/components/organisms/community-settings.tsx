@@ -1,7 +1,7 @@
 "use client";
 
 import { Input, Modal, Switch } from "antd";
-import { Link2, MessagesSquare, ShieldCheck, SlidersHorizontal, Ticket } from "lucide-react";
+import { Ban, Link2, MessagesSquare, ShieldCheck, SlidersHorizontal, Ticket } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import * as Atom from "@atom";
@@ -37,6 +37,7 @@ import { useCommunityStore } from "@/stores/community-store";
 import { linkPlatforms, normalizeLink } from "./community-links";
 import { DiscordChannelSettings } from "./discord-channel-settings";
 import { DISCORD_CHECK_MS, DiscordWidgetSteps } from "./discord-setup";
+import { CommunityBanSettings } from "./community-ban-settings";
 import { ForumCategorySettings } from "./forum-category-settings";
 import { OAuthIcon } from "./oauth-buttons";
 import { SettingsTabs } from "./settings-tabs";
@@ -898,6 +899,12 @@ export function CommunitySettings({
           label: "Admins",
           icon: <ShieldCheck size={16} aria-hidden />,
           content: <AdminSettings community={community} />,
+        },
+        {
+          key: "bans",
+          label: "Banned",
+          icon: <Ban size={16} aria-hidden />,
+          content: <CommunityBanSettings community={community} />,
         },
         {
           key: "invites",

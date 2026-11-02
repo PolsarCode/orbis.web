@@ -9,6 +9,8 @@ import type {
 import { useAuthStore } from "./auth-store";
 
 export const COMMUNITY_LEFT_EVENT = "orbis:community-left";
+export const COMMUNITY_REMOVED_EVENT = "orbis:community-removed";
+export const COMMUNITY_MEMBERS_CHANGED_EVENT = "orbis:community-members-changed";
 
 type CommunityState = {
   communities: Community[];
@@ -18,6 +20,7 @@ type CommunityState = {
   createCommunity: (name: string, isPublic: boolean) => Promise<Community>;
   joinCommunity: (communityId: number) => Promise<Community>;
   leaveCommunity: (communityId: number) => Promise<void>;
+  forgetCommunity: (communityId: number, removed?: boolean) => void;
   acceptInvite: (code: string) => Promise<Community>;
   updateCommunity: (
     communityId: number,
@@ -99,6 +102,9 @@ export const useCommunityStore = create<CommunityState>()((set, get) => ({
     if (!token) throw new Error("Please log in again.");
 
     await api.leaveCommunity(token, communityId);
+    get().forgetCommunity(communityId);
+  },
+  forgetCommunity: (communityId, removed = false) => {
     set((state) => ({
       communities: state.communities.filter(({ id }) => id !== communityId),
       layout: state.layout.flatMap((item): RailItem[] => {
@@ -107,7 +113,11 @@ export const useCommunityStore = create<CommunityState>()((set, get) => ({
         return communityIds.length > 0 ? [{ ...item, communityIds }] : [];
       }),
     }));
-    window.dispatchEvent(new CustomEvent(COMMUNITY_LEFT_EVENT, { detail: communityId }));
+    window.dispatchEvent(
+      new CustomEvent(removed ? COMMUNITY_REMOVED_EVENT : COMMUNITY_LEFT_EVENT, {
+        detail: communityId,
+      }),
+    );
   },
   acceptInvite: async (code) => {
     const { token } = useAuthStore.getState();

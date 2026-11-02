@@ -81,6 +81,7 @@ export type Community = {
   discord?: DiscordStatus | null;
   links?: CommunityLinks;
   showLibraryUpdates?: boolean;
+  banned?: boolean;
 };
 
 export type CommunityPerson = {
@@ -303,11 +304,14 @@ export type Post = {
   canDelete?: boolean;
   pinned?: boolean;
   canPin?: boolean;
+  moderation?: AuthorModeration | null;
   createdAt: string;
   author: Author;
   community: CommunitySummary | null;
   wallUser: Author | null;
 };
+
+export type AuthorModeration = { remove: boolean; ban: boolean };
 
 export type MediaType = "anime" | "manga" | "game";
 
@@ -706,6 +710,59 @@ export async function searchCommunities(
   );
 
   if (!res.ok) throw new Error("Could not search communities.");
+  return res.json();
+}
+
+export type CommunityBan = {
+  user: Author;
+  bannedBy: Author;
+  reason: string | null;
+  createdAt: string;
+};
+
+export async function removeMember(
+  token: string,
+  communityId: number,
+  userId: number,
+): Promise<void> {
+  const res = await api(`/communities/${communityId}/members/${userId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(await errorMessage(res, "Could not remove them. Please try again."));
+}
+
+export async function banMember(
+  token: string,
+  communityId: number,
+  userId: number,
+  reason?: string,
+): Promise<void> {
+  const res = await api(`/communities/${communityId}/bans/${userId}`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ reason: reason?.trim() || undefined }),
+  });
+  if (!res.ok) throw new Error(await errorMessage(res, "Could not ban them. Please try again."));
+}
+
+export async function unbanMember(
+  token: string,
+  communityId: number,
+  userId: number,
+): Promise<void> {
+  const res = await api(`/communities/${communityId}/bans/${userId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(await errorMessage(res, "Could not lift the ban. Please try again."));
+}
+
+export async function getBans(token: string, communityId: number): Promise<CommunityBan[]> {
+  const res = await api(`/communities/${communityId}/bans`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(await errorMessage(res, "Could not load banned people."));
   return res.json();
 }
 
@@ -2801,6 +2858,7 @@ export type ForumPost = {
   quote: ForumQuote | null;
   canEdit: boolean;
   canDelete: boolean;
+  moderation?: AuthorModeration | null;
 };
 
 export type ForumThread = {

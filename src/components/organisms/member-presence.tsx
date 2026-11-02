@@ -5,6 +5,7 @@ import * as Atom from "@atom";
 import { getMembers, type Member, type PresenceStatus } from "@/lib/api";
 import { displayName } from "@/lib/display-name";
 import { useAuthStore } from "@/stores/auth-store";
+import { COMMUNITY_MEMBERS_CHANGED_EVENT } from "@/stores/community-store";
 import { useFriendsStore } from "@/stores/friends-store";
 import { useLayoutStore } from "@/stores/layout-store";
 import { PersonRow } from "./person-row";
@@ -64,10 +65,18 @@ export function MemberPresence({
   const statuses = useFriendsStore((state) => state.statuses);
 
   useEffect(() => {
-    const { token } = useAuthStore.getState();
-    getMembers(token, communityId)
-      .then(setMembers)
-      .catch(() => null);
+    function load() {
+      getMembers(useAuthStore.getState().token, communityId)
+        .then(setMembers)
+        .catch(() => null);
+    }
+    function changed(event: Event) {
+      if ((event as CustomEvent<number>).detail === communityId) load();
+    }
+
+    load();
+    window.addEventListener(COMMUNITY_MEMBERS_CHANGED_EVENT, changed);
+    return () => window.removeEventListener(COMMUNITY_MEMBERS_CHANGED_EVENT, changed);
   }, [communityId]);
 
   const isOnline = (member: Member) =>

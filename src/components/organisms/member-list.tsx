@@ -1,14 +1,17 @@
 "use client";
 
-import { Popconfirm } from "antd";
-import { Check, Clock, UserPlus, UserRound } from "lucide-react";
+import { Dropdown, Popconfirm, type MenuProps } from "antd";
+import { Ban, Check, Clock, MoreHorizontal, UserMinus, UserPlus, UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
-import { getMembers, type Member } from "@/lib/api";
+import { getMembers, type CommunityRole, type Member } from "@/lib/api";
 import { displayName } from "@/lib/display-name";
+import { useReadOnly } from "@/lib/read-only";
 import { useAuthStore } from "@/stores/auth-store";
+import { useCommunityStore } from "@/stores/community-store";
 import { useFriendsStore } from "@/stores/friends-store";
+import { useMemberModeration } from "./member-moderation";
 
 const profileButton = "h-6 shrink-0 gap-1 border-transparent px-2 text-xs hover:opacity-90";
 
@@ -115,14 +118,69 @@ export function FriendAction({
   );
 }
 
+function canModerate(myRole: CommunityRole | null, member: Member, myId?: number) {
+  if (member.userId === myId || member.isOwner) return false;
+  if (myRole === "owner") return true;
+  return myRole === "admin" && !member.isAdmin;
+}
+
+function MemberMenu({
+  communityId,
+  member,
+  onGone,
+}: {
+  communityId: number;
+  member: Member;
+  onGone: () => void;
+}) {
+  const readOnly = useReadOnly();
+  const name = member.nickname ?? displayName(member);
+  const target = { communityId, userId: member.userId, name };
+  const { remove, ban, dialog } = useMemberModeration({ onRemoved: onGone, onBanned: onGone });
+
+  const items: MenuProps["items"] = [
+    {
+      key: "remove",
+      label: "Remove from community",
+      icon: <UserMinus size={14} />,
+      disabled: readOnly,
+    },
+    { key: "ban", label: "Ban", icon: <Ban size={14} />, danger: true, disabled: readOnly },
+  ];
+
+  return (
+    <>
+      <Dropdown
+        trigger={["click"]}
+        placement="bottomRight"
+        menu={{
+          items,
+          onClick: ({ key }) => (key === "remove" ? remove(target) : ban(target)),
+        }}
+      >
+        <button type="button" aria-label={`Options for ${name}`} className="icon-button cursor-pointer">
+          <MoreHorizontal size={16} />
+        </button>
+      </Dropdown>
+      {dialog}
+    </>
+  );
+}
+
 function MemberGroup({
   title,
   members,
   myId,
+  myRole,
+  communityId,
+  onGone,
 }: {
   title: string;
   members: Member[];
   myId?: number;
+  myRole: CommunityRole | null;
+  communityId: number;
+  onGone: (userId: number) => void;
 }) {
   if (members.length === 0) return null;
 
@@ -152,7 +210,16 @@ function MemberGroup({
                 }
                 action={
                   myId !== undefined && (
-                    <FriendAction userId={member.userId} self={member.userId === myId} />
+                    <span className="flex items-center gap-1">
+                      <FriendAction userId={member.userId} self={member.userId === myId} />
+                      {canModerate(myRole, member, myId) && (
+                        <MemberMenu
+                          communityId={communityId}
+                          member={member}
+                          onGone={() => onGone(member.userId)}
+                        />
+                      )}
+                    </span>
                   )
                 }
               />
@@ -167,6 +234,11 @@ function MemberGroup({
 export function MemberList({ communityId }: { communityId: number }) {
   const [members, setMembers] = useState<Member[]>([]);
   const myId = useAuthStore((state) => state.profile?.userId);
+  const myRole = useCommunityStore(
+    (state) => state.communities.find(({ id }) => id === communityId)?.role ?? null,
+  );
+  const gone = (userId: number) =>
+    setMembers((current) => current.filter((member) => member.userId !== userId));
 
   useEffect(() => {
     const { token } = useAuthStore.getState();
@@ -182,8 +254,22 @@ export function MemberList({ communityId }: { communityId: number }) {
 
   return (
     <Molecule.TabSection title="Members" count={members.length}>
-      <MemberGroup title="Owner & admins" members={staff} myId={myId} />
-      <MemberGroup title="Members" members={everyoneElse} myId={myId} />
+      <MemberGroup
+        title="Owner & admins"
+        members={staff}
+        myId={myId}
+        myRole={myRole}
+        communityId={communityId}
+        onGone={gone}
+      />
+      <MemberGroup
+        title="Members"
+        members={everyoneElse}
+        myId={myId}
+        myRole={myRole}
+        communityId={communityId}
+        onGone={gone}
+      />
     </Molecule.TabSection>
   );
 }

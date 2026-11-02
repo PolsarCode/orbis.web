@@ -4,7 +4,7 @@ import { ArrowUp, CloudOff, NotebookPen } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
-import type { FeedEntry } from "@/lib/api";
+import type { FeedEntry, Post } from "@/lib/api";
 import { itemKey, type Paged } from "@/lib/use-paged";
 import { useFeedPreferencesStore } from "@/stores/feed-preferences-store";
 import { CompactFeedItem } from "./compact-feed-item";
@@ -42,6 +42,21 @@ function PostListContent<T extends FeedEntry>({
   const open = items?.find((item) => itemKey(item) === openKey) ?? null;
   const update = (item: FeedEntry) => feed.update(item as T);
   const remove = (item: FeedEntry) => feed.remove(item as T);
+  const authorRemoved = (post: Post) =>
+    items?.forEach((item) => {
+      if (item.type === "post" && item.communityId === post.communityId && item.author.id === post.author.id)
+        update({ ...item, moderation: item.moderation && { ...item.moderation, remove: false } });
+    });
+  const authorBanned = (post: Post) =>
+    items?.forEach((item) => {
+      if (item.type !== "post" || item.communityId !== post.communityId) return;
+      if (item.author.id === post.author.id) remove(item);
+      else if (item.previewComments.some((comment) => comment.author.id === post.author.id))
+        update({
+          ...item,
+          previewComments: item.previewComments.filter((comment) => comment.author.id !== post.author.id),
+        });
+    });
 
   if (failed && !items) {
     return (
@@ -125,6 +140,8 @@ function PostListContent<T extends FeedEntry>({
               onChange={update}
               onDelete={remove}
               onPinChange={feed.retry}
+              onAuthorRemoved={authorRemoved}
+              onAuthorBanned={authorBanned}
             />
           ),
         )}
@@ -143,6 +160,8 @@ function PostListContent<T extends FeedEntry>({
         onClose={() => setOpenKey(null)}
         onChange={update}
         onDelete={remove}
+        onAuthorRemoved={authorRemoved}
+        onAuthorBanned={authorBanned}
       />
     </div>
   );

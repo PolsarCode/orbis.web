@@ -11,6 +11,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useCommunityStore } from "@/stores/community-store";
 import { useFriendsStore } from "@/stores/friends-store";
 import { ContentActions } from "./content-actions";
+import { useMemberModeration } from "./member-moderation";
 import { PostComposer } from "./post-composer";
 import { HiddenNotice } from "./report-content";
 
@@ -48,6 +49,8 @@ type PostCardProps = {
   onChange?: (post: Post) => void;
   onDelete?: (post: Post) => void;
   onPinChange?: () => void;
+  onAuthorRemoved?: (post: Post) => void;
+  onAuthorBanned?: (post: Post) => void;
   preview?: boolean;
 };
 
@@ -58,12 +61,26 @@ export function PostCard({
   onChange,
   onDelete,
   onPinChange,
+  onAuthorRemoved,
+  onAuthorBanned,
   preview = true,
 }: PostCardProps) {
   const wallUser =
     post.wallUser && post.wallUser.id !== post.author.id ? post.wallUser : null;
   const likeBlockedReason = useLikeBlockedReason(post);
   const [editing, setEditing] = useState(false);
+  const authorName = displayName(post.author);
+  const moderation = useMemberModeration({
+    onRemoved: () =>
+      onAuthorRemoved
+        ? onAuthorRemoved(post)
+        : onChange?.({ ...post, moderation: post.moderation && { ...post.moderation, remove: false } }),
+    onBanned: () => (onAuthorBanned ? onAuthorBanned(post) : onDelete?.(post)),
+  });
+  const target =
+    post.communityId !== null && post.moderation
+      ? { communityId: post.communityId, userId: post.author.id, name: authorName }
+      : null;
 
   async function save(content: string, linkUrl?: string) {
     const { token } = useAuthStore.getState();
@@ -139,8 +156,18 @@ export function PostCard({
           onEdit={() => setEditing(true)}
           onDelete={remove}
           pin={post.canPin ? { pinned: Boolean(post.pinned), onToggle: togglePin } : undefined}
+          moderation={
+            target
+              ? {
+                  name: authorName,
+                  remove: post.moderation?.remove ? () => moderation.remove(target) : undefined,
+                  ban: post.moderation?.ban ? () => moderation.ban(target) : undefined,
+                }
+              : undefined
+          }
           className="-mr-1.5 self-start"
         />
+        {moderation.dialog}
       </header>
       {post.hiddenAt && <HiddenNotice />}
       {editing ? (

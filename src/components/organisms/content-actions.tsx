@@ -1,11 +1,12 @@
 "use client";
 
 import { App, Dropdown, type MenuProps } from "antd";
-import { MoreHorizontal, Pencil, Pin, PinOff, Trash2 } from "lucide-react";
+import { Ban, Flag, MoreHorizontal, Pencil, Pin, PinOff, Trash2, UserMinus } from "lucide-react";
+import { useState } from "react";
 import * as Molecule from "@molecule";
 import { useReadOnly } from "@/lib/read-only";
 import { useAuthStore } from "@/stores/auth-store";
-import { ReportButton } from "./report-content";
+import { ReportButton, ReportModal } from "./report-content";
 
 type EditableType = "post" | "comment" | "forum_post";
 
@@ -30,6 +31,7 @@ export function ContentActions({
   onDelete,
   deleteNote,
   pin,
+  moderation,
   variant = "icon",
   className = "",
 }: {
@@ -38,23 +40,26 @@ export function ContentActions({
   ownerId: number;
   canDelete?: boolean;
   onEdit?: () => void;
-  onDelete: () => Promise<void>;
+  onDelete?: () => Promise<void>;
   deleteNote?: string;
   pin?: { pinned: boolean; onToggle: () => Promise<void> };
+  moderation?: { name: string; remove?: () => void; ban?: () => void };
   variant?: "icon" | "text";
   className?: string;
 }) {
   const myId = useAuthStore((state) => state.profile?.userId);
   const readOnly = useReadOnly();
   const { modal, message } = App.useApp();
+  const [reporting, setReporting] = useState(false);
   const own = myId !== undefined && myId === ownerId;
-  const deletable = own || canDelete;
+  const deletable = Boolean(onDelete) && (own || canDelete);
+  const canReport = myId !== undefined && !own;
+  const moderating = variant === "icon" && Boolean(moderation?.remove || moderation?.ban);
 
-  if (!own && !deletable) {
-    return (
-      <ReportButton type={type} id={id} ownerId={ownerId} variant={variant} className={className} />
-    );
+  if (variant === "text" && !deletable) {
+    return <ReportButton type={type} id={id} ownerId={ownerId} className={className} />;
   }
+  if (!deletable && !canReport) return null;
 
   function confirmDelete() {
     modal.confirm({
@@ -64,7 +69,7 @@ export function ContentActions({
       okButtonProps: { danger: true },
       cancelText: "Cancel",
       onOk: () =>
-        onDelete().catch((error: Error) => {
+        onDelete?.().catch((error: Error) => {
           message.error(error.message);
         }),
     });
@@ -87,7 +92,7 @@ export function ContentActions({
             Delete
           </button>
         </Molecule.ReadOnlyGate>
-        {!own && <ReportButton type={type} id={id} ownerId={ownerId} variant="text" />}
+        {!own && <ReportButton type={type} id={id} ownerId={ownerId} />}
       </>
     );
   }
@@ -112,8 +117,44 @@ export function ContentActions({
     ...(own && onEdit
       ? [{ key: "edit", label: "Edit", icon: <Pencil size={14} />, disabled: readOnly }]
       : []),
-    { key: "delete", label: "Delete", icon: <Trash2 size={14} />, danger: true, disabled: readOnly },
+    ...(canReport
+      ? [{ key: "report", label: `Report ${nouns[type]}`, icon: <Flag size={14} />, disabled: readOnly }]
+      : []),
+    ...(deletable
+      ? [{ key: "delete", label: "Delete", icon: <Trash2 size={14} />, danger: true, disabled: readOnly }]
+      : []),
+    ...(moderating ? [{ type: "divider" as const }] : []),
+    ...(moderation?.remove
+      ? [
+          {
+            key: "remove",
+            label: `Remove ${moderation.name} from community`,
+            icon: <UserMinus size={14} />,
+            disabled: readOnly,
+          },
+        ]
+      : []),
+    ...(moderation?.ban
+      ? [
+          {
+            key: "ban",
+            label: `Ban ${moderation.name}`,
+            icon: <Ban size={14} />,
+            danger: true,
+            disabled: readOnly,
+          },
+        ]
+      : []),
   ];
+
+  const actions: Record<string, (() => void) | undefined> = {
+    pin: togglePin,
+    edit: onEdit,
+    report: () => setReporting(true),
+    delete: confirmDelete,
+    remove: moderation?.remove,
+    ban: moderation?.ban,
+  };
 
   return (
     <span
@@ -121,20 +162,21 @@ export function ContentActions({
       onClick={(event) => event.stopPropagation()}
       onPointerDown={(event) => event.stopPropagation()}
     >
-      {!own && <ReportButton type={type} id={id} ownerId={ownerId} />}
       <Dropdown
         trigger={["click"]}
         placement="bottomRight"
         menu={{
           items,
-          onClick: ({ key }) =>
-            key === "pin" ? togglePin() : key === "edit" ? onEdit?.() : confirmDelete(),
+          onClick: ({ key }) => actions[key]?.(),
         }}
       >
         <button type="button" aria-label={`More options for this ${nouns[type]}`} className="icon-button cursor-pointer">
           <MoreHorizontal size={16} />
         </button>
       </Dropdown>
+      {canReport && (
+        <ReportModal type={type} id={id} open={reporting} onClose={() => setReporting(false)} />
+      )}
     </span>
   );
 }

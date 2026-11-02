@@ -43,6 +43,7 @@ import { useDocumentTitle } from "@/lib/use-document-title";
 import { toggleLike } from "@/lib/votes";
 import { useAuthStore } from "@/stores/auth-store";
 import { ContentActions } from "./content-actions";
+import { useMemberModeration } from "./member-moderation";
 import {
   ForumBreadcrumb,
   ForumPagination,
@@ -94,6 +95,8 @@ function ForumPostCard({
   likeBlockedReason,
   onChange,
   onDeleted,
+  onAuthorRemoved,
+  onAuthorBanned,
   onQuote,
 }: {
   post: ForumPost;
@@ -104,10 +107,18 @@ function ForumPostCard({
   likeBlockedReason?: string;
   onChange: (post: ForumPost) => void;
   onDeleted: (post: ForumPost) => void;
+  onAuthorRemoved: (post: ForumPost) => void;
+  onAuthorBanned: (post: ForumPost) => void;
   onQuote: (post: ForumPost) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const permalink = threadHref(communityId, thread.id, post.id);
+  const authorName = displayName(post.author);
+  const moderation = useMemberModeration({
+    onRemoved: () => onAuthorRemoved(post),
+    onBanned: () => onAuthorBanned(post),
+  });
+  const target = { communityId, userId: post.author.id, name: authorName };
 
   async function save(content: string) {
     onChange(await updateForumPost(forumToken(), communityId, post.id, content));
@@ -165,8 +176,18 @@ function ForumPostCard({
               ? "The whole thread and its replies are deleted with it. This can’t be undone."
               : undefined
           }
+          moderation={
+            post.moderation
+              ? {
+                  name: authorName,
+                  remove: post.moderation.remove ? () => moderation.remove(target) : undefined,
+                  ban: post.moderation.ban ? () => moderation.ban(target) : undefined,
+                }
+              : undefined
+          }
           className="-mr-1.5 self-start"
         />
+        {moderation.dialog}
       </header>
       {post.hiddenAt && <HiddenNotice />}
       {post.quote && (
@@ -567,6 +588,26 @@ export function ForumThreadView() {
     });
   }
 
+  function authorRemoved(post: ForumPost) {
+    if (!data) return;
+    patch({
+      items: data.items.map((item) =>
+        item.author.id === post.author.id && item.moderation
+          ? { ...item, moderation: { ...item.moderation, remove: false } }
+          : item,
+      ),
+    });
+  }
+
+  function authorBanned(post: ForumPost) {
+    if (post.author.id === thread.author.id) {
+      router.push(categoryHref(community.id, thread.category.id));
+      return;
+    }
+    if (quoting?.author.id === post.author.id) setQuoting(null);
+    setAttempt((count) => count + 1);
+  }
+
   function quote(post: ForumPost) {
     setQuoting(post);
     composer.current?.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -638,6 +679,8 @@ export function ForumThreadView() {
               likeBlockedReason={likeBlockedReason}
               onChange={replacePost}
               onDeleted={removePost}
+              onAuthorRemoved={authorRemoved}
+              onAuthorBanned={authorBanned}
               onQuote={quote}
             />
           </li>

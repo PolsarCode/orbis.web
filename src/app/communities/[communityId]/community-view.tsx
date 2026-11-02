@@ -16,7 +16,11 @@ import {
 } from "@/lib/api";
 import { useTabScroller } from "@/lib/use-tab-scroller";
 import { useAuthStore } from "@/stores/auth-store";
-import { COMMUNITY_LEFT_EVENT, useCommunityStore } from "@/stores/community-store";
+import {
+  COMMUNITY_LEFT_EVENT,
+  COMMUNITY_MEMBERS_CHANGED_EVENT,
+  useCommunityStore,
+} from "@/stores/community-store";
 import { pageTitle } from "@/lib/site-title";
 import { useDocumentTitle } from "@/lib/use-document-title";
 
@@ -147,6 +151,24 @@ export function CommunityView({
       );
   }, [communityId]);
 
+  useEffect(() => {
+    function changed(event: Event) {
+      if ((event as CustomEvent<number>).detail !== Number(communityId)) return;
+      getCommunity(useAuthStore.getState().token, communityId)
+        .then((fresh) =>
+          setLoaded((current) =>
+            current?.id === communityId && current.community && fresh
+              ? { ...current, community: { ...current.community, memberCount: fresh.memberCount } }
+              : current,
+          ),
+        )
+        .catch(() => null);
+    }
+
+    window.addEventListener(COMMUNITY_MEMBERS_CHANGED_EVENT, changed);
+    return () => window.removeEventListener(COMMUNITY_MEMBERS_CHANGED_EVENT, changed);
+  }, [communityId]);
+
   const current = loaded?.id === communityId ? loaded : null;
   useDocumentTitle(
     forum ? null : pageTitle(current?.community?.name, members ? "Members" : "Community"),
@@ -156,6 +178,7 @@ export function CommunityView({
     current?.community && !current.community.role ? (
       <Organism.JoinCommunityPrompt
         guest={!signedIn}
+        banned={current.community.banned}
         description={current.community.description}
         joining={joining}
         error={joinError}

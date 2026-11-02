@@ -1,7 +1,7 @@
 "use client";
 
 import { App, Input, Modal, Radio, Tooltip } from "antd";
-import { EyeOff, Flag } from "lucide-react";
+import { EyeOff } from "lucide-react";
 import { useState } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
@@ -130,13 +130,11 @@ export function ReportButton({
   type,
   id,
   ownerId,
-  variant = "icon",
   className = "",
 }: {
   type: ContentReportTarget;
   id: number;
   ownerId: number;
-  variant?: "icon" | "text";
   className?: string;
 }) {
   const myId = useAuthStore((state) => state.profile?.userId);
@@ -145,8 +143,6 @@ export function ReportButton({
 
   if (myId === undefined || myId === ownerId) return null;
 
-  const label = `Report ${nouns[type]}`;
-  const tooltip = readOnly ? "Confirm your email first to report." : label;
   const report = () => {
     if (!readOnly) setOpen(true);
   };
@@ -157,40 +153,21 @@ export function ReportButton({
       onClick={(event) => event.stopPropagation()}
       onPointerDown={(event) => event.stopPropagation()}
     >
-      {variant === "text" ? (
-        <Tooltip
-          title={readOnly ? tooltip : undefined}
-          classNames={readOnly ? { root: "touch-visible" } : undefined}
+      <Tooltip
+        title={readOnly ? "Confirm your email first to report." : undefined}
+        classNames={readOnly ? { root: "touch-visible" } : undefined}
+      >
+        <button
+          type="button"
+          aria-disabled={readOnly || undefined}
+          onClick={report}
+          className={`focus-ring rounded-sm px-1 text-xs font-semibold text-muted transition-colors ${
+            readOnly ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:text-danger"
+          }`}
         >
-          <button
-            type="button"
-            aria-disabled={readOnly || undefined}
-            onClick={report}
-            className={`focus-ring rounded-sm px-1 text-xs font-semibold text-muted transition-colors ${
-              readOnly ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:text-danger"
-            }`}
-          >
-            Report
-          </button>
-        </Tooltip>
-      ) : (
-        <Tooltip
-          title={tooltip}
-          classNames={readOnly ? { root: "touch-visible" } : undefined}
-        >
-          <button
-            type="button"
-            aria-label={label}
-            aria-disabled={readOnly || undefined}
-            onClick={report}
-            className={`icon-button ${
-              readOnly ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:text-danger"
-            }`}
-          >
-            <Flag size={16} />
-          </button>
-        </Tooltip>
-      )}
+          Report
+        </button>
+      </Tooltip>
       <ReportModal type={type} id={id} open={open} onClose={() => setOpen(false)} />
     </span>
   );

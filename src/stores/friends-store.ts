@@ -120,6 +120,9 @@ export const useFriendsStore = create<FriendsState>()((set, get) => ({
     socket.on("community:live", ({ communityId, live }: { communityId: number; live: boolean }) =>
       useCommunityStore.getState().setLive(communityId, live),
     );
+    socket.on("community:removed", ({ communityId }: { communityId: number }) =>
+      useCommunityStore.getState().forgetCommunity(communityId, true),
+    );
     socket.on("message", (event) => useMessagesStore.getState().receive(event));
     socket.on("message:updated", (event) => useMessagesStore.getState().updated(event));
     socket.on("conversation", ({ conversation }) =>
