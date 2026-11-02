@@ -1,6 +1,6 @@
 "use client";
 
-import { MessagesSquare, Settings2, ShieldCheck } from "lucide-react";
+import { MessagesSquare, Settings2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import * as Atom from "@atom";
@@ -10,7 +10,14 @@ import { pageTitle } from "@/lib/site-title";
 import { timeAgo } from "@/lib/time";
 import { useDocumentTitle } from "@/lib/use-document-title";
 import { useAuthStore } from "@/stores/auth-store";
-import { categoryHref, sectionAnchor, threadHref, useForum } from "./forum-shared";
+import {
+  AdminOnlyMark,
+  CategoryIcon,
+  categoryHref,
+  sectionAnchor,
+  threadHref,
+  useForum,
+} from "./forum-shared";
 
 function CategoryRow({
   category,
@@ -26,27 +33,19 @@ function CategoryRow({
   return (
     <li className="relative">
       <div className="flex items-center gap-4 p-4 transition-colors hover:bg-rail-item/40">
-        <span
-          aria-hidden
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent"
-        >
-          <MessagesSquare size={18} />
-        </span>
+        <CategoryIcon icon={category.icon} color={category.color} />
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <Link
-            href={categoryHref(communityId, category.id)}
-            className="focus-ring truncate rounded-sm text-sm font-semibold transition-colors after:absolute after:inset-0 hover:text-accent"
-          >
-            {category.name}
-          </Link>
+          <span className="flex min-w-0 items-center gap-1.5">
+            <Link
+              href={categoryHref(communityId, category.id)}
+              className="focus-ring truncate rounded-sm text-sm font-semibold transition-colors after:absolute after:inset-0 hover:text-accent"
+            >
+              {category.name}
+            </Link>
+            {adminOnly && <AdminOnlyMark />}
+          </span>
           {category.description && (
             <span className="line-clamp-2 text-xs text-muted">{category.description}</span>
-          )}
-          {adminOnly && (
-            <span className="flex items-center gap-1 text-xs text-muted">
-              <ShieldCheck size={12} aria-hidden className="text-accent" />
-              Only admins start threads
-            </span>
           )}
           <span className="text-xs text-muted sm:hidden">{threads}</span>
         </span>

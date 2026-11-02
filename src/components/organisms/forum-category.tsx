@@ -1,6 +1,6 @@
 "use client";
 
-import { Lock, MessageSquare, MessagesSquare, Pin, Plus, ShieldCheck } from "lucide-react";
+import { Lock, MessageSquare, MessagesSquare, Pin, Plus } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -18,6 +18,7 @@ import { timeAgo } from "@/lib/time";
 import { useDocumentTitle } from "@/lib/use-document-title";
 import { useAuthStore } from "@/stores/auth-store";
 import {
+  AdminOnlyMark,
   ForumBreadcrumb,
   ForumEmpty,
   categoryCrumbs,
@@ -194,17 +195,14 @@ export function ForumCategoryView() {
         <ForumBreadcrumb items={categoryCrumbs(community.id, data.category, false)} />
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex min-w-0 flex-col gap-1">
-            <h2 className="font-display text-2xl leading-tight font-bold sm:text-3xl">
-              {data.category.name}
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2 className="font-display text-2xl leading-tight font-bold sm:text-3xl">
+                {data.category.name}
+              </h2>
+              {data.category.adminOnly && <AdminOnlyMark size={18} />}
+            </div>
             {data.category.description && (
               <p className="max-w-xl text-[13px] text-muted">{data.category.description}</p>
-            )}
-            {data.category.adminOnly && (
-              <p className="flex items-center gap-1.5 text-xs text-muted">
-                <ShieldCheck size={13} aria-hidden className="shrink-0 text-accent" />
-                Only owners and admins can start threads here. Members can still reply.
-              </p>
             )}
           </div>
           {data.canPost && !composing && (

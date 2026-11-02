@@ -2807,6 +2807,8 @@ export type ForumCategory = {
   sectionId: number | null;
   name: string;
   description: string;
+  icon: string | null;
+  color: string | null;
   adminOnly: boolean;
   threadCount: number;
   latest: { id: number; title: string; lastPostAt: string } | null;
@@ -2975,7 +2977,13 @@ export async function deleteForumSection(
 export async function createForumCategory(
   token: string,
   communityId: number,
-  category: { name: string; description: string; sectionId: number | null },
+  category: {
+    name: string;
+    description: string;
+    sectionId: number | null;
+    icon?: string | null;
+    color?: string | null;
+  },
 ): Promise<ForumCategory> {
   const res = await forumWrite(
     token,
@@ -2991,8 +2999,17 @@ export async function updateForumCategory(
   token: string,
   communityId: number,
   categoryId: number,
-  changes: { name?: string; description?: string; sectionId?: number | null; adminOnly?: boolean },
-): Promise<Pick<ForumCategory, "id" | "sectionId" | "name" | "description" | "adminOnly">> {
+  changes: {
+    name?: string;
+    description?: string;
+    sectionId?: number | null;
+    adminOnly?: boolean;
+    icon?: string | null;
+    color?: string | null;
+  },
+): Promise<
+  Pick<ForumCategory, "id" | "sectionId" | "name" | "description" | "icon" | "color" | "adminOnly">
+> {
   const res = await forumWrite(
     token,
     forumPath(communityId, `categories/${categoryId}`),

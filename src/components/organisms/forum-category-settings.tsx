@@ -23,8 +23,19 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { App, Input, Select, Tooltip } from "antd";
-import { GripVertical, Lock, Pencil, Plus, ShieldCheck, Trash2 } from "lucide-react";
+import { App, Input, Popover, Select, Tooltip } from "antd";
+import {
+  Check,
+  ChevronDown,
+  GripVertical,
+  Lock,
+  Pencil,
+  Plus,
+  Search,
+  ShieldCheck,
+  Trash2,
+} from "lucide-react";
+import { iconNames } from "lucide-react/dynamic";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
@@ -43,9 +54,17 @@ import {
   type ForumIndex,
   type ForumSection,
 } from "@/lib/api";
+import { FOLDER_COLORS } from "@/lib/rail-layout";
 import { useReadOnly } from "@/lib/read-only";
 import { useAuthStore } from "@/stores/auth-store";
-import { forumToken } from "./forum-shared";
+import {
+  AdminOnlyMark,
+  CategoryGlyph,
+  CategoryIcon,
+  SUGGESTED_ICONS,
+  forumToken,
+  iconLabel,
+} from "./forum-shared";
 
 const CATEGORY_LIMIT = 30;
 const SECTION_LIMIT = 10;
@@ -53,9 +72,15 @@ const NAME_MAX = 60;
 const DESCRIPTION_MAX = 300;
 const NO_SECTION = 0;
 
-type Draft = { name: string; description: string; sectionId: number | null };
+type Draft = {
+  name: string;
+  description: string;
+  sectionId: number | null;
+  icon: string | null;
+  color: string | null;
+};
 
-const emptyDraft: Draft = { name: "", description: "", sectionId: null };
+const emptyDraft: Draft = { name: "", description: "", sectionId: null, icon: null, color: null };
 
 const sectionKey = (id: number) => `section-${id}`;
 const categoryKey = (id: number) => `category-${id}`;
@@ -190,15 +215,6 @@ function IconButton({
   );
 }
 
-function AdminOnlyBadge({ from }: { from?: string }) {
-  return (
-    <span className="inline-flex w-fit items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-semibold text-accent">
-      <ShieldCheck size={12} aria-hidden />
-      {from ? `Admins only, from ${from}` : "Admins only"}
-    </span>
-  );
-}
-
 function RowActions({
   readOnly,
   adminOnly,
@@ -233,6 +249,107 @@ function RowActions({
         <Trash2 size={16} />
       </IconButton>
     </div>
+  );
+}
+
+const ICON_RESULTS = 96;
+
+function IconPicker({
+  icon,
+  color,
+  onChange,
+}: {
+  icon: string | null;
+  color: string | null;
+  onChange: (icon: string | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const search = query.trim().toLowerCase().replace(/\s+/g, "-");
+  const matches = search ? iconNames.filter((name) => name.includes(search)) : null;
+  const shown: (string | null)[] = matches ? matches.slice(0, ICON_RESULTS) : [null, ...SUGGESTED_ICONS];
+
+  function toggle(next: boolean) {
+    setOpen(next);
+    if (!next) setQuery("");
+  }
+
+  const content = (
+    <div className="flex w-72 flex-col gap-2">
+      <Input
+        autoFocus
+        allowClear
+        value={query}
+        prefix={<Search size={14} className="text-muted" />}
+        placeholder="Search all icons"
+        aria-label="Search icons"
+        onChange={(event) => setQuery(event.target.value)}
+      />
+      {shown.length === 0 ? (
+        <p className="py-6 text-center text-xs text-muted">No icons match “{query.trim()}”.</p>
+      ) : (
+        <div className="grid max-h-60 grid-cols-8 gap-1 overflow-y-auto">
+          {shown.map((name) => {
+            const selected = name === icon;
+            return (
+              <button
+                key={name ?? "default"}
+                type="button"
+                title={iconLabel(name)}
+                aria-label={iconLabel(name)}
+                aria-pressed={selected}
+                onClick={() => {
+                  onChange(name);
+                  toggle(false);
+                }}
+                style={
+                  selected && color
+                    ? { color, borderColor: color, backgroundColor: `${color}26` }
+                    : undefined
+                }
+                className={`focus-ring flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border transition-colors ${
+                  selected
+                    ? "border-accent bg-accent-soft text-accent"
+                    : "border-transparent text-muted hover:bg-rail-item hover:text-foreground"
+                }`}
+              >
+                <CategoryGlyph icon={name} size={16} />
+              </button>
+            );
+          })}
+        </div>
+      )}
+      <p className="text-[11px] text-muted">
+        {!matches
+          ? "Suggestions. Search to find any icon."
+          : matches.length > ICON_RESULTS
+            ? `Showing ${ICON_RESULTS} of ${matches.length}. Keep typing to narrow it down.`
+            : `${matches.length} ${matches.length === 1 ? "icon" : "icons"}`}
+      </p>
+    </div>
+  );
+
+  return (
+    <Popover
+      open={open}
+      onOpenChange={toggle}
+      trigger="click"
+      placement="bottomLeft"
+      content={content}
+      destroyOnHidden
+    >
+      <button
+        type="button"
+        aria-label={`Icon: ${iconLabel(icon)}. Change icon`}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        className="focus-ring flex w-fit cursor-pointer items-center gap-2 rounded-md border border-divider py-1 pr-2.5 pl-1 text-sm transition-colors hover:border-muted"
+      >
+        <CategoryIcon icon={icon} color={color} size="small" />
+        <span>{iconLabel(icon)}</span>
+        <ChevronDown size={14} aria-hidden className="text-muted" />
+      </button>
+    </Popover>
   );
 }
 
@@ -274,10 +391,42 @@ function CategoryFields({
           }
           options={[
             { value: NO_SECTION, label: "No section" },
-            ...sections.map(({ id, name }) => ({ value: id, label: `In ${name}` })),
+            ...sections.map(({ id, name }) => ({ value: id, label: name })),
           ]}
         />
       )}
+      <div className="flex flex-col gap-2">
+        <span className="text-xs font-semibold text-muted">Icon</span>
+        <IconPicker
+          icon={draft.icon}
+          color={draft.color}
+          onChange={(icon) => onChange({ ...draft, icon })}
+        />
+      </div>
+      <fieldset className="flex flex-col gap-2">
+        <legend className="mb-1 text-xs font-semibold text-muted">Color</legend>
+        <div className="flex flex-wrap gap-2">
+          {[{ value: null, label: "Default" }, ...FOLDER_COLORS].map((option) => {
+            const selected = draft.color === option.value;
+            return (
+              <button
+                key={option.label}
+                type="button"
+                aria-label={option.label}
+                aria-pressed={selected}
+                title={option.label}
+                onClick={() => onChange({ ...draft, color: option.value })}
+                style={option.value ? { backgroundColor: option.value } : undefined}
+                className={`focus-ring flex h-7 w-7 cursor-pointer items-center justify-center rounded-full ${
+                  option.value ? "text-white" : "bg-accent text-accent-foreground"
+                } ${selected ? "ring-2 ring-foreground ring-offset-2 ring-offset-surface" : ""}`}
+              >
+                {selected && <Check size={13} />}
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
     </>
   );
 }
@@ -448,8 +597,12 @@ function SectionSettings({
                   ) : (
                     <>
                       <div className="flex min-w-0 flex-1 flex-col gap-1 self-center">
-                        <span className="truncate text-sm font-semibold">{section.name}</span>
-                        {section.adminOnly && <AdminOnlyBadge />}
+                        <span className="flex min-w-0 items-center gap-1.5">
+                          <span className="truncate text-sm font-semibold">{section.name}</span>
+                          {section.adminOnly && (
+                            <AdminOnlyMark label="Only owners and admins can start threads in this section. Members can still reply." />
+                          )}
+                        </span>
                       </div>
                       <RowActions
                         readOnly={readOnly}
@@ -766,19 +919,26 @@ function CategorySettings({
                     </form>
                   ) : (
                     <>
+                      <CategoryIcon icon={category.icon} color={category.color} size="small" />
                       <div className="flex min-w-0 flex-1 flex-col gap-0.5 self-center">
-                        <span className="truncate text-sm font-semibold">{category.name}</span>
+                        <span className="flex min-w-0 items-center gap-1.5">
+                          <span className="truncate text-sm font-semibold">{category.name}</span>
+                          {category.adminOnly ? (
+                            <AdminOnlyMark />
+                          ) : (
+                            group.section?.adminOnly && (
+                              <AdminOnlyMark
+                                label={`Only owners and admins can start threads here, because the ${group.section.name} section is set that way. Members can still reply.`}
+                              />
+                            )
+                          )}
+                        </span>
                         {category.description && (
                           <span className="line-clamp-2 text-xs text-muted">{category.description}</span>
                         )}
                         <span className="text-xs text-muted">
                           {category.threadCount} {category.threadCount === 1 ? "thread" : "threads"}
                         </span>
-                        {category.adminOnly ? (
-                          <AdminOnlyBadge />
-                        ) : (
-                          group.section?.adminOnly && <AdminOnlyBadge from={group.section.name} />
-                        )}
                       </div>
                       <RowActions
                         readOnly={readOnly}
@@ -791,6 +951,8 @@ function CategorySettings({
                               name: category.name,
                               description: category.description,
                               sectionId: category.sectionId,
+                              icon: category.icon,
+                              color: category.color,
                             },
                           })
                         }
