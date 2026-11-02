@@ -6,7 +6,7 @@ export async function getDesktopAssets(): Promise<DesktopAsset[]> {
       "https://api.github.com/repos/PolsarCode/orbis.desktop/releases/latest",
       {
         headers: { Accept: "application/vnd.github+json", "User-Agent": "Orbis" },
-        next: { revalidate: 3600 },
+        next: { revalidate: 300 },
       },
     );
     if (!response.ok) return [];
