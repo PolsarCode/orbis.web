@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "deploy": "bash ./scripts/deployment/deploy.sh"
+    "deploy": "bash ./scripts/deployment/deploy.sh",
+    "postinstall": "node ./scripts/icons/copy-category-icons.mjs"
   },
   "dependencies": {
     "@ant-design/icons": "^6.3.4",
@@ -37,6 +38,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
+    "lucide-static": "1.60.0",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vercel": "^65.0.0"

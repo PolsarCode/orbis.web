@@ -1,8 +1,7 @@
 "use client";
 
 import { Pagination, Tooltip } from "antd";
-import { ChevronRight, Megaphone, MessagesSquare, ShieldCheck } from "lucide-react";
-import { DynamicIcon, iconNames, type IconName } from "lucide-react/dynamic";
+import { ChevronRight, Megaphone, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, type ReactNode } from "react";
@@ -25,101 +24,6 @@ export function useForum() {
   const value = useContext(ForumContext);
   if (!value) throw new Error("useForum needs a ForumProvider.");
   return value;
-}
-
-export const SUGGESTED_ICONS: IconName[] = [
-  "megaphone",
-  "scroll-text",
-  "newspaper",
-  "calendar-days",
-  "circle-help",
-  "lightbulb",
-  "users",
-  "hand-heart",
-  "tv",
-  "clapperboard",
-  "popcorn",
-  "film",
-  "book-open",
-  "gamepad-2",
-  "dice-5",
-  "puzzle",
-  "music",
-  "headphones",
-  "mic",
-  "camera",
-  "palette",
-  "brush",
-  "pen-tool",
-  "image",
-  "sparkles",
-  "wand-sparkles",
-  "star",
-  "heart",
-  "flame",
-  "zap",
-  "trophy",
-  "crown",
-  "sword",
-  "swords",
-  "shield",
-  "drama",
-  "ghost",
-  "skull",
-  "bot",
-  "rocket",
-  "globe",
-  "map",
-  "moon",
-  "sun",
-  "flower",
-  "leaf",
-  "cat",
-  "dog",
-  "coffee",
-  "pizza",
-  "gift",
-  "party-popper",
-  "laugh",
-  "message-circle",
-];
-
-const knownIcons = new Set<string>(iconNames);
-
-export function iconLabel(icon: string | null) {
-  if (!icon) return "Speech bubbles";
-  const words = icon.replace(/-/g, " ");
-  return words.charAt(0).toUpperCase() + words.slice(1);
-}
-
-export function CategoryGlyph({ icon, size }: { icon: string | null; size: number }) {
-  return icon && knownIcons.has(icon) ? (
-    <DynamicIcon name={icon as IconName} size={size} />
-  ) : (
-    <MessagesSquare size={size} />
-  );
-}
-
-export function CategoryIcon({
-  icon,
-  color,
-  size = "large",
-}: {
-  icon: string | null;
-  color: string | null;
-  size?: "large" | "small";
-}) {
-  return (
-    <span
-      aria-hidden
-      style={color ? { color, backgroundColor: `${color}26` } : undefined}
-      className={`flex shrink-0 items-center justify-center rounded-lg ${
-        color ? "" : "bg-accent-soft text-accent"
-      } ${size === "large" ? "h-10 w-10" : "h-8 w-8"}`}
-    >
-      <CategoryGlyph icon={icon} size={size === "large" ? 18 : 16} />
-    </span>
-  );
 }
 
 export const ADMIN_ONLY_NOTE =

@@ -7,6 +7,7 @@ import { useState, useSyncExternalStore } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import { verifyTwoFactorLogin } from "@/lib/api";
+import { inDesktopApp } from "@/lib/desktop";
 import { safeNext } from "@/lib/login";
 import { useAuthStore } from "@/stores/auth-store";
 import { OAuthButtons } from "./oauth-buttons";
@@ -172,6 +173,7 @@ export function AuthForm({
   const [ticket, setTicket] = useState<string | null>(null);
   const checking = Boolean(Molecule.turnstileSiteKey) && !token;
   const notice = useSyncExternalStore(subscribeToNothing, readSuspensionNotice, () => null);
+  const desktop = useSyncExternalStore(subscribeToNothing, inDesktopApp, () => false);
   const shownError = error ?? (mode === "login" ? notice : null);
   const { title, submit, switchText, switchLabel, switchHref, footnote } =
     content[mode];
@@ -235,7 +237,7 @@ export function AuthForm({
     <div
       className={`flex w-full flex-col ${compact ? "max-w-[400px] gap-10 sm:gap-16" : "max-w-[480px] gap-7"}`}
     >
-      {!compact && (
+      {!compact && !desktop && (
         <Link
           href="/"
           className="focus-ring inline-flex w-fit items-center gap-2 rounded-sm text-[13px] transition-colors hover:text-accent"

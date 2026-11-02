@@ -3,7 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useSyncExternalStore, type ReactNode } from "react";
 import * as Atom from "@atom";
+import { inDesktopApp } from "@/lib/desktop";
 import { useAuthStore } from "@/stores/auth-store";
+
+const noSubscription = () => () => {};
 
 export function GuestGate({
   children,
@@ -18,20 +21,30 @@ export function GuestGate({
     () => Boolean(useAuthStore.getState().token),
     () => false,
   );
+  const desktop = useSyncExternalStore(noSubscription, inDesktopApp, () => false);
   const hasHome = home !== undefined;
 
   useEffect(() => {
     if (!useAuthStore.getState().token) {
       delete document.documentElement.dataset.auth;
+      if (hasHome && inDesktopApp()) router.replace("/login");
       return;
     }
 
     if (!hasHome) router.replace("/");
-  }, [router, hasHome]);
+  }, [router, hasHome, authenticated]);
 
   return (
     <>
-      <div className="contents authenticated:hidden">{children}</div>
+      <div className="contents authenticated:hidden">
+        {desktop && hasHome ? (
+          <div className="flex flex-1">
+            <Atom.Loader />
+          </div>
+        ) : (
+          children
+        )}
+      </div>
       {authenticated && hasHome ? (
         home
       ) : (

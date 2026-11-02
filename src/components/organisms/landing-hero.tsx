@@ -7,6 +7,7 @@ import {
   LandingPeople,
 } from "./landing-showcase";
 import { AnimeSlideshow } from "./anime-spotlight";
+import { DesktopDownload } from "./desktop-download";
 import { LandingReveal } from "./landing-reveal";
 import { MediaShelf } from "./media-shelf";
 import { SiteStats } from "./site-stats";
@@ -29,14 +30,17 @@ export function LandingHero() {
           <p className="max-w-md text-base leading-relaxed text-foreground/80 sm:text-lg">
             Anime, manga, games, and the people who love them as much as you do.
           </p>
-          <Atom.ButtonLink
-            href="/register"
-            size="large"
-            icon={<ArrowRight size={17} />}
-            iconPlacement="end"
-          >
-            Find your people
-          </Atom.ButtonLink>
+          <div className="flex flex-wrap items-center gap-3">
+            <Atom.ButtonLink
+              href="/register"
+              size="large"
+              icon={<ArrowRight size={17} />}
+              iconPlacement="end"
+            >
+              Find your people
+            </Atom.ButtonLink>
+            <DesktopDownload />
+          </div>
           <SiteStats />
         </div>
       </section>

@@ -12,13 +12,13 @@ import { useDocumentTitle } from "@/lib/use-document-title";
 import { useAuthStore } from "@/stores/auth-store";
 import {
   AdminOnlyMark,
-  CategoryIcon,
   FeedMark,
   categoryHref,
   sectionAnchor,
   threadHref,
   useForum,
 } from "./forum-shared";
+import { CategoryIcon } from "./forum-icons";
 
 function CategoryRow({
   category,

@@ -36,7 +36,6 @@ import {
   ShieldCheck,
   Trash2,
 } from "lucide-react";
-import { iconNames } from "lucide-react/dynamic";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
@@ -58,15 +57,8 @@ import {
 import { FOLDER_COLORS } from "@/lib/rail-layout";
 import { useReadOnly } from "@/lib/read-only";
 import { useAuthStore } from "@/stores/auth-store";
-import {
-  AdminOnlyMark,
-  CategoryGlyph,
-  CategoryIcon,
-  FeedMark,
-  SUGGESTED_ICONS,
-  forumToken,
-  iconLabel,
-} from "./forum-shared";
+import { CategoryGlyph, CategoryIcon, SUGGESTED_ICONS, iconLabel, loadIconIndex } from "./forum-icons";
+import { AdminOnlyMark, FeedMark, forumToken } from "./forum-shared";
 
 const CATEGORY_LIMIT = 30;
 const SECTION_LIMIT = 10;
@@ -283,13 +275,34 @@ function IconPicker({
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const search = query.trim().toLowerCase().replace(/\s+/g, "-");
-  const matches = search ? iconNames.filter((name) => name.includes(search)) : null;
-  const shown: (string | null)[] = matches ? matches.slice(0, ICON_RESULTS) : [null, ...SUGGESTED_ICONS];
+  const [icons, setIcons] = useState<string[][] | null>(null);
+  const [failed, setFailed] = useState(false);
+  const words = query.trim().toLowerCase();
+  const search = words.replace(/\s+/g, "-");
+  const matches =
+    words && icons
+      ? [
+          ...icons.filter(([name]) => name.includes(search)),
+          ...icons.filter(
+            ([name, ...tags]) => !name.includes(search) && tags.some((tag) => tag.includes(words)),
+          ),
+        ].map(([name]) => name)
+      : null;
+  const shown: (string | null)[] = matches
+    ? matches.slice(0, ICON_RESULTS)
+    : words
+      ? []
+      : [null, ...SUGGESTED_ICONS];
 
   function toggle(next: boolean) {
     setOpen(next);
     if (!next) setQuery("");
+    if (next && !icons) {
+      setFailed(false);
+      loadIconIndex()
+        .then(setIcons)
+        .catch(() => setFailed(true));
+    }
   }
 
   const content = (
@@ -304,7 +317,13 @@ function IconPicker({
         onChange={(event) => setQuery(event.target.value)}
       />
       {shown.length === 0 ? (
-        <p className="py-6 text-center text-xs text-muted">No icons match “{query.trim()}”.</p>
+        <p className="py-6 text-center text-xs text-muted">
+          {matches
+            ? `No icons match “${query.trim()}”.`
+            : failed
+              ? "Couldn’t load the icons. Close this and try again."
+              : "Loading icons…"}
+        </p>
       ) : (
         <div className="grid max-h-60 grid-cols-8 gap-1 overflow-y-auto">
           {shown.map((name) => {
@@ -339,7 +358,7 @@ function IconPicker({
       )}
       <p className="text-[11px] text-muted">
         {!matches
-          ? "Suggestions. Search to find any icon."
+          ? "Suggestions. Search any icon by name or keyword."
           : matches.length > ICON_RESULTS
             ? `Showing ${ICON_RESULTS} of ${matches.length}. Keep typing to narrow it down.`
             : `${matches.length} ${matches.length === 1 ? "icon" : "icons"}`}

@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 *.pem
+/public/category-icons
 
 # debug
 npm-debug.log*
