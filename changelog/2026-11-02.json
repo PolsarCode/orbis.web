@@ -1,0 +1,42 @@
+{
+  "date": "2026-11-02",
+  "versions": ["v0.97.0", "v0.97.1", "v0.98.0", "v0.99.0", "v0.100.0", "v0.101.0", "v0.101.1", "v0.102.0", "v0.102.1"],
+  "entries": [
+    {
+      "type": "new",
+      "title": "Orbis desktop app",
+      "description": "Download Orbis for Mac, Windows, or Linux from the landing page. You get native notifications, an unread count on the app icon, the option to start Orbis when you log in, and updates that install themselves.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Remove and ban community members",
+      "description": "Community admins can remove members, ban people from the community, and lift bans later from community settings.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Share forum threads to the community feed",
+      "description": "Admins can set a forum category to post its new threads to the community feed, so more members see them. You can also attach a link to forum threads and replies.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Admin-only forum sections and categories",
+      "description": "Admins can limit a forum section or category so only they can start new threads there, which is handy for announcements.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Icons and colors for forum categories",
+      "description": "Admins can give each forum category its own icon and color, making the forum easier to scan.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "improved",
+      "title": "Install guide after downloading the desktop app",
+      "description": "After you download the desktop app, a short guide walks you through opening it for the first time on your system.",
+      "platforms": ["web"]
+    }
+  ]
+}
