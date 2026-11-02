@@ -27,12 +27,15 @@ export function GuestGate({
   useEffect(() => {
     if (!useAuthStore.getState().token) {
       delete document.documentElement.dataset.auth;
-      if (hasHome && inDesktopApp()) router.replace("/login");
       return;
     }
 
     if (!hasHome) router.replace("/");
-  }, [router, hasHome, authenticated]);
+  }, [router, hasHome]);
+
+  useEffect(() => {
+    if (desktop && hasHome && !authenticated) router.replace("/login");
+  }, [router, desktop, hasHome, authenticated]);
 
   return (
     <>

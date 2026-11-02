@@ -57,8 +57,13 @@ export function DesktopDownloadButton({ assets }: { assets: DesktopAsset[] }) {
   });
 
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-      <Atom.Button href={installer.url} variant="secondary" size="large" icon={<Download size={17} />}>
+    <div className="flex flex-col items-center gap-2">
+      <Atom.Button
+        href={installer.url}
+        variant="secondary"
+        icon={<Download size={20} />}
+        className="h-14 rounded-full border-transparent bg-foreground px-8 text-base font-semibold text-background hover:border-transparent hover:bg-foreground/85 hover:text-background"
+      >
         Download for {labels[platform]}
       </Atom.Button>
       {others.length > 0 && (

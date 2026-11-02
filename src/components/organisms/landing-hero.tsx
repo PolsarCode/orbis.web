@@ -30,16 +30,16 @@ export function LandingHero() {
           <p className="max-w-md text-base leading-relaxed text-foreground/80 sm:text-lg">
             Anime, manga, games, and the people who love them as much as you do.
           </p>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-start gap-4">
+            <DesktopDownload />
             <Atom.ButtonLink
               href="/register"
-              size="large"
-              icon={<ArrowRight size={17} />}
+              icon={<ArrowRight size={20} />}
               iconPlacement="end"
+              className="h-14 rounded-full px-8 text-base font-semibold"
             >
               Find your people
             </Atom.ButtonLink>
-            <DesktopDownload />
           </div>
           <SiteStats />
         </div>

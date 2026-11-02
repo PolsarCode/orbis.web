@@ -607,7 +607,8 @@ export function CommunityRail() {
     <nav
       aria-label="Communities"
       inert={hidden}
-      className={`fixed inset-y-0 left-0 z-50 flex h-dvh w-20 shrink-0 flex-col items-center gap-4 bg-rail px-4 py-5 transition-transform duration-300 ease-out motion-reduce:transition-none sm:static sm:z-auto sm:h-full sm:translate-x-0 ${
+      data-tauri-drag-region
+      className={`fixed inset-y-0 left-0 z-50 flex h-dvh w-20 shrink-0 flex-col items-center gap-4 bg-rail px-4 py-5 transition-transform [[data-desktop=mac]_&]:pt-8 duration-300 ease-out motion-reduce:transition-none sm:static sm:z-auto sm:h-full sm:translate-x-0 ${
         railOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
       }`}
       onClickCapture={(event) => {

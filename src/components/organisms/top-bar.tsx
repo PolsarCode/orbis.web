@@ -171,7 +171,9 @@ function MessagesButton() {
 export function TopBar() {
   const setRailOpen = useLayoutStore((state) => state.setRailOpen);
   return (
-    <header className="grid h-14 shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 bg-rail px-4 sm:h-16 sm:grid-cols-[1fr_minmax(0,28rem)_1fr] sm:gap-6 sm:px-8">
+    <header
+      data-tauri-drag-region
+      className="grid h-14 shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 bg-rail px-4 sm:h-16 sm:grid-cols-[1fr_minmax(0,28rem)_1fr] sm:gap-6 sm:px-8">
       <div className="-ml-2 flex sm:ml-0 sm:block">
         <button
           type="button"

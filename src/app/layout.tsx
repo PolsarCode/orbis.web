@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, Inter } from "next/font/google";
 import { TopLoadingBar } from "@/components/organisms/top-loading-bar";
 import { wakeServerScript } from "@/lib/api";
+import { desktopScript } from "@/lib/desktop";
 import { authScript } from "@/stores/auth-store";
 import { themeScript } from "@/stores/theme-store";
 import { AntdProvider } from "./antd-provider";
@@ -58,10 +59,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <head>
         <script
-          dangerouslySetInnerHTML={{ __html: themeScript + authScript + wakeServerScript }}
+          dangerouslySetInnerHTML={{ __html: themeScript + authScript + desktopScript + wakeServerScript }}
         />
       </head>
       <body className="min-h-full flex flex-col">
+        <div
+          data-tauri-drag-region
+          aria-hidden
+          className="fixed inset-x-0 top-0 z-[60] hidden h-8 [[data-desktop=mac]_&]:block authenticated:hidden"
+        />
         <TopLoadingBar />
         <AntdProvider>{children}</AntdProvider>
         <Analytics />
