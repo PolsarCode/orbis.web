@@ -2,6 +2,7 @@
 
 import { Modal, Popover } from "antd";
 import {
+  AppWindow,
   BookUser,
   Inbox,
   LogOut,
@@ -12,14 +13,17 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
+import { inDesktopApp } from "@/lib/desktop";
 import { useIsPhone } from "@/lib/use-is-phone";
 import { useAuthStore } from "@/stores/auth-store";
 import { useLayoutStore } from "@/stores/layout-store";
 import { StatusPicker } from "./status-picker";
 import { ThemeToggle } from "./theme-toggle";
+
+const noSubscription = () => () => {};
 
 export function UserMenu() {
   const router = useRouter();
@@ -29,6 +33,7 @@ export function UserMenu() {
   const setFeedbackOpen = useLayoutStore((state) => state.setFeedbackOpen);
   const [open, setOpen] = useState(false);
   const isPhone = useIsPhone();
+  const desktop = useSyncExternalStore(noSubscription, inDesktopApp, () => false);
 
   useEffect(() => {
     if (!useAuthStore.getState().profile) fetchProfile().catch(() => null);
@@ -82,6 +87,12 @@ export function UserMenu() {
         <Settings size={18} />
         Settings
       </Link>
+      {desktop && (
+        <Link href="/settings/application" onClick={() => setOpen(false)} className={menuRow}>
+          <AppWindow size={18} />
+          Application settings
+        </Link>
+      )}
       <Link href="/changelog" onClick={() => setOpen(false)} className={menuRow}>
         <Sparkles size={18} />
         What’s new

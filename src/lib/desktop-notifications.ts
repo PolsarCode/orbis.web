@@ -1,5 +1,5 @@
 import type { Notification as OrbisNotification } from "@/lib/api";
-import { inDesktopApp } from "@/lib/desktop";
+import { inDesktopApp, requestDesktopAttention } from "@/lib/desktop";
 import { displayName } from "@/lib/display-name";
 
 async function allowed() {
@@ -10,6 +10,7 @@ async function allowed() {
 
 export async function showDesktopNotifications(notifications: OrbisNotification[]) {
   if (!inDesktopApp() || notifications.length === 0 || document.hasFocus()) return;
+  requestDesktopAttention().catch(() => null);
   if (!(await allowed().catch(() => false))) return;
 
   for (const notification of notifications) {

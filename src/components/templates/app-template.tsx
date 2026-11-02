@@ -6,6 +6,7 @@ export function AppTemplate({ children }: { children: ReactNode }) {
     <div className="flex h-dvh flex-col">
       <Organism.EmailConfirmBanner />
       <Organism.SuspendedAccountWatcher />
+      <Organism.DesktopBadge />
       <div className="shrink-0 authenticated:hidden">
         <Organism.SiteHeader />
       </div>
