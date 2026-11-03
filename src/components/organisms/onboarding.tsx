@@ -51,6 +51,13 @@ export const tourStops: TourStop[] = [
     description: "Search public communities and join the ones you like.",
   },
   {
+    target: "home-tabs",
+    placement: "bottom",
+    title: "Feed and bookmarks",
+    description:
+      "Switch between your feed and the posts you’ve saved. Save a post from its … menu, and search what you’ve saved from the Bookmarks tab.",
+  },
+  {
     target: "discover",
     placement: "bottom",
     title: "See what’s popular",

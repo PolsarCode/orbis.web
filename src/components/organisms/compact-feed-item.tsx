@@ -10,7 +10,7 @@ import { displayName } from "@/lib/display-name";
 import { spoilerLabel } from "@/lib/spoiler";
 import { activityText, mediaPath, progressText } from "@/lib/library";
 import { timeAgo } from "@/lib/time";
-import { toggleLike } from "@/lib/votes";
+import { toggleBookmark, toggleLike } from "@/lib/votes";
 import { useLikeBlockedReason } from "./post-card";
 import { ContentActions } from "./content-actions";
 import { threadHref } from "./forum-shared";
@@ -109,6 +109,13 @@ export function CompactFeedItem({
               type={item.type}
               id={item.id}
               ownerId={item.author.id}
+              bookmark={{
+                bookmarked: item.bookmarked,
+                onToggle: () =>
+                  toggleBookmark(item.id, item.bookmarked, (bookmarked) =>
+                    onChange({ ...item, bookmarked }),
+                  ),
+              }}
               className="-mt-1 -mr-1"
             />
           )}

@@ -298,6 +298,7 @@ export type Post = {
   commentCount: number;
   likeCount: number;
   liked: boolean;
+  bookmarked: boolean;
   previewComments: PreviewComment[];
   hiddenAt?: string | null;
   editedAt?: string | null;
@@ -1631,6 +1632,42 @@ export async function setLike(
   });
 
   if (!res.ok) throw new Error("Could not save your like.");
+  return res.json();
+}
+
+export async function setBookmark(
+  token: string,
+  postId: number,
+  bookmarked: boolean,
+): Promise<{ bookmarked: boolean }> {
+  const res = await api("/bookmarks", {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ type: "post", id: postId, bookmarked }),
+  });
+
+  if (!res.ok) throw new Error("Could not update your bookmarks.");
+  return res.json();
+}
+
+export async function getBookmarks(token: string | null, cursor?: string): Promise<Page<Post>> {
+  const res = await api(withQuery("/bookmarks", { cursor }), {
+    headers: authHeaders(token),
+  });
+
+  if (!res.ok) throw new Error("Could not load your bookmarks.");
+  return res.json();
+}
+
+export async function searchBookmarks(token: string | null, q: string): Promise<Post[]> {
+  const res = await api(withQuery("/bookmarks/search", { q }), {
+    headers: authHeaders(token),
+  });
+
+  if (!res.ok) throw new Error("Could not search your bookmarks.");
   return res.json();
 }
 

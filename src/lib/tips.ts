@@ -10,6 +10,12 @@ export type Tip = {
 
 export const tips: Tip[] = [
   {
+    id: "bookmarks",
+    title: "Save posts for later",
+    body: "Choose Save post in a post’s … menu to keep it. Find what you’ve saved in the Bookmarks tab on the homepage.",
+    action: { label: "Open bookmarks", href: "/?tab=bookmarks" },
+  },
+  {
     id: "spoilers",
     title: "Hide spoilers behind a warning",
     body: "Use the eye button when you write a post, comment, or forum reply to hide it until readers choose to show it. Add a short note like “Episode 12” so people know what it’s about.",

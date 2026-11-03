@@ -1,7 +1,18 @@
 "use client";
 
 import { App, Dropdown, type MenuProps } from "antd";
-import { Ban, Flag, MoreHorizontal, Pencil, Pin, PinOff, Trash2, UserMinus } from "lucide-react";
+import {
+  Ban,
+  Bookmark,
+  BookmarkX,
+  Flag,
+  MoreHorizontal,
+  Pencil,
+  Pin,
+  PinOff,
+  Trash2,
+  UserMinus,
+} from "lucide-react";
 import { useState } from "react";
 import * as Molecule from "@molecule";
 import { useReadOnly } from "@/lib/read-only";
@@ -31,6 +42,7 @@ export function ContentActions({
   onDelete,
   deleteNote,
   pin,
+  bookmark,
   moderation,
   variant = "icon",
   className = "",
@@ -43,6 +55,7 @@ export function ContentActions({
   onDelete?: () => Promise<void>;
   deleteNote?: string;
   pin?: { pinned: boolean; onToggle: () => Promise<void> };
+  bookmark?: { bookmarked: boolean; onToggle: () => Promise<void> };
   moderation?: { name: string; remove?: () => void; ban?: () => void };
   variant?: "icon" | "text";
   className?: string;
@@ -54,12 +67,13 @@ export function ContentActions({
   const own = myId !== undefined && myId === ownerId;
   const deletable = Boolean(onDelete) && (own || canDelete);
   const canReport = myId !== undefined && !own;
+  const bookmarkable = myId !== undefined && Boolean(bookmark);
   const moderating = variant === "icon" && Boolean(moderation?.remove || moderation?.ban);
 
   if (variant === "text" && !deletable) {
     return <ReportButton type={type} id={id} ownerId={ownerId} className={className} />;
   }
-  if (!deletable && !canReport) return null;
+  if (!deletable && !canReport && !bookmarkable) return null;
 
   function confirmDelete() {
     modal.confirm({
@@ -103,7 +117,29 @@ export function ContentActions({
     });
   }
 
+  function toggleBookmark() {
+    const saving = !bookmark?.bookmarked;
+    bookmark
+      ?.onToggle()
+      .then(() => {
+        message.success(saving ? "Saved to your bookmarks." : "Removed from your bookmarks.");
+      })
+      .catch((error: Error) => {
+        message.error(error.message);
+      });
+  }
+
   const items: MenuProps["items"] = [
+    ...(bookmarkable
+      ? [
+          {
+            key: "bookmark",
+            label: bookmark?.bookmarked ? "Remove from bookmarks" : "Save post",
+            icon: bookmark?.bookmarked ? <BookmarkX size={14} /> : <Bookmark size={14} />,
+            disabled: readOnly,
+          },
+        ]
+      : []),
     ...(pin
       ? [
           {
@@ -148,6 +184,7 @@ export function ContentActions({
   ];
 
   const actions: Record<string, (() => void) | undefined> = {
+    bookmark: toggleBookmark,
     pin: togglePin,
     edit: onEdit,
     report: () => setReporting(true),

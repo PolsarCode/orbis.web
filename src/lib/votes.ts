@@ -1,4 +1,4 @@
-import { setLike, type Likeable, type LikeResult } from "@/lib/api";
+import { setBookmark, setLike, type Likeable, type LikeResult } from "@/lib/api";
 import { currentPath, loginUrl } from "@/lib/login";
 import { useAuthStore } from "@/stores/auth-store";
 
@@ -21,5 +21,23 @@ export async function toggleLike(
     onChange(await setLike(token, target, liked));
   } catch {
     onChange(current);
+  }
+}
+
+export async function toggleBookmark(
+  postId: number,
+  current: boolean,
+  onChange: (bookmarked: boolean) => void,
+) {
+  const { token } = useAuthStore.getState();
+  if (!token) return requireLogin();
+
+  onChange(!current);
+
+  try {
+    onChange((await setBookmark(token, postId, !current)).bookmarked);
+  } catch (error) {
+    onChange(current);
+    throw error;
   }
 }

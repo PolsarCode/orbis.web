@@ -6,7 +6,7 @@ import { useState } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import { deletePost, setPostPinned, updatePost, type Post } from "@/lib/api";
-import { toggleLike } from "@/lib/votes";
+import { toggleBookmark, toggleLike } from "@/lib/votes";
 import { displayName } from "@/lib/display-name";
 import { timeAgo } from "@/lib/time";
 import { useAuthStore } from "@/stores/auth-store";
@@ -164,6 +164,13 @@ export function PostCard({
           onDelete={remove}
           deleteNote={thread ? "It’s taken off the feed. The thread stays in the forum." : undefined}
           pin={post.canPin ? { pinned: Boolean(post.pinned), onToggle: togglePin } : undefined}
+          bookmark={{
+            bookmarked: post.bookmarked,
+            onToggle: () =>
+              toggleBookmark(post.id, post.bookmarked, (bookmarked) =>
+                onChange?.({ ...post, bookmarked }),
+              ),
+          }}
           moderation={
             target
               ? {

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import * as Atom from "@atom";
 import {
   getMembers,
+  searchBookmarks,
   searchCommunity,
   searchForum,
   searchProfile,
@@ -267,6 +268,22 @@ export function CommunitySearchScope({
             )),
         },
       ]}
+    />
+  );
+}
+
+export function BookmarksSearchScope() {
+  const search = useCallback(
+    (query: string) => searchBookmarks(useAuthStore.getState().token, query),
+    [],
+  );
+
+  return (
+    <ContentSearchScope
+      name="Bookmarks"
+      scope="your bookmarks"
+      search={search}
+      sections={() => []}
     />
   );
 }
