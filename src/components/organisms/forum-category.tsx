@@ -113,12 +113,13 @@ function NewThread({
           className="w-full border-b border-divider bg-transparent pb-3 font-display text-xl font-bold outline-none placeholder:text-muted"
         />
       }
-      onPost={async (content, linkUrl) => {
+      onPost={async (content, linkUrl, spoiler) => {
         if (!title.trim()) throw new Error("Give your thread a title.");
         const { id } = await createForumThread(forumToken(), communityId, categoryId, {
           title,
           content,
           linkUrl,
+          spoiler,
         });
         router.push(threadHref(communityId, id));
       }}

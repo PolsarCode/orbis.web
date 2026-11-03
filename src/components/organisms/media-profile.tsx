@@ -336,10 +336,12 @@ function MediaWall({ profile }: { profile: Profile }) {
   );
   const signedIn = useAuthStore((state) => Boolean(state.token));
 
-  async function handlePost(content: string, linkUrl?: string) {
+  async function handlePost(content: string, linkUrl?: string, spoiler?: string | null) {
     const { token } = useAuthStore.getState();
     if (!token) throw new Error("Please log in again.");
-    feed.prepend(await createMediaPost(token, profile.type, profile.sourceId, content, linkUrl));
+    feed.prepend(
+      await createMediaPost(token, profile.type, profile.sourceId, content, linkUrl, spoiler),
+    );
   }
 
   return (

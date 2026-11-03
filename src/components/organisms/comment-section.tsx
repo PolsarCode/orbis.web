@@ -57,7 +57,12 @@ function CommentItem({
   node: CommentNode;
   depth: number;
   canReply: boolean;
-  onReply: (content: string, parentId: number, linkUrl?: string) => Promise<void>;
+  onReply: (
+    content: string,
+    parentId: number,
+    linkUrl?: string,
+    spoiler?: string | null,
+  ) => Promise<void>;
   onChange: (comment: Comment) => void;
   onDelete: (comment: Comment) => Promise<void>;
 }) {
@@ -65,10 +70,10 @@ function CommentItem({
   const [editing, setEditing] = useState(false);
   const author = displayName(node.author);
 
-  async function save(content: string, linkUrl?: string) {
+  async function save(content: string, linkUrl?: string, spoiler?: string | null) {
     const { token } = useAuthStore.getState();
     if (!token) throw new Error("Please log in again.");
-    onChange(await updateComment(token, node.id, content, linkUrl));
+    onChange(await updateComment(token, node.id, content, linkUrl, spoiler));
   }
 
   return (
@@ -101,6 +106,7 @@ function CommentItem({
               linkPreview
               initialContent={node.content}
               initialLink={node.linkUrl}
+              initialSpoiler={node.spoiler}
               submitLabel="Save"
               onPost={save}
               onPosted={() => setEditing(false)}
@@ -113,7 +119,7 @@ function CommentItem({
                 : "This comment is hidden while admins review it."}
             </p>
           ) : (
-            <>
+            <Molecule.SpoilerGate spoiler={node.spoiler}>
               {node.content && (
                 <div
                   className="rich-text"
@@ -121,7 +127,7 @@ function CommentItem({
                 />
               )}
               {node.linkUrl && <Molecule.LinkPreview url={node.linkUrl} />}
-            </>
+            </Molecule.SpoilerGate>
           )}
           <div className="flex items-center gap-2">
             <Molecule.LikeButton
@@ -164,7 +170,7 @@ function CommentItem({
               }
               placeholder="Write a reply…"
               submitLabel="Reply"
-              onPost={(content, linkUrl) => onReply(content, node.id, linkUrl)}
+              onPost={(content, linkUrl, spoiler) => onReply(content, node.id, linkUrl, spoiler)}
               onPosted={() => setReplying(false)}
               onCancel={() => setReplying(false)}
             />
@@ -220,11 +226,16 @@ export function CommentSection({
       .catch(() => setFailed(true));
   }, [type, id, attempt]);
 
-  async function handleReply(content: string, parentId?: number, linkUrl?: string) {
+  async function handleReply(
+    content: string,
+    parentId?: number,
+    linkUrl?: string,
+    spoiler?: string | null,
+  ) {
     const { token } = useAuthStore.getState();
     if (!token) throw new Error("Please log in again.");
 
-    const comment = await createComment(token, { type, id }, content, parentId, linkUrl);
+    const comment = await createComment(token, { type, id }, content, parentId, linkUrl, spoiler);
     useOnboardingStore.getState().refresh();
     const next = [...(comments ?? []), comment];
     setComments(next);
@@ -268,7 +279,7 @@ export function CommentSection({
             linkPreview
             placeholder="Write a comment…"
             submitLabel="Comment"
-            onPost={(content, linkUrl) => handleReply(content, undefined, linkUrl)}
+            onPost={(content, linkUrl, spoiler) => handleReply(content, undefined, linkUrl, spoiler)}
           />
         </div>
       ) : signedIn ? (

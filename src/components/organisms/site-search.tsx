@@ -42,6 +42,7 @@ import {
 } from "@/lib/api";
 import { displayName } from "@/lib/display-name";
 import { mediaPath, statusLabel } from "@/lib/library";
+import { spoilerLabel } from "@/lib/spoiler";
 import { ticketNumber } from "@/lib/ticket";
 import { useAuthStore } from "@/stores/auth-store";
 import {
@@ -435,7 +436,8 @@ function SearchPanel({
 
   const rows: Record<SearchSource, Rows> = {
     posts: rowsOf(posts, (item: Post) => {
-      const text = plainText(item.content).trim();
+      const text =
+        item.spoiler !== null ? spoilerLabel(item.spoiler) : plainText(item.content).trim();
       const place = item.community
         ? `In ${item.community.name}`
         : `On ${displayName(item.wallUser ?? item.author)}’s wall`;

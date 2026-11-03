@@ -2,6 +2,7 @@ import * as Atom from "@atom";
 import type { PreviewComment } from "@/lib/api";
 import { attachmentLabel } from "@/lib/links";
 import { displayName } from "@/lib/display-name";
+import { spoilerLabel } from "@/lib/spoiler";
 import { timeAgo } from "@/lib/time";
 import { UserLink } from "./user-link";
 
@@ -40,13 +41,15 @@ export function CommentPreview({
                   {timeAgo(comment.createdAt)}
                 </time>
               </p>
-              {comment.content && (
+              {comment.spoiler !== null ? (
+                <p className="text-[13px] text-muted italic">{spoilerLabel(comment.spoiler)}</p>
+              ) : comment.content ? (
                 <div
                   className="rich-text line-clamp-3 text-[13px]"
                   dangerouslySetInnerHTML={{ __html: comment.content }}
                 />
-              )}
-              {comment.linkUrl && (
+              ) : null}
+              {comment.linkUrl && comment.spoiler === null && (
                 <p className="text-[13px] text-muted italic">
                   {attachmentLabel(comment.linkUrl)}
                 </p>

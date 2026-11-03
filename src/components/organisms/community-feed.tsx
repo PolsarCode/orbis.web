@@ -23,11 +23,11 @@ export function CommunityFeed({
     { live: true, guest: true, types: ["post", "activity"] },
   );
 
-  async function handlePost(content: string, linkUrl?: string) {
+  async function handlePost(content: string, linkUrl?: string, spoiler?: string | null) {
     const { token } = useAuthStore.getState();
     if (!token) throw new Error("Please log in again.");
 
-    feed.prepend(await createPost(token, communityId, content, linkUrl));
+    feed.prepend(await createPost(token, communityId, content, linkUrl, spoiler));
   }
 
   return (

@@ -10,6 +10,11 @@ export type Tip = {
 
 export const tips: Tip[] = [
   {
+    id: "spoilers",
+    title: "Hide spoilers behind a warning",
+    body: "Use the eye button when you write a post, comment, or forum reply to hide it until readers choose to show it. Add a short note like “Episode 12” so people know what it’s about.",
+  },
+  {
     id: "community-forums",
     title: "Talk it through in the forum",
     body: "Every community has a Forum tab for longer conversations. Pick a category, start a thread, and quote a reply to answer someone directly.",

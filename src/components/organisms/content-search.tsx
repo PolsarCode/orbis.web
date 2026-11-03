@@ -15,6 +15,7 @@ import {
 } from "@/lib/api";
 import { displayName } from "@/lib/display-name";
 import { mediaPath, statusLabel } from "@/lib/library";
+import { spoilerLabel } from "@/lib/spoiler";
 import { useAuthStore } from "@/stores/auth-store";
 import { MediaCover } from "./library-view";
 import { PersonRow } from "./person-row";
@@ -46,7 +47,7 @@ const rowClass =
   "focus-ring flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition-colors hover:bg-rail-item";
 
 function ContentRow({ item, onOpen }: { item: Post; onOpen: () => void }) {
-  const text = plainText(item.content);
+  const text = item.spoiler !== null ? spoilerLabel(item.spoiler) : plainText(item.content);
 
   return (
     <li>

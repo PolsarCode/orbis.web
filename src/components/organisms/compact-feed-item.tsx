@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import * as Molecule from "@molecule";
 import type { FeedEntry } from "@/lib/api";
 import { displayName } from "@/lib/display-name";
+import { spoilerLabel } from "@/lib/spoiler";
 import { activityText, mediaPath, progressText } from "@/lib/library";
 import { timeAgo } from "@/lib/time";
 import { toggleLike } from "@/lib/votes";
@@ -134,10 +135,14 @@ export function CompactFeedItem({
                 {thread.title}
               </Link>
             )}
-            <div
-              className="rich-text line-clamp-2 max-h-10 overflow-hidden text-sm [&_blockquote]:my-0 [&_img]:hidden [&_ol]:my-0 [&_p]:my-0 [&_pre]:my-0 [&_ul]:my-0"
-              dangerouslySetInnerHTML={{ __html: item.content }}
-            />
+            {item.spoiler !== null ? (
+              <p className="text-sm text-muted italic">{spoilerLabel(item.spoiler)}</p>
+            ) : (
+              <div
+                className="rich-text line-clamp-2 max-h-10 overflow-hidden text-sm [&_blockquote]:my-0 [&_img]:hidden [&_ol]:my-0 [&_p]:my-0 [&_pre]:my-0 [&_ul]:my-0"
+                dangerouslySetInnerHTML={{ __html: item.content }}
+              />
+            )}
           </>
         )}
         {thread ? (

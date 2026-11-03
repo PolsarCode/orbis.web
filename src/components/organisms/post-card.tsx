@@ -89,10 +89,10 @@ export function PostCard({
       ? { communityId: post.communityId, userId: post.author.id, name: authorName }
       : null;
 
-  async function save(content: string, linkUrl?: string) {
+  async function save(content: string, linkUrl?: string, spoiler?: string | null) {
     const { token } = useAuthStore.getState();
     if (!token) throw new Error("Please log in again.");
-    const updated = await updatePost(token, post.id, content, linkUrl);
+    const updated = await updatePost(token, post.id, content, linkUrl, spoiler);
     onChange?.({ ...post, ...updated });
   }
 
@@ -184,6 +184,7 @@ export function PostCard({
           linkPreview
           initialContent={post.content}
           initialLink={post.linkUrl}
+          initialSpoiler={post.spoiler}
           submitLabel="Save"
           onPost={save}
           onPosted={() => setEditing(false)}
@@ -199,13 +200,15 @@ export function PostCard({
               {thread.title}
             </Link>
           )}
-          {post.content && (
-            <div
-              className={`rich-text ${thread ? "line-clamp-6" : ""}`}
-              dangerouslySetInnerHTML={{ __html: post.content }}
-            />
-          )}
-          {post.linkUrl && <Molecule.LinkPreview url={post.linkUrl} />}
+          <Molecule.SpoilerGate spoiler={post.spoiler}>
+            {post.content && (
+              <div
+                className={`rich-text ${thread ? "line-clamp-6" : ""}`}
+                dangerouslySetInnerHTML={{ __html: post.content }}
+              />
+            )}
+            {post.linkUrl && <Molecule.LinkPreview url={post.linkUrl} />}
+          </Molecule.SpoilerGate>
         </>
       )}
       {thread ? (

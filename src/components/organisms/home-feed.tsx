@@ -37,13 +37,13 @@ export function HomeFeed({ latestChangelog }: { latestChangelog: ChangelogDay | 
     <DiscordSetupReminder community={unfinishedDiscord} />
   ) : null;
 
-  async function handlePost(content: string, linkUrl?: string) {
+  async function handlePost(content: string, linkUrl?: string, spoiler?: string | null) {
     const { token } = useAuthStore.getState();
     if (!token || !profile) throw new Error("Please log in again.");
 
     const post = community
-      ? await createPost(token, community.id, content, linkUrl)
-      : await createWallPost(token, profile.username, content, linkUrl);
+      ? await createPost(token, community.id, content, linkUrl, spoiler)
+      : await createWallPost(token, profile.username, content, linkUrl, spoiler);
     feed.prepend(post);
     useOnboardingStore.getState().refresh();
   }

@@ -3,13 +3,14 @@
 import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Modal, Tooltip } from "antd";
-import { Link2, Lock } from "lucide-react";
+import { EyeOff, Link2, Lock } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import { previewFor, TEXT_LINK, trimLink, webUrl, youtubeVideo } from "@/lib/links";
 import { newAccountMessage, useNewAccountWait } from "@/lib/new-account";
 import { useReadOnly } from "@/lib/read-only";
+import { SPOILER_MAX } from "@/lib/spoiler";
 import { useAuthStore } from "@/stores/auth-store";
 import { useMentionSuggestions } from "./mention-suggestions";
 
@@ -56,7 +57,7 @@ function removeLinkText(editor: Editor, { from, to }: FoundLink) {
 }
 
 type PostComposerProps = {
-  onPost: (content: string, linkUrl?: string) => Promise<void>;
+  onPost: (content: string, linkUrl?: string, spoiler?: string | null) => Promise<void>;
   target?: ReactNode;
   placeholder?: string;
   label?: string;
@@ -67,6 +68,7 @@ type PostComposerProps = {
   linkPreview?: boolean;
   initialContent?: string;
   initialLink?: string | null;
+  initialSpoiler?: string | null;
 };
 
 export function PostComposer({
@@ -81,6 +83,7 @@ export function PostComposer({
   linkPreview = false,
   initialContent,
   initialLink = null,
+  initialSpoiler = null,
 }: PostComposerProps) {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -88,6 +91,7 @@ export function PostComposer({
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkDraft, setLinkDraft] = useState("");
   const [linkError, setLinkError] = useState<string | null>(null);
+  const [spoiler, setSpoiler] = useState<string | null>(initialSpoiler);
   const attached = useRef<string | null>(initialLink);
   const dismissed = useRef(false);
   const checking = useRef<string | null>(null);
@@ -206,8 +210,9 @@ export function PostComposer({
     setPending(true);
 
     try {
-      await onPost(editor.getHTML(), attachment ?? undefined);
+      await onPost(editor.getHTML(), attachment ?? undefined, spoiler?.trim() ?? null);
       editor.commands.clearContent(true);
+      setSpoiler(null);
       attached.current = null;
       dismissed.current = false;
       rejected.current.clear();
@@ -271,6 +276,12 @@ export function PostComposer({
         newAccountWait && !state?.link ? newAccountMessage("add links", newAccountWait) : undefined,
       run: toggleLink,
     },
+    {
+      label: spoiler === null ? "Mark as spoiler" : "Remove spoiler warning",
+      glyph: <EyeOff size={14} aria-hidden />,
+      active: spoiler !== null,
+      run: () => setSpoiler((current) => (current === null ? "" : null)),
+    },
   ];
 
   if (readOnly) {
@@ -294,6 +305,19 @@ export function PostComposer({
         }}
       >
         {target}
+        {spoiler !== null && (
+          <label className="flex items-center gap-2 rounded-md border border-dashed border-divider px-3 py-2">
+            <EyeOff size={14} aria-hidden className="shrink-0 text-muted" />
+            <input
+              value={spoiler}
+              onChange={(event) => setSpoiler(event.target.value)}
+              maxLength={SPOILER_MAX}
+              placeholder="What’s the spoiler about? Like “Episode 12” (optional)"
+              aria-label="Spoiler note"
+              className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted"
+            />
+          </label>
+        )}
         <div className="relative">
           {state?.empty && (
             <p className="pointer-events-none absolute top-0 left-0 text-sm text-muted">

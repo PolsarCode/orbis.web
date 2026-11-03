@@ -283,6 +283,7 @@ export type PreviewComment = {
   id: number;
   content: string;
   linkUrl: string | null;
+  spoiler: string | null;
   createdAt: string;
   author: Author;
 };
@@ -293,6 +294,7 @@ export type Post = {
   communityId: number | null;
   content: string;
   linkUrl: string | null;
+  spoiler: string | null;
   commentCount: number;
   likeCount: number;
   liked: boolean;
@@ -437,6 +439,7 @@ export type Comment = {
   parentId: number | null;
   content: string;
   linkUrl: string | null;
+  spoiler: string | null;
   likeCount: number;
   liked: boolean;
   hidden?: "review" | "reported" | null;
@@ -971,6 +974,7 @@ export async function createWallPost(
   username: string,
   content: string,
   linkUrl?: string,
+  spoiler?: string | null,
 ): Promise<Post> {
   const res = await api(`/users/${encodeURIComponent(username)}/posts`, {
     method: "POST",
@@ -978,7 +982,7 @@ export async function createWallPost(
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ content, linkUrl }),
+    body: JSON.stringify({ content, linkUrl, spoiler }),
   });
 
   if (res.status === 400) throw new Error("Write something before posting.");
@@ -1078,6 +1082,7 @@ export async function createMediaPost(
   sourceId: string,
   content: string,
   linkUrl?: string,
+  spoiler?: string | null,
 ): Promise<Post> {
   const res = await api(`/library/media/${type}/${encodeURIComponent(sourceId)}/posts`, {
     method: "POST",
@@ -1085,7 +1090,7 @@ export async function createMediaPost(
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ content, linkUrl }),
+    body: JSON.stringify({ content, linkUrl, spoiler }),
   });
 
   if (res.status === 400) throw new Error("Write something before posting.");
@@ -1098,6 +1103,7 @@ export async function createPost(
   communityId: number,
   content: string,
   linkUrl?: string,
+  spoiler?: string | null,
 ): Promise<Post> {
   const res = await api(`/communities/${communityId}/posts`, {
     method: "POST",
@@ -1105,7 +1111,7 @@ export async function createPost(
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ content, linkUrl }),
+    body: JSON.stringify({ content, linkUrl, spoiler }),
   });
 
   if (res.status === 400) throw new Error("Write something before posting.");
@@ -1506,6 +1512,7 @@ export async function updatePost(
   postId: number,
   content: string,
   linkUrl?: string,
+  spoiler?: string | null,
 ): Promise<Post> {
   const res = await api(`/posts/${postId}`, {
     method: "PATCH",
@@ -1513,7 +1520,7 @@ export async function updatePost(
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ content, linkUrl }),
+    body: JSON.stringify({ content, linkUrl, spoiler }),
   });
 
   if (!res.ok) throw new Error(await errorMessage(res, "Could not save the post."));
@@ -1564,6 +1571,7 @@ export async function createComment(
   content: string,
   parentId?: number,
   linkUrl?: string,
+  spoiler?: string | null,
 ): Promise<Comment> {
   const res = await api("/comments", {
     method: "POST",
@@ -1571,7 +1579,7 @@ export async function createComment(
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ type, id, parentId, content, linkUrl }),
+    body: JSON.stringify({ type, id, parentId, content, linkUrl, spoiler }),
   });
 
   if (res.status === 400) throw new Error("Write something before commenting.");
@@ -1584,6 +1592,7 @@ export async function updateComment(
   commentId: number,
   content: string,
   linkUrl?: string,
+  spoiler?: string | null,
 ): Promise<Comment> {
   const res = await api(`/comments/${commentId}`, {
     method: "PATCH",
@@ -1591,7 +1600,7 @@ export async function updateComment(
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ content, linkUrl }),
+    body: JSON.stringify({ content, linkUrl, spoiler }),
   });
 
   if (!res.ok) throw new Error(await errorMessage(res, "Could not save the comment."));
@@ -2849,6 +2858,7 @@ export type ForumQuote =
       available: true;
       content: string;
       linkUrl: string | null;
+      spoiler: string | null;
       createdAt: string;
       author: Author;
     };
@@ -2859,6 +2869,7 @@ export type ForumPost = {
   opening: boolean;
   content: string;
   linkUrl: string | null;
+  spoiler: string | null;
   likeCount: number;
   liked: boolean;
   hiddenAt: string | null;
@@ -3080,7 +3091,7 @@ export async function createForumThread(
   token: string,
   communityId: number,
   categoryId: number,
-  thread: { title: string; content: string; linkUrl?: string },
+  thread: { title: string; content: string; linkUrl?: string; spoiler?: string | null },
 ): Promise<{ id: number }> {
   const res = await forumWrite(
     token,
@@ -3161,13 +3172,14 @@ export async function createForumPost(
   content: string,
   quoteId?: number,
   linkUrl?: string,
+  spoiler?: string | null,
 ): Promise<{ id: number }> {
   const res = await forumWrite(
     token,
     forumPath(communityId, `threads/${threadId}/posts`),
     "POST",
     "Could not post your reply.",
-    { content, quoteId, linkUrl },
+    { content, quoteId, linkUrl, spoiler },
   );
   return res.json();
 }
@@ -3178,13 +3190,14 @@ export async function updateForumPost(
   postId: number,
   content: string,
   linkUrl?: string,
+  spoiler?: string | null,
 ): Promise<ForumPost> {
   const res = await forumWrite(
     token,
     forumPath(communityId, `posts/${postId}`),
     "PATCH",
     "Could not save the post.",
-    { content, linkUrl },
+    { content, linkUrl, spoiler },
   );
   return res.json();
 }
