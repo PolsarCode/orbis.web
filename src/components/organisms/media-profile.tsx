@@ -1,6 +1,15 @@
 "use client";
 
-import { ChevronDown, EyeOff, Globe, Lock, MoreHorizontal, SearchX, Star } from "lucide-react";
+import {
+  ChevronDown,
+  ExternalLink,
+  EyeOff,
+  Globe,
+  Lock,
+  MoreHorizontal,
+  SearchX,
+  Star,
+} from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useState, type UIEvent } from "react";
 import * as Atom from "@atom";
@@ -54,6 +63,17 @@ const detailLabels: Record<string, string> = {
   publishers: "Publishers",
   releaseDate: "Release date",
 };
+
+function outsideLinks(profile: Profile) {
+  const links: { label: string; url: string }[] = [];
+  if (profile.source?.provider === "myanimelist") {
+    links.push({ label: "View on MyAnimeList", url: profile.source.url });
+  }
+  if (typeof profile.details.steamUrl === "string") {
+    links.push({ label: "View on Steam", url: profile.details.steamUrl });
+  }
+  return links;
+}
 
 function formatDetail(value: unknown): string | null {
   if (value === null || value === undefined || value === "") return null;
@@ -458,6 +478,7 @@ export function MediaProfile({ type, sourceId }: { type: string; sourceId: strin
     .filter(([name]) => detailLabels[name])
     .map(([name, value]) => [detailLabels[name], formatDetail(value)] as const)
     .filter((pair): pair is readonly [string, string] => pair[1] !== null);
+  const links = outsideLinks(profile);
 
   return (
     <main className="flex min-h-0 flex-1 flex-col">
@@ -501,6 +522,23 @@ export function MediaProfile({ type, sourceId }: { type: string; sourceId: strin
                   </div>
                 ))}
               </dl>
+              {links.length > 0 && (
+                <ul className="flex flex-col gap-1.5 border-t border-divider pt-3">
+                  {links.map(({ label, url }) => (
+                    <li key={url}>
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="focus-ring flex w-fit items-center gap-1 rounded-sm text-xs font-semibold text-accent hover:underline"
+                      >
+                        {label}
+                        <ExternalLink size={12} aria-hidden />
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </section>
             <MediaWall profile={profile} />
           </div>
