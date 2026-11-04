@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, Inter } from "next/font/google";
 import { TopLoadingBar } from "@/components/organisms/top-loading-bar";
 import { desktopScript } from "@/lib/desktop";
+import { installScript } from "@/lib/install-prompt";
 import { authScript } from "@/stores/auth-store";
 import { themeScript } from "@/stores/theme-store";
 import { AntdProvider } from "./antd-provider";
@@ -58,7 +59,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <head>
         <script
-          dangerouslySetInnerHTML={{ __html: themeScript + authScript + desktopScript }}
+          dangerouslySetInnerHTML={{ __html: themeScript + authScript + desktopScript + installScript }}
         />
       </head>
       <body className="min-h-full flex flex-col">

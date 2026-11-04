@@ -20,6 +20,7 @@ export default function Home() {
             <Suspense>
               <Organism.HomeView latestChangelog={latestChangelog} />
             </Suspense>
+            <Organism.InstallPrompt />
           </main>
         </Template.AppTemplate>
       }
@@ -31,6 +32,7 @@ export default function Home() {
           <Organism.LandingHero />
         </main>
         <Organism.SiteFooter bordered={false} />
+        <Organism.InstallPrompt />
       </div>
     </Organism.GuestGate>
   );

@@ -4,11 +4,11 @@ import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import * as Atom from "@atom";
 import { getSpotlight, getSpotlights, type AnimeSpotlight as Spotlight } from "@/lib/api";
 
 const SLIDE_MS = 8000;
 const DRIFT_MS = 14000;
-const FALLBACK_IMAGE = "/images/backgrounds/saiyan-training-grounds.webp";
 
 export function useAnimeSpotlight() {
   const [spotlight, setSpotlight] = useState<Spotlight | null>(null);
@@ -40,6 +40,7 @@ export function AnimeBackdrop({
 
   return (
     <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden">
+      <Atom.WallpaperPlaceholder />
       {src && (
         <Image
           src={src}
@@ -158,17 +159,7 @@ export function AnimeSlideshow({
   return (
     <>
       <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden">
-        {!revealed && (
-          <Image
-            src={FALLBACK_IMAGE}
-            alt=""
-            fill
-            unoptimized
-            preload
-            sizes="100vw"
-            className="object-cover dark:brightness-35"
-          />
-        )}
+        {!revealed && <Atom.WallpaperPlaceholder />}
         {shown.map(({ spotlight, src, visible }) => (
           <div
             key={spotlight.sourceId}

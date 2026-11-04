@@ -23,6 +23,7 @@ export * from "./friends-panel";
 export * from "./group-chat-modals";
 export * from "./email-confirmation";
 export * from "./guest-gate";
+export * from "./install-prompt";
 export * from "./invite-button";
 export * from "./join-community-prompt";
 export * from "./home-feed";

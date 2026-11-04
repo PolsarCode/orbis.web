@@ -10,6 +10,11 @@ export type Tip = {
 
 export const tips: Tip[] = [
   {
+    id: "home-screen",
+    title: "Put Orbis on your phone’s home screen",
+    body: "Open Orbis in your phone’s browser and choose Install, or Add to Home Screen on iPhone, to open it full screen like any other app.",
+  },
+  {
     id: "bookmarks",
     title: "Save posts for later",
     body: "Choose Save post in a post’s … menu to keep it. Find what you’ve saved in the Bookmarks tab on the homepage.",
