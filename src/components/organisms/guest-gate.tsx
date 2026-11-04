@@ -2,9 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useSyncExternalStore, type ReactNode } from "react";
-import * as Atom from "@atom";
+import * as Molecule from "@molecule";
 import { inDesktopApp } from "@/lib/desktop";
 import { useAuthStore } from "@/stores/auth-store";
+import { skipStartupScreen } from "./startup-screen";
 
 const noSubscription = () => () => {};
 
@@ -27,6 +28,7 @@ export function GuestGate({
   useEffect(() => {
     if (!useAuthStore.getState().token) {
       delete document.documentElement.dataset.auth;
+      skipStartupScreen();
       return;
     }
 
@@ -40,19 +42,13 @@ export function GuestGate({
   return (
     <>
       <div className="contents authenticated:hidden">
-        {desktop && hasHome ? (
-          <div className="flex flex-1">
-            <Atom.Loader />
-          </div>
-        ) : (
-          children
-        )}
+        {desktop && hasHome ? <Molecule.LoadingScreen /> : children}
       </div>
       {authenticated && hasHome ? (
         home
       ) : (
-        <div className="hidden flex-1 authenticated:flex">
-          <Atom.Loader />
+        <div className="hidden authenticated:contents">
+          <Molecule.LoadingScreen />
         </div>
       )}
     </>

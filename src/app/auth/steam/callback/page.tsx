@@ -4,10 +4,13 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import * as Atom from "@atom";
+import * as Molecule from "@molecule";
 import * as Template from "@template";
 import { connectSteam } from "@/lib/api";
 import { takeOAuthNonce } from "@/lib/oauth";
 import { useAuthStore } from "@/stores/auth-store";
+
+const CONNECTING = "Connecting Steam and looking at your games…";
 
 function Callback() {
   const params = useSearchParams();
@@ -49,19 +52,14 @@ function Callback() {
     );
   }
 
-  return (
-    <div className="flex flex-col items-center gap-3 text-center">
-      <Atom.Loader />
-      <p className="text-sm text-muted">Connecting Steam and looking at your games…</p>
-    </div>
-  );
+  return <Molecule.LoadingScreen status={CONNECTING} />;
 }
 
 export default function SteamCallbackPage() {
   return (
     <Template.AppTemplate>
       <Template.CenteredTemplate>
-        <Suspense>
+        <Suspense fallback={<Molecule.LoadingScreen status={CONNECTING} />}>
           <Callback />
         </Suspense>
       </Template.CenteredTemplate>

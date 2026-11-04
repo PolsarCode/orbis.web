@@ -7,6 +7,7 @@ import { useThemeStore } from "./theme-store";
 type AuthState = {
   token: string | null;
   profile: Profile | null;
+  profileFailed: boolean;
   login: (credentials: LoginCredentials) => Promise<LoginResult>;
   signup: (details: SignupDetails) => Promise<void>;
   loginWithToken: (token: string) => void;
@@ -27,6 +28,7 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       token: null,
       profile: null,
+      profileFailed: false,
       login: async (credentials) => {
         const result = await api.login(credentials);
         if ("token" in result) {
@@ -45,14 +47,19 @@ export const useAuthStore = create<AuthState>()(
       },
       logout: () => {
         markAuthenticated(false);
-        set({ token: null, profile: null });
+        set({ token: null, profile: null, profileFailed: false });
       },
       fetchProfile: async () => {
         const { token, logout } = get();
-        const profile = token ? await api.getProfile(token) : null;
+        const profile = token
+          ? await api.getProfile(token).catch((error: unknown) => {
+              set({ profileFailed: true });
+              throw error;
+            })
+          : null;
 
         if (profile) {
-          set({ profile });
+          set({ profile, profileFailed: false });
           useThemeStore.getState().setMode(profile.theme);
         } else {
           logout();

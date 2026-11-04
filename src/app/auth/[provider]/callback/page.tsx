@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import * as Atom from "@atom";
+import * as Molecule from "@molecule";
 import * as Template from "@template";
 import { completeOAuth } from "@/lib/api";
 import {
@@ -107,19 +108,14 @@ function Callback() {
     );
   }
 
-  return (
-    <div className="flex flex-col items-center gap-3 text-center">
-      <Atom.Loader />
-      <p className="text-sm text-muted">Finishing up with {label}…</p>
-    </div>
-  );
+  return <Molecule.LoadingScreen status={`Finishing up with ${label}…`} />;
 }
 
 export default function OAuthCallbackPage() {
   return (
     <Template.AppTemplate>
       <Template.CenteredTemplate>
-        <Suspense>
+        <Suspense fallback={<Molecule.LoadingScreen />}>
           <Callback />
         </Suspense>
       </Template.CenteredTemplate>

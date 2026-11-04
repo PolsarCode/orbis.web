@@ -8,6 +8,7 @@ import { getSpotlight, getSpotlights, type AnimeSpotlight as Spotlight } from "@
 
 const SLIDE_MS = 8000;
 const DRIFT_MS = 14000;
+const FALLBACK_IMAGE = "/images/backgrounds/saiyan-training-grounds.webp";
 
 export function useAnimeSpotlight() {
   const [spotlight, setSpotlight] = useState<Spotlight | null>(null);
@@ -111,6 +112,7 @@ export function AnimeSlideshow({
   const [slides, setSlides] = useState<Spotlight[]>([]);
   const [index, setIndex] = useState(0);
   const [loaded, setLoaded] = useState<string[]>([]);
+  const [revealed, setRevealed] = useState(false);
   const frames = useRef(new Map<string, HTMLDivElement>());
   const count = slides.length;
   const next = count > 0 ? (index + 1) % count : 0;
@@ -156,6 +158,17 @@ export function AnimeSlideshow({
   return (
     <>
       <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden">
+        {!revealed && (
+          <Image
+            src={FALLBACK_IMAGE}
+            alt=""
+            fill
+            unoptimized
+            preload
+            sizes="100vw"
+            className="object-cover dark:brightness-35"
+          />
+        )}
         {shown.map(({ spotlight, src, visible }) => (
           <div
             key={spotlight.sourceId}
@@ -164,9 +177,12 @@ export function AnimeSlideshow({
               else frames.current.delete(spotlight.sourceId);
             }}
             style={{ transform: "scale(1.08) translateX(2.5%)" }}
-            className={`absolute inset-0 transition-opacity duration-[1500ms] ease-in-out motion-reduce:transition-none ${
-              visible ? "opacity-100" : "opacity-0"
-            }`}
+            onTransitionEnd={() => {
+              if (visible) setRevealed(true);
+            }}
+            className={`absolute inset-0 transition-opacity ease-in-out motion-reduce:transition-none ${
+              revealed ? "duration-[1500ms]" : "duration-[600ms]"
+            } ${visible ? "opacity-100" : "opacity-0"}`}
           >
             <Image
               src={src}

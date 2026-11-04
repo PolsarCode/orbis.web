@@ -158,8 +158,17 @@ function ShelfItems({
     >
       {shown === undefined
         ? Array.from({ length: size }, (_, index) => (
-            <li key={index} className={cell(index)}>
-              <span className="block aspect-[2/3] animate-pulse rounded-md bg-rail-item motion-reduce:animate-none" />
+            <li key={index} aria-hidden className={cell(index)}>
+              <span className="relative block aspect-[2/3] animate-pulse rounded-md border border-divider bg-rail-item motion-reduce:animate-none">
+                <span className="absolute inset-x-2 top-2 flex flex-col gap-1.5">
+                  <span className="h-2.5 w-4/5 rounded-full bg-surface" />
+                  <span className="h-2.5 w-1/2 rounded-full bg-surface" />
+                </span>
+                <span className="absolute inset-x-2 bottom-2.5 flex items-center gap-2">
+                  <span className="h-2 w-6 rounded-full bg-surface" />
+                  <span className="h-2 w-9 rounded-full bg-surface" />
+                </span>
+              </span>
             </li>
           ))
         : shown.map((item, index) => (

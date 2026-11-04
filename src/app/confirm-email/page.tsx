@@ -5,12 +5,14 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import * as Atom from "@atom";
+import * as Molecule from "@molecule";
 import * as Organism from "@organism";
 import * as Template from "@template";
 import { confirmEmail } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
 
 const MISSING_TOKEN = "This link is incomplete. Open the link from the email again.";
+const CONFIRMING = "Confirming your email…";
 const CARD =
   "flex w-full max-w-sm flex-col items-center gap-4 rounded-xl border border-divider bg-surface p-8 text-center";
 
@@ -78,19 +80,14 @@ function Confirm() {
     );
   }
 
-  return (
-    <div className="flex flex-col items-center gap-3 text-center">
-      <Atom.Loader />
-      <p className="text-sm text-muted">Confirming your email…</p>
-    </div>
-  );
+  return <Molecule.LoadingScreen status={CONFIRMING} />;
 }
 
 export default function ConfirmEmailPage() {
   return (
     <Template.AppTemplate>
       <Template.CenteredTemplate>
-        <Suspense>
+        <Suspense fallback={<Molecule.LoadingScreen status={CONFIRMING} />}>
           <Confirm />
         </Suspense>
       </Template.CenteredTemplate>

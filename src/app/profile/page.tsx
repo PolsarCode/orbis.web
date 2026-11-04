@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import * as Template from "@template";
 import { useAuthStore } from "@/stores/auth-store";
@@ -26,7 +25,7 @@ export default function ProfilePage() {
         {failed ? (
           <Molecule.ConnectionError onRetry={() => window.location.reload()} />
         ) : (
-          <Atom.Loader />
+          <Molecule.LoadingScreen />
         )}
       </Template.CenteredTemplate>
     </Template.AppTemplate>

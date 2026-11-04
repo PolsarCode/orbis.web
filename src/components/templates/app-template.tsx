@@ -28,6 +28,7 @@ export function AppTemplate({ children }: { children: ReactNode }) {
         <Organism.NotificationToasts />
         <Organism.FeedbackDock />
       </div>
+      <Organism.StartupScreen />
     </div>
   );
 }

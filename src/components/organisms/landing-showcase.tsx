@@ -19,10 +19,35 @@ import {
 } from "@/lib/api";
 import { displayName } from "@/lib/display-name";
 
-export function LandingCommunities() {
-  const [communities, setCommunities] = useState<PublicCommunity[] | null>(
-    null,
+const PLACEHOLDERS = 6;
+
+function LibraryUpdateSkeleton() {
+  return (
+    <div aria-hidden className="h-full rounded-lg border border-divider bg-surface p-4">
+      <div className="flex animate-pulse items-start gap-4 motion-reduce:animate-none">
+        <span className="h-9 w-9 shrink-0 rounded-full bg-rail-item" />
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="flex flex-col">
+            <span className="flex h-5 items-center">
+              <span className="h-2.5 w-11/12 rounded-full bg-rail-item" />
+            </span>
+            <span className="flex h-5 items-center">
+              <span className="h-2.5 w-3/5 rounded-full bg-rail-item" />
+            </span>
+          </span>
+          <span className="flex items-center gap-2">
+            <span className="h-5 w-16 rounded-full bg-rail-item" />
+            <span className="h-2 w-14 rounded-full bg-rail-item" />
+          </span>
+        </div>
+        <span className="aspect-[2/3] w-12 shrink-0 rounded-md bg-rail-item" />
+      </div>
+    </div>
   );
+}
+
+export function LandingCommunities() {
+  const [communities, setCommunities] = useState<PublicCommunity[]>();
 
   useEffect(() => {
     let ignore = false;
@@ -30,7 +55,9 @@ export function LandingCommunities() {
       .then((results) => {
         if (!ignore) setCommunities(results);
       })
-      .catch(() => null);
+      .catch(() => {
+        if (!ignore) setCommunities([]);
+      });
     return () => {
       ignore = true;
     };
@@ -50,7 +77,14 @@ export function LandingCommunities() {
           a community or make one that feels like you.
         </p>
       </div>
-      {communities && communities.length > 0 ? (
+      {communities === undefined ? (
+        <div role="status" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <span className="sr-only">Loading public communities</span>
+          {Array.from({ length: PLACEHOLDERS }, (_, index) => (
+            <Molecule.IdentityCardSkeleton key={index} />
+          ))}
+        </div>
+      ) : communities.length > 0 ? (
         <ul
           aria-label="Public communities"
           className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
@@ -82,7 +116,7 @@ export function LandingCommunities() {
 }
 
 export function LandingPeople() {
-  const [people, setPeople] = useState<PublicUser[] | null>(null);
+  const [people, setPeople] = useState<PublicUser[]>();
 
   useEffect(() => {
     let ignore = false;
@@ -90,13 +124,15 @@ export function LandingPeople() {
       .then((results) => {
         if (!ignore) setPeople(results);
       })
-      .catch(() => null);
+      .catch(() => {
+        if (!ignore) setPeople([]);
+      });
     return () => {
       ignore = true;
     };
   }, []);
 
-  if (!people || people.length === 0) return null;
+  if (people?.length === 0) return null;
 
   return (
     <section id="people" className="flex flex-col gap-8">
@@ -112,30 +148,39 @@ export function LandingPeople() {
           they’re into.
         </p>
       </div>
-      <ul
-        aria-label="Public profiles"
-        className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3"
-      >
-        {people.map((person) => (
-          <li key={person.userId}>
-            <Molecule.PersonCard
-              userId={person.userId}
-              username={person.username}
-              label={displayName(person)}
-              avatarUrl={person.avatarUrl}
-              coverUrl={person.coverUrl}
-              isVerified={person.isVerified}
-              presence={person.online ? person.status : "offline"}
-            />
-          </li>
-        ))}
-      </ul>
+      {people === undefined ? (
+        <div role="status" className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
+          <span className="sr-only">Loading public profiles</span>
+          {Array.from({ length: PLACEHOLDERS }, (_, index) => (
+            <Molecule.IdentityCardSkeleton key={index} />
+          ))}
+        </div>
+      ) : (
+        <ul
+          aria-label="Public profiles"
+          className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3"
+        >
+          {people.map((person) => (
+            <li key={person.userId}>
+              <Molecule.PersonCard
+                userId={person.userId}
+                username={person.username}
+                label={displayName(person)}
+                avatarUrl={person.avatarUrl}
+                coverUrl={person.coverUrl}
+                isVerified={person.isVerified}
+                presence={person.online ? person.status : "offline"}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }
 
 export function LandingLibraryUpdates() {
-  const [updates, setUpdates] = useState<PublicLibraryUpdate[] | null>(null);
+  const [updates, setUpdates] = useState<PublicLibraryUpdate[]>();
 
   useEffect(() => {
     let ignore = false;
@@ -143,13 +188,15 @@ export function LandingLibraryUpdates() {
       .then((results) => {
         if (!ignore) setUpdates(results);
       })
-      .catch(() => null);
+      .catch(() => {
+        if (!ignore) setUpdates([]);
+      });
     return () => {
       ignore = true;
     };
   }, []);
 
-  if (!updates || updates.length === 0) return null;
+  if (updates?.length === 0) return null;
 
   return (
     <section id="library-updates" className="flex flex-col gap-8">
@@ -164,18 +211,27 @@ export function LandingLibraryUpdates() {
           What people on Orbis just started, finished, or caught up on.
         </p>
       </div>
-      <ul
-        aria-label="Latest library updates"
-        className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3"
-      >
-        {updates.map((update) => (
-          <li key={update.id}>
-            <article className="h-full rounded-lg border border-divider bg-surface p-4">
-              <ActivitySummary activity={update} />
-            </article>
-          </li>
-        ))}
-      </ul>
+      {updates === undefined ? (
+        <div role="status" className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+          <span className="sr-only">Loading library updates</span>
+          {Array.from({ length: PLACEHOLDERS }, (_, index) => (
+            <LibraryUpdateSkeleton key={index} />
+          ))}
+        </div>
+      ) : (
+        <ul
+          aria-label="Latest library updates"
+          className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3"
+        >
+          {updates.map((update) => (
+            <li key={update.id}>
+              <article className="h-full rounded-lg border border-divider bg-surface p-4">
+                <ActivitySummary activity={update} />
+              </article>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

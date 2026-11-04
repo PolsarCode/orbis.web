@@ -16,6 +16,7 @@ type CommunityState = {
   communities: Community[];
   layout: RailItem[];
   loaded: boolean;
+  failed: boolean;
   fetchCommunities: () => Promise<void>;
   createCommunity: (name: string, isPublic: boolean) => Promise<Community>;
   joinCommunity: (communityId: number) => Promise<Community>;
@@ -63,11 +64,12 @@ export const useCommunityStore = create<CommunityState>()((set, get) => ({
     })),
   communities: [],
   loaded: false,
+  failed: false,
   layout: [],
   fetchCommunities: async () => {
     const { token } = useAuthStore.getState();
     if (!token) {
-      set({ communities: [], layout: [], loaded: false });
+      set({ communities: [], layout: [], loaded: false, failed: false });
       return;
     }
 
@@ -75,7 +77,7 @@ export const useCommunityStore = create<CommunityState>()((set, get) => ({
       api.getCommunities(token).catch(() => null),
       api.getRailLayout(token).catch(() => null),
     ]);
-    if (communities) set({ communities, loaded: true });
+    set(communities ? { communities, loaded: true, failed: false } : { failed: true });
     if (layout) set({ layout });
   },
   createCommunity: async (name, isPublic) => {

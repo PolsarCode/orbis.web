@@ -62,6 +62,17 @@ function Figure({ value, one, many }: { value: number; one: string; many: string
   );
 }
 
+function FigurePlaceholder() {
+  return (
+    <span className="flex flex-col">
+      <span className="h-6 w-12 rounded-md bg-rail-item lg:h-9 lg:w-16" />
+      <span className="flex h-4 items-center lg:h-5">
+        <span className="h-2 w-14 rounded-full bg-rail-item" />
+      </span>
+    </span>
+  );
+}
+
 function Stack({ more, children }: { more: number; children: ReactNode }) {
   return (
     <span aria-hidden className="flex -space-x-2 lg:-space-x-3">
@@ -94,24 +105,64 @@ function FloatingCard({
   );
 }
 
+function SiteStatsPlaceholder() {
+  const pulse = "flex animate-pulse items-center gap-3 motion-reduce:animate-none lg:gap-4";
+  const stack = (count: number) => (
+    <Stack more={0}>
+      {Array.from({ length: count }, (_, index) => (
+        <span key={index} className={bubble} />
+      ))}
+    </Stack>
+  );
+
+  return (
+    <div
+      role="status"
+      className="flex flex-wrap gap-2.5 lg:absolute lg:top-1/2 lg:right-8 lg:-translate-y-1/2 lg:flex-col lg:items-end lg:gap-7"
+    >
+      <span className="sr-only">Loading Orbis in numbers</span>
+      <FloatingCard delay="0s">
+        <span aria-hidden className={pulse}>
+          {stack(FACES)}
+          <FigurePlaceholder />
+        </span>
+      </FloatingCard>
+      <FloatingCard delay="-2s" className="lg:mr-24">
+        <span aria-hidden className={pulse}>
+          {stack(ICONS)}
+          <FigurePlaceholder />
+        </span>
+      </FloatingCard>
+      <FloatingCard delay="-4s" className="lg:mr-8">
+        <span aria-hidden className={pulse}>
+          <span className={bubble} />
+          <FigurePlaceholder />
+          <FigurePlaceholder />
+        </span>
+      </FloatingCard>
+    </div>
+  );
+}
+
 export function SiteStats() {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [people, setPeople] = useState<PublicUser[]>([]);
-  const [communities, setCommunities] = useState<PublicCommunity[]>([]);
+  const [stats, setStats] = useState<Stats | null>();
+  const [people, setPeople] = useState<PublicUser[]>();
+  const [communities, setCommunities] = useState<PublicCommunity[]>();
 
   useEffect(() => {
     getStats()
       .then(setStats)
-      .catch(() => null);
+      .catch(() => setStats(null));
     getPublicUsers()
       .then((results) => setPeople(results.slice(0, FACES)))
-      .catch(() => null);
+      .catch(() => setPeople([]));
     getPublicCommunities()
       .then((results) => setCommunities(results.slice(0, ICONS)))
-      .catch(() => null);
+      .catch(() => setCommunities([]));
   }, []);
 
-  if (!stats) return null;
+  if (stats === null) return null;
+  if (!stats || !people || !communities) return <SiteStatsPlaceholder />;
 
   return (
     <div

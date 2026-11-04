@@ -24,6 +24,7 @@ type FriendsState = {
   games: Record<number, string | null>;
   twitchLogins: Record<number, string | null>;
   loaded: boolean;
+  failed: boolean;
   suggestions: FriendSuggestion[];
   suggestionsFetchedAt: number;
   connect: () => void;
@@ -43,6 +44,7 @@ const empty = {
   games: {},
   twitchLogins: {},
   loaded: false,
+  failed: false,
   suggestions: [],
   suggestionsFetchedAt: 0,
 };
@@ -170,7 +172,7 @@ export const useFriendsStore = create<FriendsState>()((set, get) => ({
     if (!token) return;
 
     const list = await api.getFriends(token).catch(() => null);
-    if (list) set({ ...list, loaded: true });
+    set(list ? { ...list, loaded: true, failed: false } : { failed: true });
   },
   fetchSuggestions: () => {
     const { token } = useAuthStore.getState();

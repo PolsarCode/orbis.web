@@ -68,6 +68,7 @@ export * from "./steam-connection";
 export * from "./verify-toggle";
 export * from "./admin-toggle";
 export * from "./suspended-account-watcher";
+export * from "./startup-screen";
 export * from "./profile-admin";
 export * from "./profile-menu";
 export * from "./twitch-clips";
