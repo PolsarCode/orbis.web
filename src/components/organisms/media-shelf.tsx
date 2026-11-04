@@ -42,6 +42,10 @@ const SECTION_SIZE = 6;
 const SECTION_SIZE_ON_PHONES = 3;
 const sectionTitles: Record<MediaType, string> = { anime: "Anime", manga: "Manga", game: "Games" };
 
+function hasList(type: MediaType, list: MediaListName) {
+  return !(type === "manga" && list === "upcoming");
+}
+
 function listLabel(list: MediaListName, type: MediaType | null) {
   if (list === "season") {
     return type ? { anime: "This season", manga: "New series", game: "New releases" }[type] : "New";
@@ -197,7 +201,7 @@ export function MediaShelf({
 }) {
   const token = useAuthStore((state) => state.token);
   const type = useMediaShelfStore((state) => state.type);
-  const list = useMediaShelfStore((state) => state.list);
+  const savedList = useMediaShelfStore((state) => state.list);
   const setType = useMediaShelfStore((state) => state.setType);
   const setList = useMediaShelfStore((state) => state.setList);
   const [ready, setReady] = useState(false);
@@ -206,6 +210,9 @@ export function MediaShelf({
   const requested = useRef(new Set<string>());
   const row = useRef<HTMLUListElement>(null);
   const grid = layout === "grid";
+  const list = grid || hasList(type, savedList) ? savedList : "trending";
+  const tabs = grid ? lists : lists.filter((value) => hasList(type, value));
+  const sections = types.filter((value) => hasList(value, list));
 
   useEffect(() => {
     let active = true;
@@ -219,7 +226,7 @@ export function MediaShelf({
 
   useEffect(() => {
     if (!ready) return;
-    for (const value of grid ? types : [type]) {
+    for (const value of grid ? types.filter((item) => hasList(item, list)) : [type]) {
       const key = `${value}:${list}`;
       if (requested.current.has(key)) continue;
       requested.current.add(key);
@@ -276,8 +283,8 @@ export function MediaShelf({
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
     event.preventDefault();
-    const index = lists.indexOf(list);
-    const next = lists[(index + (event.key === "ArrowRight" ? 1 : -1) + lists.length) % lists.length];
+    const index = tabs.indexOf(list);
+    const next = tabs[(index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length];
     setList(next);
     document.getElementById(`media-shelf-${next}`)?.focus();
   }
@@ -294,7 +301,7 @@ export function MediaShelf({
           onKeyDown={handleKeyDown}
           className="flex min-w-0 gap-4 overflow-x-auto [scrollbar-width:none]"
         >
-          {lists.map((value) => {
+          {tabs.map((value) => {
             const selected = value === list;
             const Icon = listIcons[value];
             return (
@@ -341,7 +348,7 @@ export function MediaShelf({
         className={grid ? "mt-3 flex flex-col gap-10" : ""}
       >
         {grid ? (
-          types.map((value) => (
+          sections.map((value) => (
             <section key={value} aria-label={sectionTitles[value]} className="flex flex-col gap-4">
               <h3 className="flex items-center gap-2 font-display text-2xl font-bold">
                 <span aria-hidden className="text-accent [&>svg]:size-5">
