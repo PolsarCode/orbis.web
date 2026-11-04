@@ -11,6 +11,7 @@ import {
   LayoutGrid,
   Library,
   List,
+  LoaderCircle,
   Lock,
   Minus,
   MoreHorizontal,
@@ -266,10 +267,13 @@ export function AddStatusPill({
 }) {
   const { message } = App.useApp();
   const readOnly = useReadOnly();
+  const [pending, setPending] = useState<LibraryStatus | null>(null);
+  const PendingIcon = pending && statusIcons[pending];
 
   async function add(status: LibraryStatus) {
     const { token } = useAuthStore.getState();
     if (!token) return;
+    setPending(status);
     try {
       const entry = await addToLibrary(token, {
         type: media.type,
@@ -282,6 +286,8 @@ export function AddStatusPill({
       message.success(`Added ${media.title} to your library.`);
     } catch (e) {
       message.error(e instanceof Error ? e.message : "Something went wrong.");
+    } finally {
+      setPending(null);
     }
   }
 
@@ -289,7 +295,7 @@ export function AddStatusPill({
     readOnly,
     "add to your library",
     <Dropdown
-      disabled={readOnly}
+      disabled={readOnly || pending !== null}
       trigger={["click"]}
       menu={{
         items: libraryStatuses.map((status) => {
@@ -305,15 +311,29 @@ export function AddStatusPill({
     >
       <button
         type="button"
-        aria-label={`Add ${media.title} to your library`}
-        className="focus-ring w-full cursor-pointer rounded-full disabled:cursor-not-allowed"
+        aria-label={
+          pending ? `Adding ${media.title} to your library` : `Add ${media.title} to your library`
+        }
+        aria-busy={pending !== null}
+        className="focus-ring w-full cursor-pointer rounded-full disabled:cursor-not-allowed aria-busy:cursor-progress"
       >
-        <Atom.Pill className="h-7 w-full! justify-between px-3 pointer-coarse:h-9">
+        <Atom.Pill
+          tone={pending ? statusTones[pending] : undefined}
+          className="h-7 w-full! justify-between px-3 pointer-coarse:h-9"
+        >
           <span className="flex min-w-0 items-center gap-1.5">
-            <Plus size={13} aria-hidden className="shrink-0" />
-            <span className="truncate">Add</span>
+            {PendingIcon ? (
+              <PendingIcon size={13} aria-hidden className="shrink-0" />
+            ) : (
+              <Plus size={13} aria-hidden className="shrink-0" />
+            )}
+            <span className="truncate">{pending ? statusLabel(pending, media.type) : "Add"}</span>
           </span>
-          <ChevronDown size={13} aria-hidden className="shrink-0" />
+          {pending ? (
+            <LoaderCircle size={13} aria-hidden className="shrink-0 animate-spin" />
+          ) : (
+            <ChevronDown size={13} aria-hidden className="shrink-0" />
+          )}
         </Atom.Pill>
       </button>
     </Dropdown>,
@@ -329,16 +349,21 @@ export function StatusPill({
 }) {
   const { message } = App.useApp();
   const readOnly = useReadOnly();
-  const label = statusLabel(entry.status, entry.mediaType);
-  const Icon = statusIcons[entry.status];
+  const [pending, setPending] = useState<LibraryStatus | null>(null);
+  const shown = pending ?? entry.status;
+  const label = statusLabel(shown, entry.mediaType);
+  const Icon = statusIcons[shown];
 
   async function change(status: LibraryStatus) {
     const { token } = useAuthStore.getState();
     if (!token || status === entry.status) return;
+    setPending(status);
     try {
       onChange(await updateLibraryEntry(token, entry.id, { status }));
     } catch (e) {
       message.error(e instanceof Error ? e.message : "Something went wrong.");
+    } finally {
+      setPending(null);
     }
   }
 
@@ -346,7 +371,7 @@ export function StatusPill({
     readOnly,
     "change your library",
     <Dropdown
-      disabled={readOnly}
+      disabled={readOnly || pending !== null}
       trigger={["click"]}
       menu={{
         items: libraryStatuses.map((status) => {
@@ -363,18 +388,25 @@ export function StatusPill({
     >
       <button
         type="button"
-        aria-label={`${label}. Change status of ${entry.title}`}
-        className="focus-ring w-full cursor-pointer rounded-full"
+        aria-label={
+          pending ? `Saving ${entry.title} as ${label}` : `${label}. Change status of ${entry.title}`
+        }
+        aria-busy={pending !== null}
+        className="focus-ring w-full cursor-pointer rounded-full aria-busy:cursor-progress"
       >
         <Atom.Pill
-          tone={statusTones[entry.status]}
+          tone={statusTones[shown]}
           className="h-7 w-full! justify-between px-3 pointer-coarse:h-9"
         >
           <span className="flex min-w-0 items-center gap-1.5">
             <Icon size={13} aria-hidden className="shrink-0" />
             <span className="truncate">{label}</span>
           </span>
-          <ChevronDown size={13} aria-hidden className="shrink-0" />
+          {pending ? (
+            <LoaderCircle size={13} aria-hidden className="shrink-0 animate-spin" />
+          ) : (
+            <ChevronDown size={13} aria-hidden className="shrink-0" />
+          )}
         </Atom.Pill>
       </button>
     </Dropdown>,
