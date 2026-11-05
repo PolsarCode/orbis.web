@@ -1,0 +1,30 @@
+{
+  "date": "2026-11-05",
+  "versions": ["v0.109.0"],
+  "entries": [
+    {
+      "type": "new",
+      "title": "Hashtags and hashtag pages",
+      "description": "Add #hashtags to your posts, comments, and forum posts. Click one to open its page, where you'll find every public post, comment, and forum reply that uses it.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Follow hashtags",
+      "description": "Follow a hashtag from its page and its public posts show up in your feed. You can see and unfollow the tags you follow from the Trending tab.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Trending tab on the home page",
+      "description": "See which hashtags people are using most and how many are talking about them. Trending tags also show up in the side panel next to your friends.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "improved",
+      "title": "Search finds hashtags",
+      "description": "Site search now looks through hashtags too, so you can jump straight to a tag's page.",
+      "platforms": ["web"]
+    }
+  ]
+}
