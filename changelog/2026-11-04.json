@@ -1,0 +1,66 @@
+{
+  "date": "2026-11-04",
+  "versions": ["v0.102.4", "v0.102.5", "v0.103.0", "v0.104.0", "v0.105.0", "v0.106.0", "v0.107.0", "v0.108.0", "v0.108.1", "v0.108.2"],
+  "entries": [
+    {
+      "type": "new",
+      "title": "Spoiler warnings on posts and comments",
+      "description": "Mark a post, comment, or forum post as a spoiler and add a short note about what it spoils. Others see the warning first and choose when to reveal it.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Bookmark posts",
+      "description": "Save posts to read later and find them again in the new Bookmarks tab on your home page, where you can also search through them.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Explore and community pages in the mobile app",
+      "description": "Search for communities, see who's in them and which friends have joined, open community pages, and join from your phone.",
+      "platforms": ["mobile"]
+    },
+    {
+      "type": "new",
+      "title": "Settings in the mobile app",
+      "description": "Change your theme, NSFW, privacy, update notes, guided tours, and connected accounts right from the mobile app, just like on the web.",
+      "platforms": ["mobile"]
+    },
+    {
+      "type": "new",
+      "title": "Add Orbis to your home screen",
+      "description": "On your phone, Orbis offers to install itself on your home screen so it opens full screen like any other app.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "MyAnimeList and Steam links on media pages",
+      "description": "Anime, manga, and game pages now link to the matching MyAnimeList or Steam page so you can jump straight there.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "improved",
+      "title": "Smoother loading when you open Orbis",
+      "description": "A loading screen with tips shows while your feed, friends, and communities load, and pages show placeholders instead of jumping around as they fill in.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "improved",
+      "title": "Library status shows while it saves",
+      "description": "When you change an entry's status in your library, the button shows it's saving until the change goes through.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "fixed",
+      "title": "Mobile theme follows your account",
+      "description": "The theme you pick in the mobile app is saved to your account and applied when you sign in, the same as on the web.",
+      "platforms": ["mobile"]
+    },
+    {
+      "type": "fixed",
+      "title": "No more Upcoming list for manga",
+      "description": "The media shelf no longer shows an Upcoming list for manga, where it didn't apply.",
+      "platforms": ["web"]
+    }
+  ]
+}
