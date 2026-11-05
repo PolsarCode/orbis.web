@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { create } from "zustand";
 import type { FeedEntry, LibraryEntry } from "@/lib/api";
 
-export const searchSources = ["posts", "titles", "people", "communities", "library", "tickets"] as const;
+export const searchSources = ["posts", "tags", "titles", "people", "communities", "library", "tickets"] as const;
 
 export type SearchSource = (typeof searchSources)[number];
 export type SearchFilter = "all" | "page" | SearchSource;

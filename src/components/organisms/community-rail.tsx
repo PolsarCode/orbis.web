@@ -309,6 +309,7 @@ export function CommunityRail() {
   const { communityId } = useParams<{ communityId?: string }>();
   const router = useRouter();
   const pathname = usePathname();
+  const homeActive = pathname === "/" || pathname.startsWith("/tags/");
   const inLibrary = pathname === "/library" || pathname.startsWith("/library/");
   const communities = useCommunityStore((state) => state.communities);
   const layout = useCommunityStore((state) => state.layout);
@@ -633,8 +634,8 @@ export function CommunityRail() {
             href="/"
             aria-label="Home"
             data-tour="home"
-            aria-current={pathname === "/" ? "page" : undefined}
-            className={itemClass(pathname === "/")}
+            aria-current={homeActive ? "page" : undefined}
+            className={itemClass(homeActive)}
           >
             <House size={20} />
           </Link>

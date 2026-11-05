@@ -1,17 +1,19 @@
 "use client";
 
 import { App, Tooltip } from "antd";
-import { Inbox, Send, UserPlus, X } from "lucide-react";
+import { Hash, Inbox, Send, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { Fragment, useEffect, useState, type ReactNode } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import * as Template from "@template";
-import type { FriendSuggestion, FriendUser } from "@/lib/api";
+import type { FriendSuggestion, FriendUser, TagWindow, TrendingTag } from "@/lib/api";
 import { displayName } from "@/lib/display-name";
 import { useReadOnly } from "@/lib/read-only";
+import { tagHref, tagPeople } from "@/lib/tags";
 import { useFriendsStore } from "@/stores/friends-store";
 import { useLayoutStore } from "@/stores/layout-store";
+import { useTrendingStore } from "@/stores/trending-store";
 import { PersonRow } from "./person-row";
 import { PanelHeading, SidePanel } from "./side-panel";
 
@@ -25,7 +27,9 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 }
 
 const PANEL_SUGGESTIONS = 3;
+const PANEL_TAGS = 3;
 const SUGGESTIONS_STALE_MS = 10 * 60 * 1000;
+const TRENDING_STALE_MS = 5 * 60 * 1000;
 
 function useSuggestions() {
   const suggestions = useFriendsStore((state) => state.suggestions);
@@ -40,6 +44,18 @@ function useSuggestions() {
 
   const known = new Set([...friends, ...incoming, ...outgoing].map(({ userId }) => userId));
   return suggestions.filter(({ userId }) => !known.has(userId));
+}
+
+function useTrending() {
+  const tags = useTrendingStore((state) => state.tags);
+  const window = useTrendingStore((state) => state.window);
+
+  useEffect(() => {
+    const { fetchedAt, fetchTrending } = useTrendingStore.getState();
+    if (Date.now() - fetchedAt > TRENDING_STALE_MS) fetchTrending();
+  }, []);
+
+  return { tags, window };
 }
 
 function useSuggestionActions(person: FriendSuggestion) {
@@ -169,10 +185,47 @@ function SuggestionsSection({ suggestions }: { suggestions: FriendSuggestion[] }
   );
 }
 
+function TrendingSection({ tags, window }: { tags: TrendingTag[]; window: TagWindow }) {
+  return (
+    <div className="flex flex-col gap-2" onClick={() => useLayoutStore.getState().closeDrawer()}>
+      <Section title="Trending">
+        {tags.slice(0, PANEL_TAGS).map((tag) => (
+          <li key={tag.name}>
+            <Link
+              href={tagHref(tag.name)}
+              className="focus-ring group flex items-center gap-3 rounded-sm py-2"
+            >
+              <span
+                aria-hidden
+                className="flex size-8 shrink-0 items-center justify-center rounded-full bg-rail-item text-muted"
+              >
+                <Hash size={14} />
+              </span>
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate text-[13px] font-semibold group-hover:underline">
+                  #{tag.display}
+                </span>
+                <span className="truncate text-xs text-muted">{tagPeople(tag.people, window)}</span>
+              </span>
+            </Link>
+          </li>
+        ))}
+      </Section>
+      <Atom.ButtonLink href="/?tab=trending" variant="secondary" block>
+        See all
+      </Atom.ButtonLink>
+    </div>
+  );
+}
+
 export function FriendsPanel() {
   const friends = useFriendsStore((state) => state.friends);
   const loaded = useFriendsStore((state) => state.loaded);
   const suggestions = useSuggestions();
+  const trending = useTrending();
+  const [preferTrending] = useState(() => Math.random() < 0.5);
+  const showTrending =
+    trending.tags.length > 0 && (preferTrending || suggestions.length === 0);
 
   const streaming = friends.filter((friend) => friend.status === "streaming");
   const online = friends.filter((friend) => friend.online && friend.status !== "streaming");
@@ -227,7 +280,11 @@ export function FriendsPanel() {
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          <SuggestionsSection suggestions={suggestions} />
+          {showTrending ? (
+            <TrendingSection tags={trending.tags} window={trending.window} />
+          ) : (
+            <SuggestionsSection suggestions={suggestions} />
+          )}
           {sections.length === 0 ? (
             <p className="text-[13px] text-muted">
               No friends yet. Search for people on the home page, or add them from

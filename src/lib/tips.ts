@@ -59,7 +59,7 @@ export const tips: Tip[] = [
   {
     id: "search",
     title: "Search everything from anywhere",
-    body: "Press ⌘K (Ctrl+K on Windows) or / to search people, communities, posts, titles, and your library without leaving the page.",
+    body: "Press ⌘K (Ctrl+K on Windows) or / to search people, communities, posts, tags, titles, and your library without leaving the page.",
   },
   {
     id: "folders",
@@ -88,6 +88,12 @@ export const tips: Tip[] = [
     id: "mentions",
     title: "Mention people with @",
     body: "Type @ and a username in a post or comment to tag someone. They get a notification if they can see where you posted it.",
+  },
+  {
+    id: "hashtags",
+    title: "Group posts with hashtags",
+    body: "Add a hashtag like #frieren to a post, comment, or forum reply. Open one to see everything public that uses it, and follow it to get matching posts in your feed.",
+    action: { label: "See trending tags", href: "/?tab=trending" },
   },
   {
     id: "edit-delete",

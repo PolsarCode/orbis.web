@@ -6,6 +6,7 @@ import {
   Check,
   Clock,
   Compass,
+  Hash,
   Library,
   Newspaper,
   Search,
@@ -31,6 +32,7 @@ import {
   searchPeople,
   searchPosts,
   searchReports,
+  searchTags,
   type CommunitySearchResult,
   type FeedEntry,
   type FriendUser,
@@ -39,10 +41,12 @@ import {
   type MediaType,
   type Post,
   type Report,
+  type TagSearchResult,
 } from "@/lib/api";
 import { displayName } from "@/lib/display-name";
 import { mediaPath, statusLabel } from "@/lib/library";
 import { spoilerLabel } from "@/lib/spoiler";
+import { tagHref } from "@/lib/tags";
 import { ticketNumber } from "@/lib/ticket";
 import { useAuthStore } from "@/stores/auth-store";
 import {
@@ -68,6 +72,7 @@ const RECENT_LIMIT = 6;
 
 const sourceLabels: Record<SearchSource, string> = {
   posts: "Posts",
+  tags: "Tags",
   titles: "Titles",
   people: "People",
   communities: "Communities",
@@ -153,6 +158,7 @@ function interleave(groups: Record<MediaType, MediaResult[]>) {
 }
 
 const loadPosts = (token: string, query: string) => searchPosts(token, query);
+const loadTags = (token: string, query: string) => searchTags(token, query);
 const loadTitles = (token: string, query: string) => searchLibrary(token, query).then(interleave);
 const loadPeople = (token: string, query: string) => searchPeople(token, query.replace(/^@/, ""));
 const loadCommunities = (token: string, query: string) => searchCommunities(token, query);
@@ -348,7 +354,7 @@ function SearchHome({
       </ResultSection>
       {!hasRecent && (
         <p className="px-2 text-xs text-muted">
-          Search people, communities, anime, manga, games, and posts from anywhere.
+          Search people, communities, anime, manga, games, posts, and tags from anywhere.
         </p>
       )}
     </div>
@@ -410,6 +416,7 @@ function SearchPanel({
     (filter === "page" && !section) || (filter === "tickets" && !isAdmin) ? "all" : filter;
   const wants = (source: SearchSource) => active === "all" || active === source;
   const posts = useResults(search, wants("posts"), loadPosts);
+  const tags = useResults(search, wants("tags"), loadTags);
   const titles = useResults(search, wants("titles"), loadTitles);
   const people = useResults(search, wants("people"), loadPeople);
   const communities = useResults(search, wants("communities"), loadCommunities);
@@ -449,6 +456,21 @@ function SearchPanel({
           title={displayName(item.author)}
           subtitle={text || undefined}
           detail={place}
+        />
+      );
+    }),
+    tags: rowsOf(tags, (tag: TagSearchResult) => {
+      const href = tagHref(tag.name);
+      const title = `#${tag.display}`;
+      const subtitle = `${tag.uses.toLocaleString()} ${tag.uses === 1 ? "use" : "uses"}`;
+      return (
+        <ResultRow
+          key={tag.name}
+          href={href}
+          onSelect={() => select({ href, title, subtitle })}
+          icon={<Hash size={18} className="text-muted" />}
+          title={title}
+          subtitle={subtitle}
         />
       );
     }),
@@ -615,7 +637,7 @@ function SearchPanel({
           placeholder={
             section
               ? `Search ${section.label} and everywhere…`
-              : "Search people, titles, communities, and posts…"
+              : "Search people, titles, communities, posts, and tags…"
           }
           prefix={<Search size={18} className="text-muted" />}
           allowClear

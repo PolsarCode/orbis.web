@@ -283,13 +283,15 @@ body {
     text-decoration: underline;
   }
 
-  .rich-text a.mention {
+  .rich-text a.mention,
+  .rich-text a.hashtag {
     font-weight: 600;
     text-decoration: none;
   }
 
   @media (hover: hover) {
-    .rich-text a.mention:hover {
+    .rich-text a.mention:hover,
+    .rich-text a.hashtag:hover {
       text-decoration: underline;
     }
   }

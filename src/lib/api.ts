@@ -1671,6 +1671,101 @@ export async function searchBookmarks(token: string | null, q: string): Promise<
   return res.json();
 }
 
+export type TagSummary = { name: string; display: string };
+
+export type TagWindow = "day" | "week";
+
+export type TrendingTag = TagSummary & { people: number };
+
+export type Tag = TagSummary & { following: boolean; people: number; window: TagWindow };
+
+export type TagSearchResult = TagSummary & { uses: number };
+
+export type TagItem =
+  | { kind: "post"; createdAt: string; post: Post }
+  | {
+      kind: "comment";
+      createdAt: string;
+      comment: Comment;
+      target: {
+        type: Commentable["type"];
+        id: number;
+        author: Author;
+        community: CommunitySummary | null;
+        media: { type: MediaType; sourceId: string } | null;
+        wallUser: Author | null;
+      };
+    }
+  | {
+      kind: "forum_post";
+      createdAt: string;
+      forumPost: ForumPost;
+      thread: { id: number; title: string; categoryId: number; community: CommunitySummary };
+    };
+
+export type TagPage = { tag: Tag; items: TagItem[]; nextCursor: string | null };
+
+function tagPath(name: string, path = "") {
+  return `/tags/${encodeURIComponent(name)}${path}`;
+}
+
+export async function getTrendingTags(
+  token: string | null,
+): Promise<{ window: TagWindow; tags: TrendingTag[] }> {
+  const res = await api("/tags/trending", { headers: authHeaders(token) });
+
+  if (!res.ok) throw new Error("Could not load trending tags.");
+  return res.json();
+}
+
+export async function getFollowedTags(token: string | null): Promise<TagSummary[]> {
+  const res = await api("/tags/following", { headers: authHeaders(token) });
+
+  if (!res.ok) throw new Error("Could not load the tags you follow.");
+  const { tags } = await res.json();
+  return tags;
+}
+
+export async function searchTags(token: string | null, q: string): Promise<TagSearchResult[]> {
+  const res = await api(withQuery("/tags/search", { q }), { headers: authHeaders(token) });
+
+  if (!res.ok) throw new Error("Could not search tags.");
+  const { tags } = await res.json();
+  return tags;
+}
+
+export async function getTag(
+  token: string | null,
+  name: string,
+  cursor?: string,
+): Promise<TagPage | null> {
+  const res = await api(withQuery(tagPath(name, "/items"), { cursor }), {
+    headers: authHeaders(token),
+  });
+
+  if (res.status === 400) return null;
+  if (!res.ok) throw new Error("Could not load this tag.");
+  return res.json();
+}
+
+export async function setTagFollowing(
+  token: string,
+  name: string,
+  following: boolean,
+): Promise<{ following: boolean }> {
+  const res = await api(tagPath(name, "/follow"), {
+    method: following ? "POST" : "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    throw new Error(
+      await errorMessage(res, following ? "Could not follow this tag." : "Could not unfollow this tag."),
+    );
+  }
+  return res.json();
+}
+
 export type Stats = {
   members: number;
   communities: number;

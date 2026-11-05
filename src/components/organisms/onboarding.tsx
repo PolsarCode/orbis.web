@@ -53,9 +53,9 @@ export const tourStops: TourStop[] = [
   {
     target: "home-tabs",
     placement: "bottom",
-    title: "Feed and bookmarks",
+    title: "Feed, trending, and bookmarks",
     description:
-      "Switch between your feed and the posts you’ve saved. Save a post from its … menu, and search what you’ve saved from the Bookmarks tab.",
+      "Switch between your feed, the hashtags people are using most, and the posts you’ve saved. Save a post from its … menu, and search what you’ve saved from the Bookmarks tab.",
   },
   {
     target: "discover",
@@ -95,7 +95,7 @@ export const tourStops: TourStop[] = [
     placement: "bottom",
     title: "Search everything",
     description:
-      "Find people, communities, anime, manga, games, and posts in one place. Open it from any page, or press Ctrl K (⌘K on a Mac).",
+      "Find people, communities, anime, manga, games, posts, and tags in one place. Open it from any page, or press Ctrl K (⌘K on a Mac).",
   },
   {
     target: "side-panel",
