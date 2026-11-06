@@ -1,0 +1,40 @@
+{
+  "date": "2026-11-06",
+  "versions": ["v0.109.1", "v0.110.0", "v0.110.1"],
+  "entries": [
+    {
+      "type": "new",
+      "title": "Block people",
+      "description": "Block someone from the … menu on their profile. You won't see each other's posts, comments, or profile, and they can't message you or send you a friend request. They aren't told.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Mute people",
+      "description": "Mute someone from the … menu on their profile. Their posts, comments, and library updates are left out of your feeds and collapsed elsewhere, and they aren't told.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Keyword filters",
+      "description": "Add a word or phrase in your Privacy settings, forever or for a day, week, or month. Posts, comments, and forum posts that mention it are collapsed, with a button to show them anyway.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Mute conversations",
+      "description": "Mute a chat to keep it quiet. New messages won't pop it open or add to your unread count, and you can unmute it whenever you like.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "fixed",
+      "title": "Hashtag pages respect 18+ and hidden content",
+      "description": "18+ posts no longer show up on hashtag pages unless you've chosen to see them, and neither do posts from forum threads hidden from you."
+    },
+    {
+      "type": "fixed",
+      "title": "Editing text around a hashtag",
+      "description": "If typing next to a hashtag stretched its link, the post now keeps your text correctly when you edit it again. Tags too long to open no longer turn into broken links."
+    }
+  ]
+}
