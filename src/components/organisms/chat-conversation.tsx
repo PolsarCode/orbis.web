@@ -135,6 +135,7 @@ function Conversation({
   const restoreFrom = useRef<number | null>(null);
   const viewing = active && visible;
   const request = conversation.status === "request";
+  const canMessage = history?.canMessage !== false && conversation.canMessage !== false;
   const messages = history?.messages;
   const missing = history === undefined;
   const typing = members.filter(({ userId }) => typers?.includes(userId));
@@ -271,72 +272,74 @@ function Conversation({
                 return (
                   <li key={message.id} className="flex flex-col">
                     {showTime && <TimeLabel sentAt={message.sentAt} />}
-                    {isGroup && !mine && !sameAsPrevious && (
-                      <p className="mt-1 mb-0.5 pl-9 text-[11px] text-muted">{senderName}</p>
-                    )}
-                    <div
-                      className={`group/message flex items-end gap-2 ${mine ? "flex-row-reverse" : ""} ${
-                        endsGroup && !seenBy?.length ? "mb-1.5" : ""
-                      }`}
-                    >
-                      {!mine && (
-                        <span className={`w-7 shrink-0 ${endsGroup ? "" : "invisible"}`}>
-                          <Atom.Avatar
-                            label={senderName}
-                            src={message.sender.avatarUrl}
-                            seed={message.senderId}
-                            size="xs"
-                          />
-                        </span>
+                    <Molecule.HiddenGate hiddenBecause={message.hiddenBecause} className="my-1">
+                      {isGroup && !mine && !sameAsPrevious && (
+                        <p className="mt-1 mb-0.5 pl-9 text-[11px] text-muted">{senderName}</p>
                       )}
                       <div
-                        className={`flex max-w-[78%] min-w-0 flex-col ${mine ? "items-end" : "items-start"}`}
+                        className={`group/message flex items-end gap-2 ${mine ? "flex-row-reverse" : ""} ${
+                          endsGroup && !seenBy?.length ? "mb-1.5" : ""
+                        }`}
                       >
-                        {message.replyTo && (
-                          <ReplyQuote reply={message.replyTo} me={me} mine={mine} />
+                        {!mine && (
+                          <span className={`w-7 shrink-0 ${endsGroup ? "" : "invisible"}`}>
+                            <Atom.Avatar
+                              label={senderName}
+                              src={message.sender.avatarUrl}
+                              seed={message.senderId}
+                              size="xs"
+                            />
+                          </span>
                         )}
-                        <p
-                          title={formatTime(message.sentAt)}
-                          className={`relative max-w-full rounded-2xl px-3 py-1.5 text-sm whitespace-pre-wrap [overflow-wrap:anywhere] ${
-                            mine ? "bg-accent text-accent-foreground" : "bg-rail-item text-foreground"
-                          } ${editing?.id === message.id ? "ring-2 ring-foreground/25" : ""}`}
+                        <div
+                          className={`flex max-w-[78%] min-w-0 flex-col ${mine ? "items-end" : "items-start"}`}
                         >
-                          {message.text}
-                          {message.editedAt && (
-                            <span
-                              title={`Edited ${formatTime(message.editedAt)}`}
-                              className="ml-1.5 text-[11px] opacity-70"
-                            >
-                              (edited)
-                            </span>
+                          {message.replyTo && (
+                            <ReplyQuote reply={message.replyTo} me={me} mine={mine} />
                           )}
-                        </p>
-                        {link && (
-                          <div className="mt-1 w-64 max-w-full">
-                            <Molecule.LinkPreview url={link} />
-                          </div>
-                        )}
-                        {message.reactions.length > 0 && (
-                          <Reactions
-                            reactions={message.reactions}
-                            me={me}
-                            disabled={request || readOnly}
+                          <p
+                            title={formatTime(message.sentAt)}
+                            className={`relative max-w-full rounded-2xl px-3 py-1.5 text-sm whitespace-pre-wrap [overflow-wrap:anywhere] ${
+                              mine ? "bg-accent text-accent-foreground" : "bg-rail-item text-foreground"
+                            } ${editing?.id === message.id ? "ring-2 ring-foreground/25" : ""}`}
+                          >
+                            {message.text}
+                            {message.editedAt && (
+                              <span
+                                title={`Edited ${formatTime(message.editedAt)}`}
+                                className="ml-1.5 text-[11px] opacity-70"
+                              >
+                                (edited)
+                              </span>
+                            )}
+                          </p>
+                          {link && (
+                            <div className="mt-1 w-64 max-w-full">
+                              <Molecule.LinkPreview url={link} />
+                            </div>
+                          )}
+                          {message.reactions.length > 0 && (
+                            <Reactions
+                              reactions={message.reactions}
+                              me={me}
+                              disabled={request || readOnly || !canMessage}
+                              onReact={reactWith}
+                            />
+                          )}
+                        </div>
+                        {!request && !readOnly && canMessage && (
+                          <MessageActions
+                            mine={mine}
                             onReact={reactWith}
+                            onReply={() => {
+                              if (editing) stopEdit();
+                              setReplyTo(message);
+                            }}
+                            onEdit={mine ? () => startEdit(message) : undefined}
                           />
                         )}
                       </div>
-                      {!request && !readOnly && (
-                        <MessageActions
-                          mine={mine}
-                          onReact={reactWith}
-                          onReply={() => {
-                            if (editing) stopEdit();
-                            setReplyTo(message);
-                          }}
-                          onEdit={mine ? () => startEdit(message) : undefined}
-                        />
-                      )}
-                    </div>
+                    </Molecule.HiddenGate>
                     {seenBy && seenBy.length > 0 && (
                       <div
                         className="mt-0.5 mb-1.5 flex justify-end gap-0.5"
@@ -396,6 +399,7 @@ function Conversation({
       {request && <RequestBanner conversation={conversation} />}
       <Composer
         conversation={conversation}
+        canMessage={canMessage}
         me={me}
         text={draft}
         setText={setDraft}
@@ -417,11 +421,20 @@ function ReplyQuote({ reply, me, mine }: { reply: ChatReply; me: number; mine: b
         mine ? "items-end text-right" : ""
       }`}
     >
-      <span className="flex items-center gap-1 font-semibold">
-        <CornerUpLeft size={12} aria-hidden />
-        {reply.senderId === me ? "You" : displayName(reply.sender)}
-      </span>
-      <span className="line-clamp-2 [overflow-wrap:anywhere]">{reply.text}</span>
+      {reply.hiddenBecause ? (
+        <span className="flex items-center gap-1 italic">
+          <CornerUpLeft size={12} aria-hidden />
+          Message from someone you blocked
+        </span>
+      ) : (
+        <>
+          <span className="flex items-center gap-1 font-semibold">
+            <CornerUpLeft size={12} aria-hidden />
+            {reply.senderId === me ? "You" : displayName(reply.sender)}
+          </span>
+          <span className="line-clamp-2 [overflow-wrap:anywhere]">{reply.text}</span>
+        </>
+      )}
     </div>
   );
 }
@@ -559,6 +572,7 @@ function RequestBanner({ conversation }: { conversation: Chat }) {
 
 function Composer({
   conversation,
+  canMessage,
   me,
   text,
   setText,
@@ -570,6 +584,7 @@ function Composer({
   onCancelEdit,
 }: {
   conversation: Chat;
+  canMessage: boolean;
   me: number;
   text: string;
   setText: Dispatch<SetStateAction<string>>;
@@ -693,6 +708,15 @@ function Composer({
       event.preventDefault();
       submit();
     }
+  }
+
+  if (!canMessage) {
+    return (
+      <p className="flex items-center gap-2 border-t border-divider p-3 text-xs text-muted">
+        <Lock size={14} aria-hidden className="shrink-0" />
+        You can’t message this person.
+      </p>
+    );
   }
 
   if (readOnly) {

@@ -35,3 +35,4 @@ export * from "./tab-section";
 export * from "./turnstile";
 export * from "./edited-mark";
 export * from "./spoiler-gate";
+export * from "./hidden-gate";

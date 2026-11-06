@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Ban,
   Boxes,
   CalendarDays,
   Clapperboard,
@@ -15,7 +16,15 @@ import { App, Tooltip } from "antd";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, type ReactNode, type UIEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+  type UIEvent,
+} from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import * as Template from "@template";
@@ -27,6 +36,8 @@ import {
   removeUserBackground,
   removeUserCover,
   setProfileVerified,
+  setUserBlocked,
+  setUserMuted,
   uploadAvatar,
   uploadUserBackground,
   uploadUserCover,
@@ -41,6 +52,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useCommunityStore } from "@/stores/community-store";
 import { useFriendsStore } from "@/stores/friends-store";
 import { useLayoutStore } from "@/stores/layout-store";
+import { useMessagesStore } from "@/stores/messages-store";
 import { MessageButton } from "./chat-dock";
 import { FriendAction } from "./member-list";
 import { PostComposer } from "./post-composer";
@@ -649,6 +661,27 @@ function ProfileSidePanel({ profile }: { profile: Profile }) {
   );
 }
 
+function UnblockButton({ onUnblock }: { onUnblock: () => Promise<void> }) {
+  const { message } = App.useApp();
+  const [pending, setPending] = useState(false);
+
+  async function unblock() {
+    setPending(true);
+    try {
+      await onUnblock();
+    } catch (e) {
+      message.error(e instanceof Error ? e.message : "Something went wrong.");
+      setPending(false);
+    }
+  }
+
+  return (
+    <Atom.Button loading={pending} onClick={unblock}>
+      Unblock
+    </Atom.Button>
+  );
+}
+
 export function UserProfile({ username }: { username: string }) {
   const me = useAuthStore((state) => state.profile);
   const livePresence = useFriendsStore((state) => state.presence);
@@ -709,6 +742,27 @@ export function UserProfile({ username }: { username: string }) {
     );
   }
 
+  async function handleBlocked(blocked: boolean) {
+    const { token } = useAuthStore.getState();
+    if (!token) throw new Error("Please log in again.");
+
+    await setUserBlocked(token, username, blocked);
+    useFriendsStore.getState().fetchFriends();
+    useMessagesStore.getState().refresh();
+    const profile = await getPublicProfile(token, username);
+    setLoaded({ username, profile });
+  }
+
+  async function handleMuted(muted: boolean) {
+    const { token } = useAuthStore.getState();
+    if (!token) throw new Error("Please log in again.");
+
+    await setUserMuted(token, username, muted);
+    setLoaded((current) =>
+      current?.profile ? { ...current, profile: { ...current.profile, muted } } : current,
+    );
+  }
+
   function handleScroll(event: UIEvent<HTMLDivElement>) {
     const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
     const room = scrollHeight - clientHeight;
@@ -728,11 +782,11 @@ export function UserProfile({ username }: { username: string }) {
             role={current.failed ? "alert" : undefined}
             eyebrow={current.failed ? "Connection error" : "Not found"}
             icon={<UserX size={24} strokeWidth={1.5} />}
-            title={current.failed ? "This profile couldn’t be loaded." : "No one goes by that name."}
+            title={current.failed ? "This profile couldn’t be loaded." : "This profile isn’t available."}
             description={
               current.failed
                 ? "Check your connection and try again."
-                : `There’s no user called @${username}.`
+                : `There’s no profile to show for @${username}.`
             }
           />
         )}
@@ -768,6 +822,87 @@ export function UserProfile({ username }: { username: string }) {
     </>
   );
 
+  const canSuspend =
+    Boolean(me?.isAdmin) &&
+    !isSelf &&
+    !profile.isHeadAdmin &&
+    (!profile.isAdmin || Boolean(me?.isHeadAdmin));
+  const admin: ComponentProps<typeof ProfileMenu>["admin"] =
+    me?.isHeadAdmin || canSuspend
+      ? {
+          username: profile.username,
+          name: displayName(profile),
+          isVerified: profile.isVerified,
+          isAdmin: profile.isAdmin,
+          suspension: profile.suspension ?? null,
+          twoFactorEnabled: profile.twoFactorEnabled ?? null,
+          canVerify: Boolean(me?.isHeadAdmin),
+          canChangeAdmin: Boolean(me?.isHeadAdmin) && !isSelf && !profile.isHeadAdmin,
+          canSuspend,
+          canResetTwoFactor: canSuspend,
+          onVerify: handleVerified,
+          onAdminChange: (isAdmin) =>
+            setLoaded((current) =>
+              current?.profile
+                ? { ...current, profile: { ...current.profile, isAdmin } }
+                : current,
+            ),
+          onSuspensionChange: (suspension) =>
+            setLoaded((current) =>
+              current?.profile
+                ? { ...current, profile: { ...current.profile, suspension } }
+                : current,
+            ),
+          onTwoFactorReset: () =>
+            setLoaded((current) =>
+              current?.profile
+                ? { ...current, profile: { ...current.profile, twoFactorEnabled: false } }
+                : current,
+            ),
+        }
+      : undefined;
+
+  const safety =
+    me && !isSelf
+      ? {
+          username: profile.username,
+          blocked: Boolean(profile.blocked),
+          muted: Boolean(profile.muted),
+          onBlockedChange: handleBlocked,
+          onMutedChange: handleMuted,
+        }
+      : undefined;
+
+  if (profile.blocked) {
+    return (
+      <main className="flex min-h-0 flex-1 flex-col">
+        <ProfileHeader
+          profile={profile}
+          status="offline"
+          collapsed={false}
+          actions={
+            <ProfileMenu
+              userId={profile.userId}
+              isSelf={false}
+              canReport={Boolean(me)}
+              safety={safety}
+              admin={admin}
+            />
+          }
+        />
+        <Template.PageColumn>
+          <Molecule.FeedState
+            eyebrow="Blocked"
+            icon={<Ban size={24} strokeWidth={1.5} />}
+            title={`You blocked @${profile.username}.`}
+            description="You won’t see each other’s posts, comments or profile, and they can’t message you or send a friend request."
+            action={<UnblockButton onUnblock={() => handleBlocked(false)} />}
+          />
+        </Template.PageColumn>
+      </main>
+    );
+  }
+
   if (profile.restricted) {
     return (
       <main className="flex min-h-0 flex-1 flex-col">
@@ -776,7 +911,14 @@ export function UserProfile({ username }: { username: string }) {
           status="offline"
           collapsed={false}
           social={social}
-          actions={null}
+          actions={
+            <ProfileMenu
+              userId={profile.userId}
+              isSelf={false}
+              canReport={Boolean(me)}
+              safety={safety}
+            />
+          }
         />
         <Template.PageColumn>
           <Molecule.FeedState
@@ -799,12 +941,6 @@ export function UserProfile({ username }: { username: string }) {
     );
   }
 
-  const canSuspend =
-    Boolean(me?.isAdmin) &&
-    !isSelf &&
-    !profile.isHeadAdmin &&
-    (!profile.isAdmin || Boolean(me?.isHeadAdmin));
-
   return (
     <main className="flex min-h-0 flex-1 flex-col">
       <ProfileSearchScope key={profile.username} profile={profile} />
@@ -825,41 +961,8 @@ export function UserProfile({ username }: { username: string }) {
             userId={profile.userId}
             isSelf={isSelf}
             canReport={Boolean(me) && !isSelf}
-            admin={
-              me?.isHeadAdmin || canSuspend
-                ? {
-                    username: profile.username,
-                    name: displayName(profile),
-                    isVerified: profile.isVerified,
-                    isAdmin: profile.isAdmin,
-                    suspension: profile.suspension ?? null,
-                    twoFactorEnabled: profile.twoFactorEnabled ?? null,
-                    canVerify: Boolean(me?.isHeadAdmin),
-                    canChangeAdmin: Boolean(me?.isHeadAdmin) && !isSelf && !profile.isHeadAdmin,
-                    canSuspend,
-                    canResetTwoFactor: canSuspend,
-                    onVerify: handleVerified,
-                    onAdminChange: (isAdmin) =>
-                      setLoaded((current) =>
-                        current?.profile
-                          ? { ...current, profile: { ...current.profile, isAdmin } }
-                          : current,
-                      ),
-                    onSuspensionChange: (suspension) =>
-                      setLoaded((current) =>
-                        current?.profile
-                          ? { ...current, profile: { ...current.profile, suspension } }
-                          : current,
-                      ),
-                    onTwoFactorReset: () =>
-                      setLoaded((current) =>
-                        current?.profile
-                          ? { ...current, profile: { ...current.profile, twoFactorEnabled: false } }
-                          : current,
-                      ),
-                  }
-                : undefined
-            }
+            safety={safety}
+            admin={admin}
           />
         }
       />
@@ -901,7 +1004,7 @@ export function UserProfile({ username }: { username: string }) {
             />
           ) : (
             <Wall
-              key={profile.username}
+              key={`${profile.username}:${Boolean(profile.muted)}`}
               profile={profile}
               isSelf={isSelf}
               canPost={isSelf || friendIds.some((friend) => friend.userId === profile.userId)}

@@ -1,7 +1,7 @@
 "use client";
 
 import { Segmented, Tooltip } from "antd";
-import { ArrowLeft, MessageCircle, UsersRound } from "lucide-react";
+import { ArrowLeft, BellOff, MessageCircle, UsersRound } from "lucide-react";
 import { useEffect, useState } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
@@ -11,7 +11,7 @@ import { timeAgo } from "@/lib/time";
 import { useAuthStore } from "@/stores/auth-store";
 import { useFriendsStore } from "@/stores/friends-store";
 import { useMessagesStore } from "@/stores/messages-store";
-import { AddPeopleButton, ChatHeading, GroupSettingsButton } from "./chat-dock";
+import { AddPeopleButton, ChatHeading, GroupSettingsButton, MuteChatButton } from "./chat-dock";
 import { ChatConversation } from "./chat-conversation";
 import { NewGroupModal } from "./group-chat-modals";
 
@@ -121,6 +121,7 @@ export function MessagesView() {
               <span className="flex-1" />
               <AddPeopleButton conversation={selected} />
               <GroupSettingsButton conversation={selected} />
+              <MuteChatButton conversation={selected} />
             </div>
             <ChatConversation id={selected.id} active />
           </>
@@ -174,8 +175,13 @@ export function ConversationRow({
           presence={status}
         />
         <span className="flex min-w-0 flex-1 flex-col">
-          <span className={`truncate text-sm ${unread ? "font-bold" : "font-semibold"}`}>
-            {chatTitle(conversation)}
+          <span className="flex min-w-0 items-center gap-1">
+            <span className={`truncate text-sm ${unread ? "font-bold" : "font-semibold"}`}>
+              {chatTitle(conversation)}
+            </span>
+            {conversation.muted && (
+              <BellOff size={12} aria-label="Muted" className="shrink-0 text-muted" />
+            )}
           </span>
           <span className={`flex gap-1 text-xs ${unread ? "font-semibold text-foreground" : "text-muted"}`}>
             <span className="truncate">{chatPreview(conversation, me)}</span>

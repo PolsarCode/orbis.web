@@ -23,6 +23,7 @@ import { ResendConfirmation } from "./email-confirmation";
 import { NsfwSwitch } from "./nsfw-switch";
 import { FriendsPanel } from "./friends-panel";
 import { PrivateProfileSwitch } from "./private-profile-switch";
+import { KeywordFilterSettings, PeopleSafetySettings } from "./safety-settings";
 import { SettingsTabs } from "./settings-tabs";
 import { SidePanel } from "./side-panel";
 import { SteamConnection } from "./steam-connection";
@@ -115,20 +116,25 @@ export function ProfileSettings({ profile }: { profile: Profile }) {
           label: "Privacy",
           icon: <Lock size={16} aria-hidden />,
           content: (
-            <Molecule.SettingsSection title="Visibility">
-              <Molecule.SettingsRow
-                label="Appear offline"
-                description="Friends see you as offline. You can still post as usual."
-              >
-                <AppearOfflineSwitch />
-              </Molecule.SettingsRow>
-              <Molecule.SettingsRow
-                label="Private profile"
-                description="Only your friends can see your posts, friends, communities, and library. Everyone else sees just your name and picture."
-              >
-                <PrivateProfileSwitch />
-              </Molecule.SettingsRow>
-            </Molecule.SettingsSection>
+            <>
+              <Molecule.SettingsSection title="Visibility">
+                <Molecule.SettingsRow
+                  label="Appear offline"
+                  description="Friends see you as offline. You can still post as usual."
+                >
+                  <AppearOfflineSwitch />
+                </Molecule.SettingsRow>
+                <Molecule.SettingsRow
+                  label="Private profile"
+                  description="Only your friends can see your posts, friends, communities, and library. Everyone else sees just your name and picture."
+                >
+                  <PrivateProfileSwitch />
+                </Molecule.SettingsRow>
+              </Molecule.SettingsSection>
+              <PeopleSafetySettings kind="blocked" />
+              <PeopleSafetySettings kind="muted" />
+              <KeywordFilterSettings />
+            </>
           ),
         },
         {

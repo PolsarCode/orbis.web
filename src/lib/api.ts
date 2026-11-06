@@ -277,6 +277,11 @@ export type Author = {
   nickname?: string | null;
 };
 
+export type HiddenBecause =
+  | { kind: "muted" }
+  | { kind: "blocked" }
+  | { kind: "filtered"; phrase: string };
+
 export type CommunitySummary = Pick<Community, "id" | "name" | "iconUrl">;
 
 export type PreviewComment = {
@@ -286,6 +291,7 @@ export type PreviewComment = {
   spoiler: string | null;
   createdAt: string;
   author: Author;
+  hiddenBecause?: HiddenBecause | null;
 };
 
 export type Post = {
@@ -307,6 +313,7 @@ export type Post = {
   canPin?: boolean;
   moderation?: AuthorModeration | null;
   forumThread?: { id: number; title: string; replyCount: number } | null;
+  hiddenBecause?: HiddenBecause | null;
   createdAt: string;
   author: Author;
   community: CommunitySummary | null;
@@ -351,6 +358,7 @@ export type Activity = {
   likeCount: number;
   liked: boolean;
   previewComments: PreviewComment[];
+  hiddenBecause?: HiddenBecause | null;
   createdAt: string;
   author: Author;
   status: LibraryStatus;
@@ -447,6 +455,7 @@ export type Comment = {
   editedAt?: string | null;
   deleted?: boolean;
   canDelete?: boolean;
+  hiddenBecause?: HiddenBecause | null;
   createdAt: string;
   author: Author;
 };
@@ -1266,6 +1275,7 @@ export type ChatReply = {
   senderId: number;
   sender: ChatPerson;
   text: string;
+  hiddenBecause?: HiddenBecause | null;
 };
 
 export type ChatReaction = { emoji: string; userIds: number[] };
@@ -1280,6 +1290,7 @@ export type ChatMessage = {
   editedAt: string | null;
   replyTo: ChatReply | null;
   reactions: ChatReaction[];
+  hiddenBecause?: HiddenBecause | null;
 };
 
 export type Conversation = {
@@ -1294,6 +1305,8 @@ export type Conversation = {
   lastAt: string;
   unread: number;
   status: "accepted" | "request";
+  muted?: boolean;
+  canMessage?: boolean;
 };
 
 export type ChatMember = ChatPerson & { readAt: string | null };
@@ -1302,6 +1315,8 @@ export type ChatHistory = {
   messages: ChatMessage[];
   members: ChatMember[];
   hasMore: boolean;
+  muted?: boolean;
+  canMessage?: boolean;
 };
 
 function messagesRequest(token: string, path: string, method = "POST", body?: unknown) {
@@ -1440,6 +1455,24 @@ export async function removeGroupMember(
   const res = await messagesRequest(token, `/${id}/members/${userId}`, "DELETE");
 
   if (!res.ok) throw new Error(await errorMessage(res, "Could not update the group."));
+}
+
+export async function setConversationMuted(
+  token: string,
+  id: number,
+  muted: boolean,
+): Promise<{ muted: boolean }> {
+  const res = await messagesRequest(token, `/${id}/mute`, muted ? "POST" : "DELETE");
+
+  if (!res.ok) {
+    throw new Error(
+      await errorMessage(
+        res,
+        muted ? "Couldn’t mute this chat. Try again." : "Couldn’t unmute this chat. Try again.",
+      ),
+    );
+  }
+  return res.json();
 }
 
 export async function getCommunityPost(
@@ -2218,6 +2251,8 @@ export type PublicProfile = {
   isVerified: boolean;
   isPublic: boolean;
   restricted: boolean;
+  blocked?: boolean;
+  muted?: boolean;
   suspension?: ProfileSuspension | null;
   twoFactorEnabled?: boolean | null;
   hasClips: boolean;
@@ -2275,6 +2310,111 @@ export async function getPublicProfile(
   if (res.status === 404) return null;
   if (!res.ok) throw new Error("Could not load this profile.");
   return res.json();
+}
+
+export type BlockedPerson = Author & { blockedAt: string };
+
+export type MutedPerson = Author & { mutedAt: string };
+
+export type KeywordFilter = {
+  id: number;
+  phrase: string;
+  expiresAt: string | null;
+  createdAt: string;
+};
+
+export type KeywordFilterDuration = "forever" | "day" | "week" | "month";
+
+export async function getBlockedPeople(token: string): Promise<BlockedPerson[]> {
+  const res = await api("/blocks", { headers: { Authorization: `Bearer ${token}` } });
+
+  if (!res.ok) throw new Error("Could not load the people you blocked.");
+  return (await res.json()).people;
+}
+
+export async function setUserBlocked(
+  token: string,
+  username: string,
+  blocked: boolean,
+): Promise<{ blocked: boolean }> {
+  const res = await api(`/users/${encodeURIComponent(username)}/block`, {
+    method: blocked ? "POST" : "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    throw new Error(
+      await errorMessage(
+        res,
+        blocked ? "Couldn’t block them. Try again." : "Couldn’t unblock them. Try again.",
+      ),
+    );
+  }
+  return res.json();
+}
+
+export async function getMutedPeople(token: string): Promise<MutedPerson[]> {
+  const res = await api("/mutes", { headers: { Authorization: `Bearer ${token}` } });
+
+  if (!res.ok) throw new Error("Could not load the people you muted.");
+  return (await res.json()).people;
+}
+
+export async function setUserMuted(
+  token: string,
+  username: string,
+  muted: boolean,
+): Promise<{ muted: boolean }> {
+  const res = await api(`/users/${encodeURIComponent(username)}/mute`, {
+    method: muted ? "POST" : "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    throw new Error(
+      await errorMessage(
+        res,
+        muted ? "Couldn’t mute them. Try again." : "Couldn’t unmute them. Try again.",
+      ),
+    );
+  }
+  return res.json();
+}
+
+export async function getKeywordFilters(token: string): Promise<KeywordFilter[]> {
+  const res = await api("/keyword-filters", { headers: { Authorization: `Bearer ${token}` } });
+
+  if (!res.ok) throw new Error("Could not load your keyword filters.");
+  return (await res.json()).filters;
+}
+
+export async function addKeywordFilter(
+  token: string,
+  phrase: string,
+  duration: KeywordFilterDuration,
+): Promise<KeywordFilter> {
+  const res = await api("/keyword-filters", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ phrase, duration }),
+  });
+
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t add that filter. Try again."));
+  return res.json();
+}
+
+export async function removeKeywordFilter(token: string, id: number): Promise<void> {
+  const res = await api(`/keyword-filters/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok && res.status !== 404) {
+    throw new Error("Couldn’t remove that filter. Try again.");
+  }
 }
 
 export async function setSiteAdmin(
@@ -2993,6 +3133,7 @@ export type ForumQuote =
       spoiler: string | null;
       createdAt: string;
       author: Author;
+      hiddenBecause?: HiddenBecause | null;
     };
 
 export type ForumPost = {
@@ -3006,6 +3147,7 @@ export type ForumPost = {
   liked: boolean;
   hiddenAt: string | null;
   editedAt: string | null;
+  hiddenBecause?: HiddenBecause | null;
   createdAt: string;
   author: Author;
   quote: ForumQuote | null;

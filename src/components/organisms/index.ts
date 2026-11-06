@@ -82,4 +82,5 @@ export * from "./forum-category";
 export * from "./forum-thread";
 export * from "./forum-category-settings";
 export * from "./community-ban-settings";
+export * from "./safety-settings";
 export * from "./leave-community-button";

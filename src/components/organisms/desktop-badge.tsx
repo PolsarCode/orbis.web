@@ -9,7 +9,9 @@ export function DesktopBadge() {
   const notifications = useNotificationsStore((state) => state.unreadCount);
   const chats = useMessagesStore(
     (state) =>
-      state.conversations.filter(({ status, unread }) => status === "accepted" && unread > 0).length,
+      state.conversations.filter(
+        ({ status, unread, muted }) => status === "accepted" && unread > 0 && !muted,
+      ).length,
   );
   const count = notifications + chats;
 

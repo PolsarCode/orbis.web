@@ -77,17 +77,27 @@ export function ActivitySummary({
   );
 }
 
-export function ActivityCard({
-  activity,
-  onOpenComments,
-  onChange,
-  preview = true,
-}: {
+type ActivityCardProps = {
   activity: Activity;
   onOpenComments?: () => void;
   onChange?: (activity: Activity) => void;
   preview?: boolean;
-}) {
+};
+
+export function ActivityCard(props: ActivityCardProps) {
+  return (
+    <Molecule.HiddenGate hiddenBecause={props.activity.hiddenBecause}>
+      <VisibleActivityCard {...props} />
+    </Molecule.HiddenGate>
+  );
+}
+
+function VisibleActivityCard({
+  activity,
+  onOpenComments,
+  onChange,
+  preview = true,
+}: ActivityCardProps) {
   return (
     <article className="flex flex-col gap-3 rounded-lg border border-divider bg-surface p-4">
       <ActivitySummary activity={activity} />

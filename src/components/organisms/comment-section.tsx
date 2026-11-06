@@ -81,101 +81,103 @@ function CommentItem({
       {node.deleted ? (
         <p className="text-sm text-muted italic">Comment deleted</p>
       ) : (
-        <div className="flex flex-col gap-3">
-          <p className="flex flex-wrap items-center gap-x-2 text-xs text-muted">
-            <Atom.Avatar
-              size="xs"
-              label={author}
-              src={node.author.avatarUrl}
-              seed={node.author.id}
-            />
-            <Molecule.UserLink username={node.author.username} className="text-foreground">
-              {author}
-            </Molecule.UserLink>
-            <time
-              dateTime={node.createdAt}
-              title={new Date(node.createdAt).toLocaleString()}
-            >
-              {timeAgo(node.createdAt)}
-            </time>
-            <Molecule.EditedMark editedAt={node.editedAt} />
-          </p>
-          {editing ? (
-            <PostComposer
-              autoFocus
-              linkPreview
-              initialContent={node.content}
-              initialLink={node.linkUrl}
-              initialSpoiler={node.spoiler}
-              submitLabel="Save"
-              onPost={save}
-              onPosted={() => setEditing(false)}
-              onCancel={() => setEditing(false)}
-            />
-          ) : node.hidden ? (
-            <p className="text-sm text-muted italic">
-              {node.hidden === "reported"
-                ? "You reported this comment."
-                : "This comment is hidden while admins review it."}
-            </p>
-          ) : (
-            <Molecule.SpoilerGate spoiler={node.spoiler}>
-              {node.content && (
-                <div
-                  className="rich-text"
-                  dangerouslySetInnerHTML={{ __html: node.content }}
-                />
-              )}
-              {node.linkUrl && <Molecule.LinkPreview url={node.linkUrl} />}
-            </Molecule.SpoilerGate>
-          )}
-          <div className="flex items-center gap-2">
-            <Molecule.LikeButton
-              liked={node.liked}
-              count={node.likeCount}
-              onToggle={() =>
-                toggleLike({ type: "comment", id: node.id }, node, (result) =>
-                  onChange({ ...node, ...result }),
-                )
-              }
-            />
-            {canReply && (
-              <button
-                type="button"
-                onClick={() => setReplying((open) => !open)}
-                aria-expanded={replying}
-                className="focus-ring rounded-sm px-1 text-xs font-semibold text-muted transition-colors hover:text-foreground"
+        <Molecule.HiddenGate hiddenBecause={node.hiddenBecause}>
+          <div className="flex flex-col gap-3">
+            <p className="flex flex-wrap items-center gap-x-2 text-xs text-muted">
+              <Atom.Avatar
+                size="xs"
+                label={author}
+                src={node.author.avatarUrl}
+                seed={node.author.id}
+              />
+              <Molecule.UserLink username={node.author.username} className="text-foreground">
+                {author}
+              </Molecule.UserLink>
+              <time
+                dateTime={node.createdAt}
+                title={new Date(node.createdAt).toLocaleString()}
               >
-                Reply
-              </button>
+                {timeAgo(node.createdAt)}
+              </time>
+              <Molecule.EditedMark editedAt={node.editedAt} />
+            </p>
+            {editing ? (
+              <PostComposer
+                autoFocus
+                linkPreview
+                initialContent={node.content}
+                initialLink={node.linkUrl}
+                initialSpoiler={node.spoiler}
+                submitLabel="Save"
+                onPost={save}
+                onPosted={() => setEditing(false)}
+                onCancel={() => setEditing(false)}
+              />
+            ) : node.hidden ? (
+              <p className="text-sm text-muted italic">
+                {node.hidden === "reported"
+                  ? "You reported this comment."
+                  : "This comment is hidden while admins review it."}
+              </p>
+            ) : (
+              <Molecule.SpoilerGate spoiler={node.spoiler}>
+                {node.content && (
+                  <div
+                    className="rich-text"
+                    dangerouslySetInnerHTML={{ __html: node.content }}
+                  />
+                )}
+                {node.linkUrl && <Molecule.LinkPreview url={node.linkUrl} />}
+              </Molecule.SpoilerGate>
             )}
-            <ContentActions
-              type="comment"
-              id={node.id}
-              ownerId={node.author.id}
-              canDelete={node.canDelete}
-              onEdit={() => setEditing(true)}
-              onDelete={() => onDelete(node)}
-              variant="text"
-            />
+            <div className="flex items-center gap-2">
+              <Molecule.LikeButton
+                liked={node.liked}
+                count={node.likeCount}
+                onToggle={() =>
+                  toggleLike({ type: "comment", id: node.id }, node, (result) =>
+                    onChange({ ...node, ...result }),
+                  )
+                }
+              />
+              {canReply && (
+                <button
+                  type="button"
+                  onClick={() => setReplying((open) => !open)}
+                  aria-expanded={replying}
+                  className="focus-ring rounded-sm px-1 text-xs font-semibold text-muted transition-colors hover:text-foreground"
+                >
+                  Reply
+                </button>
+              )}
+              <ContentActions
+                type="comment"
+                id={node.id}
+                ownerId={node.author.id}
+                canDelete={node.canDelete}
+                onEdit={() => setEditing(true)}
+                onDelete={() => onDelete(node)}
+                variant="text"
+              />
+            </div>
+            {replying && (
+              <PostComposer
+                autoFocus
+                linkPreview
+                target={
+                  <p className="text-xs text-muted">
+                    Replying to @{node.author.username}
+                  </p>
+                }
+                placeholder="Write a reply…"
+                submitLabel="Reply"
+                onPost={(content, linkUrl, spoiler) => onReply(content, node.id, linkUrl, spoiler)}
+                onPosted={() => setReplying(false)}
+                onCancel={() => setReplying(false)}
+              />
+            )}
           </div>
-          {replying && (
-            <PostComposer
-              autoFocus
-              linkPreview
-              target={
-                <p className="text-xs text-muted">
-                  Replying to @{node.author.username}
-                </p>
-              }
-              placeholder="Write a reply…"
-              submitLabel="Reply"
-              onPost={(content, linkUrl, spoiler) => onReply(content, node.id, linkUrl, spoiler)}
-              onPosted={() => setReplying(false)}
-              onCancel={() => setReplying(false)}
-            />
-          )}
-        </div>
+        </Molecule.HiddenGate>
       )}
       {node.replies.length > 0 && (
         <ul

@@ -126,4 +126,10 @@ export const tips: Tip[] = [
     title: "Update your library from any page",
     body: "Pull up the bar at the bottom of the screen to change what you’re watching, reading, or playing without leaving the page.",
   },
+  {
+    id: "keyword-filters",
+    title: "Hide words you’d rather not see",
+    body: "Add keyword filters in Privacy settings to collapse posts and comments that mention them. To mute or block someone, open the … menu on their profile.",
+    action: { label: "Open Privacy", href: "/settings?tab=privacy" },
+  },
 ];

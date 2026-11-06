@@ -119,7 +119,7 @@ function MessagesButton() {
   const pathname = usePathname();
   const active = open || pathname === "/messages";
   const chats = conversations.filter(({ status }) => status === "accepted");
-  const unread = chats.filter((chat) => chat.unread > 0).length;
+  const unread = chats.filter((chat) => chat.unread > 0 && !chat.muted).length;
   const label = unread > 0 ? `Messages, ${unread} unread` : "Messages";
 
   return (

@@ -57,7 +57,15 @@ type PostCardProps = {
   preview?: boolean;
 };
 
-export function PostCard({
+export function PostCard(props: PostCardProps) {
+  return (
+    <Molecule.HiddenGate hiddenBecause={props.post.hiddenBecause}>
+      <VisiblePostCard {...props} />
+    </Molecule.HiddenGate>
+  );
+}
+
+function VisiblePostCard({
   post,
   showCommunity = false,
   onOpenComments,

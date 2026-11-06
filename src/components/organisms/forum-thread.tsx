@@ -71,40 +71,30 @@ function QuoteCard({ quote, href }: { quote: ForumQuote; href: string }) {
   }
 
   return (
-    <figure className="flex flex-col gap-1.5 rounded-md border-l-2 border-accent bg-rail px-3 py-2">
-      <figcaption className="text-xs text-muted">
-        <Link href={href} className="focus-ring rounded-sm font-semibold text-foreground transition-colors hover:text-accent">
-          {displayName(quote.author)}
-        </Link>{" "}
-        wrote:
-      </figcaption>
-      <Molecule.SpoilerGate spoiler={quote.spoiler}>
-        {quote.content ? (
-          <blockquote
-            className="rich-text line-clamp-4 text-[13px]"
-            dangerouslySetInnerHTML={{ __html: quote.content }}
-          />
-        ) : (
-          quote.linkUrl && <p className="truncate text-[13px] text-muted">{quote.linkUrl}</p>
-        )}
-      </Molecule.SpoilerGate>
-    </figure>
+    <Molecule.HiddenGate hiddenBecause={quote.hiddenBecause}>
+      <figure className="flex flex-col gap-1.5 rounded-md border-l-2 border-accent bg-rail px-3 py-2">
+        <figcaption className="text-xs text-muted">
+          <Link href={href} className="focus-ring rounded-sm font-semibold text-foreground transition-colors hover:text-accent">
+            {displayName(quote.author)}
+          </Link>{" "}
+          wrote:
+        </figcaption>
+        <Molecule.SpoilerGate spoiler={quote.spoiler}>
+          {quote.content ? (
+            <blockquote
+              className="rich-text line-clamp-4 text-[13px]"
+              dangerouslySetInnerHTML={{ __html: quote.content }}
+            />
+          ) : (
+            quote.linkUrl && <p className="truncate text-[13px] text-muted">{quote.linkUrl}</p>
+          )}
+        </Molecule.SpoilerGate>
+      </figure>
+    </Molecule.HiddenGate>
   );
 }
 
-function ForumPostCard({
-  post,
-  number,
-  thread,
-  communityId,
-  highlighted,
-  likeBlockedReason,
-  onChange,
-  onDeleted,
-  onAuthorRemoved,
-  onAuthorBanned,
-  onQuote,
-}: {
+type ForumPostCardProps = {
   post: ForumPost;
   number: number;
   thread: ForumThread;
@@ -116,7 +106,31 @@ function ForumPostCard({
   onAuthorRemoved: (post: ForumPost) => void;
   onAuthorBanned: (post: ForumPost) => void;
   onQuote: (post: ForumPost) => void;
-}) {
+};
+
+function ForumPostCard(props: ForumPostCardProps) {
+  return (
+    <div id={`post-${props.post.id}`} className="scroll-mt-4">
+      <Molecule.HiddenGate hiddenBecause={props.post.hiddenBecause}>
+        <VisibleForumPostCard {...props} />
+      </Molecule.HiddenGate>
+    </div>
+  );
+}
+
+function VisibleForumPostCard({
+  post,
+  number,
+  thread,
+  communityId,
+  highlighted,
+  likeBlockedReason,
+  onChange,
+  onDeleted,
+  onAuthorRemoved,
+  onAuthorBanned,
+  onQuote,
+}: ForumPostCardProps) {
   const [editing, setEditing] = useState(false);
   const permalink = threadHref(communityId, thread.id, post.id);
   const authorName = displayName(post.author);
@@ -139,9 +153,8 @@ function ForumPostCard({
 
   return (
     <article
-      id={`post-${post.id}`}
       aria-label={`Post ${number} by ${displayName(post.author)}`}
-      className={`flex scroll-mt-4 flex-col gap-4 rounded-lg border bg-surface p-5 ${
+      className={`flex flex-col gap-4 rounded-lg border bg-surface p-5 ${
         highlighted ? "border-accent" : "border-divider"
       }`}
     >

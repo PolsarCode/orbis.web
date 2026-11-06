@@ -1,7 +1,7 @@
 "use client";
 
-import { Tooltip } from "antd";
-import { MessageCircle, Minus, Settings2, UserPlus, X } from "lucide-react";
+import { App, Tooltip } from "antd";
+import { Bell, BellOff, MessageCircle, Minus, Settings2, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -155,6 +155,28 @@ export function GroupSettingsButton({ conversation }: { conversation: Conversati
   );
 }
 
+export function MuteChatButton({ conversation }: { conversation: Conversation }) {
+  const { message } = App.useApp();
+  const setMuted = useMessagesStore((state) => state.setMuted);
+  const muted = Boolean(conversation.muted);
+  const label = muted ? "Unmute conversation" : "Mute conversation";
+
+  return (
+    <Tooltip title={label}>
+      <button
+        type="button"
+        aria-label={label}
+        onClick={() =>
+          setMuted(conversation.id, !muted).catch((error: Error) => message.error(error.message))
+        }
+        className="icon-button"
+      >
+        {muted ? <BellOff size={16} /> : <Bell size={16} />}
+      </button>
+    </Tooltip>
+  );
+}
+
 export function AddPeopleButton({ conversation }: { conversation: Conversation }) {
   const [open, setOpen] = useState(false);
   const showChat = useShowChat();
@@ -224,6 +246,7 @@ function ChatWindow({ id, minimized }: { id: number; minimized: boolean }) {
             <span className="flex-1" />
             <AddPeopleButton conversation={conversation} />
             <GroupSettingsButton conversation={conversation} />
+            <MuteChatButton conversation={conversation} />
             <button
               type="button"
               onClick={() => toggleChat(id)}

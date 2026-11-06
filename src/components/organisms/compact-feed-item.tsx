@@ -16,17 +16,22 @@ import { ContentActions } from "./content-actions";
 import { threadHref } from "./forum-shared";
 import { HiddenNotice } from "./report-content";
 
-export function CompactFeedItem({
-  item,
-  showCommunity,
-  onOpen,
-  onChange,
-}: {
+type CompactFeedItemProps = {
   item: FeedEntry;
   showCommunity: boolean;
   onOpen: () => void;
   onChange: (item: FeedEntry) => void;
-}) {
+};
+
+export function CompactFeedItem(props: CompactFeedItemProps) {
+  return (
+    <Molecule.HiddenGate hiddenBecause={props.item.hiddenBecause} className="m-3 sm:mx-4">
+      <VisibleCompactFeedItem {...props} />
+    </Molecule.HiddenGate>
+  );
+}
+
+function VisibleCompactFeedItem({ item, showCommunity, onOpen, onChange }: CompactFeedItemProps) {
   const router = useRouter();
   const community = item.type !== "activity" ? item.community : null;
   const thread =

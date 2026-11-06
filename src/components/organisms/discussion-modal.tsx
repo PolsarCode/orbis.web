@@ -67,10 +67,14 @@ export function DiscussionModal({
             title="The discussion"
           />
           {item.type === "activity" ? (
-            <ActivityCard activity={item} onChange={onChange} preview={false} />
+            <ActivityCard
+              activity={{ ...item, hiddenBecause: null }}
+              onChange={onChange}
+              preview={false}
+            />
           ) : (
             <PostCard
-              post={item}
+              post={{ ...item, hiddenBecause: null }}
               showCommunity
               onChange={onChange}
               onDelete={deleted}

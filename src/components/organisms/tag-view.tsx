@@ -381,14 +381,23 @@ export function TagView({ name }: { name: string }) {
                   onDelete={removePost}
                 />
               ) : item.kind === "comment" ? (
-                <CommentItem
+                <Molecule.HiddenGate
                   key={tagItemKey(item)}
-                  item={item}
-                  opening={opening === tagItemKey(item)}
-                  onOpen={() => openDiscussion(item)}
-                />
+                  hiddenBecause={item.comment.hiddenBecause}
+                >
+                  <CommentItem
+                    item={item}
+                    opening={opening === tagItemKey(item)}
+                    onOpen={() => openDiscussion(item)}
+                  />
+                </Molecule.HiddenGate>
               ) : (
-                <ForumItem key={tagItemKey(item)} item={item} />
+                <Molecule.HiddenGate
+                  key={tagItemKey(item)}
+                  hiddenBecause={item.forumPost.hiddenBecause}
+                >
+                  <ForumItem item={item} />
+                </Molecule.HiddenGate>
               ),
             )}
             {nextCursor ? (

@@ -44,6 +44,7 @@ type MessagesState = {
   rename: (id: number, name: string) => Promise<void>;
   addMembers: (id: number, userIds: number[]) => Promise<void>;
   removeMember: (id: number, userId: number) => Promise<void>;
+  setMuted: (id: number, muted: boolean) => Promise<void>;
 };
 
 const MAX_WINDOWS = 3;
@@ -161,7 +162,9 @@ export const useMessagesStore = create<MessagesState>()((set, get) => {
         messages: history.messages.map((current) =>
           current.id === message.id
             ? message
-            : current.replyTo?.id === message.id
+            : current.replyTo?.id === message.id &&
+                !message.hiddenBecause &&
+                !current.replyTo.hiddenBecause
               ? { ...current, replyTo: { ...current.replyTo, text: message.text } }
               : current,
         ),
@@ -185,18 +188,24 @@ export const useMessagesStore = create<MessagesState>()((set, get) => {
       if (message.senderId === me) return;
       get().setTyping({ conversationId: id, userId: message.senderId, typing: false });
       if (conversation.status !== "accepted") return;
+      if (get().conversations.find((current) => current.id === id)?.muted) return;
+      if (message.hiddenBecause) return;
 
       const { pageOpen, windows } = get();
       if (!pageOpen && !windows.some((window) => window.id === id)) get().openChat(id);
       if (document.hidden || !viewing.has(id)) playMessageSound();
     },
     upsert: (conversation) =>
-      set(({ conversations }) => ({
-        conversations: [
-          conversation,
-          ...conversations.filter(({ id }) => id !== conversation.id),
-        ].sort((a, b) => b.lastAt.localeCompare(a.lastAt)),
-      })),
+      set(({ conversations }) => {
+        const muted =
+          conversation.muted ?? conversations.find(({ id }) => id === conversation.id)?.muted;
+        return {
+          conversations: [
+            { ...conversation, muted },
+            ...conversations.filter(({ id }) => id !== conversation.id),
+          ].sort((a, b) => b.lastAt.localeCompare(a.lastAt)),
+        };
+      }),
     removed: (id) => {
       set(({ conversations, histories, windows, selected }) => {
         const rest = { ...histories };
@@ -294,6 +303,10 @@ export const useMessagesStore = create<MessagesState>()((set, get) => {
     removeMember: async (id, userId) => {
       await api.removeGroupMember(tokenOrThrow(), id, userId);
       if (userId === useAuthStore.getState().profile?.userId) get().removed(id);
+    },
+    setMuted: async (id, muted) => {
+      await api.setConversationMuted(tokenOrThrow(), id, muted);
+      patchConversation(id, { muted });
     },
   };
 });
