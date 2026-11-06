@@ -298,6 +298,8 @@ export type Post = {
   type: "post";
   id: number;
   communityId: number | null;
+  mediaType?: MediaType | null;
+  mediaSourceId?: string | null;
   content: string;
   linkUrl: string | null;
   spoiler: string | null;
@@ -318,7 +320,38 @@ export type Post = {
   author: Author;
   community: CommunitySummary | null;
   wallUser: Author | null;
+  quote?: QuotedItem | null;
+} & ShareFields;
+
+export type ShareTarget = { type: FeedEntry["type"]; id: number };
+
+export type RepostedBy = { people: Author[]; total: number };
+
+export type ShareFields = {
+  repostCount: number;
+  reposted: boolean;
+  canRepost: boolean;
+  canQuote: boolean;
+  repostedBy?: RepostedBy | null;
 };
+
+export type QuotedPost = Pick<
+  Post,
+  | "id"
+  | "content"
+  | "linkUrl"
+  | "spoiler"
+  | "createdAt"
+  | "author"
+  | "community"
+  | "wallUser"
+  | "hiddenBecause"
+> & { media: { type: MediaType; sourceId: string; title: string | null } | null };
+
+export type QuotedItem =
+  | { available: true; type: "post"; post: QuotedPost }
+  | { available: true; type: "activity"; activity: Activity }
+  | { available: false };
 
 export type AuthorModeration = { remove: boolean; ban: boolean };
 
@@ -371,7 +404,7 @@ export type Activity = {
     coverImage: string | null;
     year: number | null;
   };
-};
+} & ShareFields;
 
 export type FeedEntry = Post | Activity;
 
@@ -985,6 +1018,7 @@ export async function createWallPost(
   content: string,
   linkUrl?: string,
   spoiler?: string | null,
+  quote?: ShareTarget,
 ): Promise<Post> {
   const res = await api(`/users/${encodeURIComponent(username)}/posts`, {
     method: "POST",
@@ -992,11 +1026,22 @@ export async function createWallPost(
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ content, linkUrl, spoiler }),
+    body: JSON.stringify({ content, linkUrl, spoiler, quote }),
   });
 
-  if (res.status === 400) throw new Error("Write something before posting.");
-  if (res.status === 403) throw new Error("Only friends can post on this wall.");
+  if (res.status === 400) {
+    throw new Error(
+      quote
+        ? await errorMessage(res, "Write something before posting.")
+        : "Write something before posting.",
+    );
+  }
+  if (res.status === 403) {
+    throw new Error(
+      quote ? await errorMessage(res, "You can’t quote this.") : "Only friends can post on this wall.",
+    );
+  }
+  if (res.status === 404 && quote) throw new Error("That post isn’t available.");
   if (!res.ok) throw new Error("Could not post. Please try again.");
   return res.json();
 }
@@ -1114,6 +1159,7 @@ export async function createPost(
   content: string,
   linkUrl?: string,
   spoiler?: string | null,
+  quote?: ShareTarget,
 ): Promise<Post> {
   const res = await api(`/communities/${communityId}/posts`, {
     method: "POST",
@@ -1121,10 +1167,18 @@ export async function createPost(
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ content, linkUrl, spoiler }),
+    body: JSON.stringify({ content, linkUrl, spoiler, quote }),
   });
 
-  if (res.status === 400) throw new Error("Write something before posting.");
+  if (res.status === 400) {
+    throw new Error(
+      quote
+        ? await errorMessage(res, "Write something before posting.")
+        : "Write something before posting.",
+    );
+  }
+  if (res.status === 403 && quote) throw new Error(await errorMessage(res, "You can’t quote this."));
+  if (res.status === 404 && quote) throw new Error("That post isn’t available.");
   if (!res.ok) throw new Error("Could not post. Please try again.");
   return res.json();
 }
@@ -1686,6 +1740,66 @@ export async function setBookmark(
   return res.json();
 }
 
+export type RepostResult = { reposted: boolean; repostCount: number };
+
+export type Reposter = Author & { repostedAt: string };
+
+export async function repost(
+  token: string,
+  { type, id }: ShareTarget,
+  communityId: number | null,
+): Promise<RepostResult> {
+  const res = await api(`/reposts/${type}/${id}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ communityId }),
+  });
+
+  if (res.status === 403) throw new Error(await errorMessage(res, "You can’t repost this."));
+  if (res.status === 404) throw new Error("That post isn’t available.");
+  if (!res.ok) throw new Error("Could not repost. Please try again.");
+  return res.json();
+}
+
+export async function undoRepost(token: string, { type, id }: ShareTarget): Promise<RepostResult> {
+  const res = await api(`/reposts/${type}/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) throw new Error("Could not undo your repost. Please try again.");
+  return res.json();
+}
+
+export async function getReposters(
+  token: string,
+  { type, id }: ShareTarget,
+  cursor?: string,
+): Promise<Page<Reposter>> {
+  const res = await api(withQuery(`/reposts/${type}/${id}/people`, { cursor }), {
+    headers: authHeaders(token),
+  });
+
+  if (!res.ok) throw new Error("Could not load reposts.");
+  return res.json();
+}
+
+export async function getQuotes(
+  token: string,
+  { type, id }: ShareTarget,
+  cursor?: string,
+): Promise<Page<Post>> {
+  const res = await api(withQuery(`/reposts/${type}/${id}/quotes`, { cursor }), {
+    headers: authHeaders(token),
+  });
+
+  if (!res.ok) throw new Error("Could not load quotes.");
+  return res.json();
+}
+
 export async function getBookmarks(token: string | null, cursor?: string): Promise<Page<Post>> {
   const res = await api(withQuery("/bookmarks", { cursor }), {
     headers: authHeaders(token),
@@ -2103,7 +2217,9 @@ export type NotificationType =
   | "wall_post"
   | "mention"
   | "forum_reply"
-  | "forum_quote";
+  | "forum_quote"
+  | "repost"
+  | "quote";
 
 export type Notification = {
   id: number;

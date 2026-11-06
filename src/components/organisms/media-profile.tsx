@@ -38,6 +38,7 @@ import {
 import { SearchScope } from "./site-search";
 import { PostComposer } from "./post-composer";
 import { PostList } from "./post-list";
+import { MediaPageContext } from "./repost-actions";
 import { PanelHeading, SidePanel } from "./side-panel";
 import { PageTour } from "./onboarding";
 import { MediaLinkedDiscussion } from "./linked-discussion";
@@ -371,13 +372,17 @@ function MediaWall({ profile }: { profile: Profile }) {
           </div>
         </section>
       )}
-      <PostList
-        feed={feed}
-        empty={{
-          title: "No posts yet.",
-          description: `Be the first to share your thoughts on ${profile.title}.`,
-        }}
-      />
+      <MediaPageContext
+        value={{ type: profile.type, sourceId: profile.sourceId, title: profile.title }}
+      >
+        <PostList
+          feed={feed}
+          empty={{
+            title: "No posts yet.",
+            description: `Be the first to share your thoughts on ${profile.title}.`,
+          }}
+        />
+      </MediaPageContext>
     </section>
   );
 }

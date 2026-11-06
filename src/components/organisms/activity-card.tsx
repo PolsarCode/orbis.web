@@ -10,6 +10,7 @@ import { displayName } from "@/lib/display-name";
 import { activityText, mediaPath, progressText } from "@/lib/library";
 import { timeAgo } from "@/lib/time";
 import { toggleLike } from "@/lib/votes";
+import { RepostActions } from "./repost-actions";
 
 export const mediaTypes: Record<MediaType, { label: string; icon: ReactNode }> = {
   anime: { label: "Anime", icon: <Tv size={12} /> },
@@ -100,6 +101,7 @@ function VisibleActivityCard({
 }: ActivityCardProps) {
   return (
     <article className="flex flex-col gap-3 rounded-lg border border-divider bg-surface p-4">
+      <Molecule.RepostedBy repostedBy={activity.repostedBy} />
       <ActivitySummary activity={activity} />
       <div className="flex items-center gap-4 pl-[52px]">
         <Molecule.LikeButton
@@ -114,6 +116,7 @@ function VisibleActivityCard({
         {onOpenComments && (
           <Molecule.CommentsButton count={activity.commentCount} onClick={onOpenComments} />
         )}
+        <RepostActions item={activity} onChange={onChange} />
       </div>
       {preview && onOpenComments && (
         <Molecule.CommentPreview

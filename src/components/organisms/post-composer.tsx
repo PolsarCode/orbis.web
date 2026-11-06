@@ -59,6 +59,7 @@ function removeLinkText(editor: Editor, { from, to }: FoundLink) {
 type PostComposerProps = {
   onPost: (content: string, linkUrl?: string, spoiler?: string | null) => Promise<void>;
   target?: ReactNode;
+  embed?: ReactNode;
   placeholder?: string;
   label?: string;
   submitLabel?: string;
@@ -74,6 +75,7 @@ type PostComposerProps = {
 export function PostComposer({
   onPost,
   target,
+  embed,
   placeholder = "Share something with the community…",
   label = "Write a post",
   submitLabel = "Post",
@@ -328,6 +330,7 @@ export function PostComposer({
           {mentions.popup}
         </div>
         {attachment && <Molecule.LinkPreview url={attachment} onRemove={removeAttachment} />}
+        {embed}
         <hr className="border-divider" />
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div

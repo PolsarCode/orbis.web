@@ -36,3 +36,4 @@ export * from "./turnstile";
 export * from "./edited-mark";
 export * from "./spoiler-gate";
 export * from "./hidden-gate";
+export * from "./reposted-by";

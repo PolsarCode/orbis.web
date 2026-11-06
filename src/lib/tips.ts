@@ -127,6 +127,11 @@ export const tips: Tip[] = [
     body: "Pull up the bar at the bottom of the screen to change what you’re watching, reading, or playing without leaving the page.",
   },
   {
+    id: "reposts",
+    title: "Repost or quote what you enjoy",
+    body: "Use the repost button under a public post or library update to share it on your wall or in a community, or quote it to add your own words. Click the count to see who shared it.",
+  },
+  {
     id: "keyword-filters",
     title: "Hide words you’d rather not see",
     body: "Add keyword filters in Privacy settings to collapse posts and comments that mention them. To mute or block someone, open the … menu on their profile.",

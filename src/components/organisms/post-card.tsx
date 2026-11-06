@@ -16,7 +16,9 @@ import { ContentActions } from "./content-actions";
 import { threadHref } from "./forum-shared";
 import { useMemberModeration } from "./member-moderation";
 import { PostComposer } from "./post-composer";
+import { QuoteEmbed } from "./quote-embed";
 import { HiddenNotice } from "./report-content";
+import { RepostActions } from "./repost-actions";
 
 export function useLikeBlockedReason(post: Post | null) {
   const myId = useAuthStore((state) => state.profile?.userId);
@@ -121,6 +123,7 @@ function VisiblePostCard({
 
   return (
     <article className="flex flex-col gap-4 rounded-lg border border-divider bg-surface p-5">
+      <Molecule.RepostedBy repostedBy={post.repostedBy} className="-mb-2" />
       {post.pinned && (
         <p className="-mb-2 flex items-center gap-1.5 text-xs font-semibold text-accent">
           <Pin size={13} aria-hidden />
@@ -223,6 +226,7 @@ function VisiblePostCard({
               />
             )}
             {post.linkUrl && <Molecule.LinkPreview url={post.linkUrl} />}
+            {post.quote && <QuoteEmbed quote={post.quote} />}
           </Molecule.SpoilerGate>
         </>
       )}
@@ -239,6 +243,7 @@ function VisiblePostCard({
           <span className="text-xs text-muted">
             {thread.replyCount} {thread.replyCount === 1 ? "reply" : "replies"}
           </span>
+          <RepostActions item={post} onChange={onChange} />
         </div>
       ) : (
         <div className="flex items-center gap-4">
@@ -255,6 +260,7 @@ function VisiblePostCard({
           {onOpenComments && (
             <Molecule.CommentsButton count={post.commentCount} onClick={onOpenComments} />
           )}
+          <RepostActions item={post} onChange={onChange} />
         </div>
       )}
       {preview && onOpenComments && !thread && (

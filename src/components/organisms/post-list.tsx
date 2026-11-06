@@ -12,20 +12,24 @@ import { FeedFilters } from "./feed-filters";
 import { ActivityCard } from "./activity-card";
 import { DiscussionModal } from "./discussion-modal";
 import { PostCard } from "./post-card";
+import { QuotedContext } from "./repost-actions";
 
 type PostListProps<T extends FeedEntry> = {
   feed: Paged<T>;
   empty: { title: ReactNode; description: ReactNode; action?: ReactNode };
   end?: ReactNode;
   showCommunity?: boolean;
+  onQuoted?: (post: Post) => void;
 };
 
 export function PostList<T extends FeedEntry>(props: PostListProps<T>) {
   return (
-    <div className="flex flex-col gap-3">
-      <FeedFilters types={props.feed.contentTypes} />
-      <PostListContent {...props} />
-    </div>
+    <QuotedContext value={props.onQuoted ?? null}>
+      <div className="flex flex-col gap-3">
+        <FeedFilters types={props.feed.contentTypes} />
+        <PostListContent {...props} />
+      </div>
+    </QuotedContext>
   );
 }
 

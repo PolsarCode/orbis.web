@@ -432,6 +432,7 @@ function Wall({
       <PostList
         showCommunity
         feed={feed}
+        onQuoted={isSelf ? feed.prepend : undefined}
         empty={{
           title: "Nothing here yet.",
           description: isSelf

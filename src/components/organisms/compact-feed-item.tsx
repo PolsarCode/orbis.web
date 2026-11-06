@@ -14,7 +14,9 @@ import { toggleBookmark, toggleLike } from "@/lib/votes";
 import { useLikeBlockedReason } from "./post-card";
 import { ContentActions } from "./content-actions";
 import { threadHref } from "./forum-shared";
+import { QuoteEmbed } from "./quote-embed";
 import { HiddenNotice } from "./report-content";
+import { RepostActions } from "./repost-actions";
 
 type CompactFeedItemProps = {
   item: FeedEntry;
@@ -65,6 +67,7 @@ function VisibleCompactFeedItem({ item, showCommunity, onOpen, onChange }: Compa
         wallUser={wallUser ?? undefined}
       />
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <Molecule.RepostedBy repostedBy={item.repostedBy} />
         <header className="flex min-w-0 items-start justify-between gap-2">
           <p className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted">
             {item.type === "post" && item.pinned && (
@@ -150,10 +153,13 @@ function VisibleCompactFeedItem({ item, showCommunity, onOpen, onChange }: Compa
             {item.spoiler !== null ? (
               <p className="text-sm text-muted italic">{spoilerLabel(item.spoiler)}</p>
             ) : (
-              <div
-                className="rich-text line-clamp-2 max-h-10 overflow-hidden text-sm [&_blockquote]:my-0 [&_img]:hidden [&_ol]:my-0 [&_p]:my-0 [&_pre]:my-0 [&_ul]:my-0"
-                dangerouslySetInnerHTML={{ __html: item.content }}
-              />
+              <>
+                <div
+                  className="rich-text line-clamp-2 max-h-10 overflow-hidden text-sm [&_blockquote]:my-0 [&_img]:hidden [&_ol]:my-0 [&_p]:my-0 [&_pre]:my-0 [&_ul]:my-0"
+                  dangerouslySetInnerHTML={{ __html: item.content }}
+                />
+                {item.quote && <QuoteEmbed quote={item.quote} />}
+              </>
             )}
           </>
         )}
@@ -168,6 +174,7 @@ function VisibleCompactFeedItem({ item, showCommunity, onOpen, onChange }: Compa
             <span>
               {thread.replyCount} {thread.replyCount === 1 ? "reply" : "replies"}
             </span>
+            <RepostActions item={item} onChange={onChange} />
           </p>
         ) : (
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-0.5">
@@ -182,6 +189,7 @@ function VisibleCompactFeedItem({ item, showCommunity, onOpen, onChange }: Compa
               }
             />
             <Molecule.CommentsButton count={item.commentCount} onClick={onOpen} />
+            <RepostActions item={item} onChange={onChange} />
             {item.type === "activity" && item.steam && (
               <Molecule.SteamBadge steam={item.steam} title={item.media.title} />
             )}

@@ -39,6 +39,9 @@ export function CommunityFeed({
       )}
       <PostList
         feed={feed}
+        onQuoted={(post) => {
+          if (post.communityId === communityId) feed.prepend(post);
+        }}
         empty={{
           title: "No posts yet.",
           description: "Be the first to share a post with this community.",
