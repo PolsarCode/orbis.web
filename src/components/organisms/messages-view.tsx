@@ -154,7 +154,8 @@ export function ConversationRow({
   onSelect: () => void;
 }) {
   const me = useAuthStore((state) => state.profile?.userId);
-  const direct = conversation.isGroup ? undefined : conversation.members[0];
+  const other = conversation.isGroup ? undefined : conversation.members[0];
+  const direct = other?.deleted ? undefined : other;
   const status = useFriendsStore(
     (state) => state.friends.find(({ userId }) => userId === direct?.userId)?.status,
   );

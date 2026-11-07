@@ -8,12 +8,14 @@ import * as Atom from "@atom";
 import * as Organism from "@organism";
 import * as Template from "@template";
 import { inDesktopApp } from "@/lib/desktop";
+import { useSignOutRedirect } from "@/lib/use-sign-out-redirect";
 import { useAuthStore } from "@/stores/auth-store";
 
 const noSubscription = () => () => {};
 
 export default function ApplicationSettingsPage() {
   const router = useRouter();
+  useSignOutRedirect();
   const profile = useAuthStore((state) => state.profile);
   const desktop = useSyncExternalStore(noSubscription, inDesktopApp, () => null);
 

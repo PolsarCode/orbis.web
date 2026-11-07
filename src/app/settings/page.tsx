@@ -9,9 +9,11 @@ import * as Molecule from "@molecule";
 import * as Organism from "@organism";
 import * as Template from "@template";
 import { useAuthStore } from "@/stores/auth-store";
+import { useSignOutRedirect } from "@/lib/use-sign-out-redirect";
 
 export default function SettingsPage() {
   const router = useRouter();
+  useSignOutRedirect();
   const profile = useAuthStore((state) => state.profile);
   const fetchProfile = useAuthStore((state) => state.fetchProfile);
   const [failed, setFailed] = useState(false);

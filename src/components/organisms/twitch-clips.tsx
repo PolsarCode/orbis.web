@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import { getCommunityClips, getUserClips, type Clip, type ClipPage } from "@/lib/api";
-import { timeAgo } from "@/lib/time";
+import { minutesAndSeconds, timeAgo } from "@/lib/time";
 import { useAuthStore } from "@/stores/auth-store";
 
 type ClipSource = { communityId?: number; username?: string };
@@ -17,11 +17,6 @@ function loadClips({ communityId, username }: ClipSource, cursor?: string): Prom
   return communityId !== undefined
     ? getCommunityClips(token, communityId, cursor)
     : getUserClips(token, username ?? "", cursor);
-}
-
-function clipLength(seconds: number) {
-  const total = Math.round(seconds);
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }
 
 function clipDetails(clip: Clip) {
@@ -126,7 +121,7 @@ export function TwitchClips({ communityId, username, name }: ClipSource & { name
                   className="object-cover"
                 />
                 <span className="absolute right-2 bottom-2 rounded bg-black/75 px-1.5 py-0.5 text-[11px] font-semibold text-white tabular-nums">
-                  {clipLength(clip.duration)}
+                  {minutesAndSeconds(clip.duration)}
                 </span>
                 <span className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/30">
                   <span className="flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100">

@@ -17,6 +17,7 @@ import {
   type NumberedPage,
 } from "@/lib/api";
 import { displayName } from "@/lib/display-name";
+import { useSignOutRedirect } from "@/lib/use-sign-out-redirect";
 import { requireToken, useAuthStore } from "@/stores/auth-store";
 import { useDirectoryPreferencesStore } from "@/stores/directory-preferences-store";
 import { AdminToggle } from "./admin-toggle";
@@ -399,6 +400,7 @@ export function DirectoryView() {
   const profile = useAuthStore((state) => state.profile);
   const fetchProfile = useAuthStore((state) => state.fetchProfile);
   const router = useRouter();
+  useSignOutRedirect();
   const [authFailed, setAuthFailed] = useState(false);
   const requested = useSearchParams().get("tab");
   const tab: Tab = tabs.find(({ value }) => value === requested)?.value ?? "users";

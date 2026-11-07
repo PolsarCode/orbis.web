@@ -13,6 +13,7 @@ import {
   type Invite,
 } from "@/lib/api";
 import { qrUrl } from "@/lib/invites";
+import { saveFile } from "@/lib/save-file";
 import { useAuthStore } from "@/stores/auth-store";
 
 const PAPER = "#f5f2eb";
@@ -256,12 +257,7 @@ export function InviteCardButton({ community }: { community: Community }) {
     setError(null);
     setBusy(true);
     try {
-      const url = URL.createObjectURL(await downloadInviteCard(token, community.id));
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${slugOf(community.name)}-invite-card.pdf`;
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      saveFile(await downloadInviteCard(token, community.id), `${slugOf(community.name)}-invite-card.pdf`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn’t create the card.");
     } finally {

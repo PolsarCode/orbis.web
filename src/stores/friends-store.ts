@@ -112,6 +112,10 @@ export const useFriendsStore = create<FriendsState>()((set, get) => ({
       useNotificationsStore.getState().refresh();
       useMessagesStore.getState().refresh();
     });
+    socket.on("disconnect", (reason) => {
+      const { token } = useAuthStore.getState();
+      if (reason === "io server disconnect" && token) void api.getProfile(token).catch(() => null);
+    });
     socket.on(
       "notifications:changed",
       ({ notifications = [] }: { notifications?: Notification[] } = {}) => {

@@ -230,7 +230,9 @@ function Conversation({
                 />
               )}
               <p className="font-semibold">{chatTitle(conversation)}</p>
-              <p className="text-[13px] text-muted">Say hi to start the conversation.</p>
+              {canMessage && (
+                <p className="text-[13px] text-muted">Say hi to start the conversation.</p>
+              )}
             </div>
           ) : (
             <ol className="mt-auto flex flex-col gap-0.5">

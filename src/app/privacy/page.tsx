@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <Template.LegalTemplate title="Privacy policy" updated="October 29, 2026">
+    <Template.LegalTemplate title="Privacy policy" updated="November 7, 2026">
       <p>
         This policy explains what information Orbis collects when you use the
         service, how we use it, and the choices you have. We collect only what
@@ -95,17 +95,65 @@ export default function PrivacyPage() {
       <p>
         We keep your information for as long as your account exists. When a
         community is deleted, its posts, comments, and memberships are
-        deleted with it. To delete your account and the information associated
-        with it, contact the Orbis team and we will process your request.
+        deleted with it.
       </p>
+      <p>
+        You can delete your account yourself in{" "}
+        <Link href="/settings?tab=data">Settings, under Your data</Link>.
+        Once you confirm, you are signed out everywhere, and your profile,
+        posts, and comments are hidden from other members. We delete your
+        account for good 30 days later. If you sign in before then, the
+        deletion is cancelled and everything comes back as it was.
+      </p>
+      <p>When your account is deleted:</p>
+      <ul>
+        <li>
+          <strong>Your content</strong> is deleted: your posts, reposts,
+          comments, forum threads and posts, and the messages you sent. What
+          was left on your content goes with it: posts other people left on
+          your profile, comments on your posts and library updates, and replies
+          in forum threads you started. Replies other people left on your
+          comments stay, shown under a &quot;Comment deleted&quot; placeholder.
+        </li>
+        <li>
+          <strong>Direct chats</strong> stay with the other person. Only your
+          messages are removed, and you are shown as &quot;Deleted
+          account&quot;.
+        </li>
+        <li>
+          <strong>Your activity</strong> is deleted: your library, likes,
+          bookmarks, friends and friend requests, blocks and mutes,
+          notifications, the reports you filed, the hashtags you follow, your
+          Steam data, and the images you uploaded.
+        </li>
+        <li>
+          <strong>Communities you own</strong> pass to their longest-serving
+          admin. A community with no admins is deleted, along with everything
+          in it. Group chats you own pass to another member, or are deleted if
+          no one else is left.
+        </li>
+        <li>
+          <strong>Linked accounts</strong> such as Discord, Twitch, and Steam
+          are disconnected, and the links and tokens we stored for them are
+          deleted.
+        </li>
+      </ul>
 
       <h2>Your choices</h2>
       <ul>
         <li>Update your preferences at any time from your profile.</li>
         <li>Remove friends or decline friend requests whenever you want.</li>
         <li>
-          Request a copy of your information, or ask us to correct or delete
-          it, by contacting the Orbis team.
+          Download a copy of your information as a file, or delete your
+          account, from{" "}
+          <Link href="/settings?tab=data">Settings, under Your data</Link>.
+          The download includes your profile and settings, posts, comments,
+          forum threads and posts, the messages you sent, your library, your
+          friends, and your communities.
+        </li>
+        <li>
+          Ask us to correct information you cannot change yourself by
+          contacting the Orbis team.
         </li>
       </ul>
 

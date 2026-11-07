@@ -73,7 +73,7 @@ export function CommunityBanSettings({ community }: { community: Community }) {
                   {displayName(ban.user)}
                 </Molecule.UserLink>
                 <span className="text-xs text-muted">
-                  Banned by {displayName(ban.bannedBy)} ·{" "}
+                  Banned by {ban.bannedBy ? displayName(ban.bannedBy) : "a deleted account"} ·{" "}
                   <time dateTime={ban.createdAt} title={new Date(ban.createdAt).toLocaleString()}>
                     {timeAgo(ban.createdAt)}
                   </time>

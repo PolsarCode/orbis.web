@@ -28,6 +28,7 @@ import { pageTitle } from "@/lib/site-title";
 import { tagPeople } from "@/lib/tags";
 import { timeAgo } from "@/lib/time";
 import { useDocumentTitle } from "@/lib/use-document-title";
+import { useSignOutRedirect } from "@/lib/use-sign-out-redirect";
 import { useAuthStore } from "@/stores/auth-store";
 import { DiscussionModal } from "./discussion-modal";
 import { threadHref } from "./forum-shared";
@@ -233,6 +234,7 @@ function ForumItem({ item }: { item: TagForumPost }) {
 
 export function TagView({ name }: { name: string }) {
   const router = useRouter();
+  useSignOutRedirect();
   const { message } = App.useApp();
   const [page, setPage] = useState<TagPage | "invalid" | null>(null);
   const [failed, setFailed] = useState(false);

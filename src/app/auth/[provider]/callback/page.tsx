@@ -1,5 +1,6 @@
 "use client";
 
+import { App } from "antd";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -7,6 +8,7 @@ import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import * as Template from "@template";
 import { completeOAuth } from "@/lib/api";
+import { DELETION_CANCELLED_NOTICE } from "@/lib/login";
 import {
   isMobileOAuthState,
   isOAuthProvider,
@@ -22,6 +24,7 @@ function Callback() {
   const { provider } = useParams<{ provider: string }>();
   const params = useSearchParams();
   const router = useRouter();
+  const { message } = App.useApp();
   const loginWithToken = useAuthStore((state) => state.loginWithToken);
   const signedIn = useAuthStore((state) => Boolean(state.token));
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +64,7 @@ function Callback() {
       );
       if (result.access_token) {
         loginWithToken(result.access_token);
+        if (result.restored) message.success(DELETION_CANCELLED_NOTICE, 8);
         router.replace("/");
       } else if (result.signup) {
         savePendingSignup({ provider, ...result.signup });
@@ -77,7 +81,7 @@ function Callback() {
     }
 
     finish().catch((cause: Error) => setError(cause.message));
-  }, [params, provider, router, loginWithToken]);
+  }, [params, provider, router, loginWithToken, message]);
 
   const label = isOAuthProvider(provider) ? oauthLabels[provider] : "this provider";
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { App } from "antd";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -8,7 +9,7 @@ import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import { verifyTwoFactorLogin } from "@/lib/api";
 import { inDesktopApp } from "@/lib/desktop";
-import { safeNext } from "@/lib/login";
+import { DELETION_CANCELLED_NOTICE, safeNext } from "@/lib/login";
 import { useAuthStore } from "@/stores/auth-store";
 import { OAuthButtons } from "./oauth-buttons";
 import { SUSPENSION_NOTICE_KEY } from "./suspended-account-watcher";
@@ -68,7 +69,7 @@ function TwoFactorStep({
 }: {
   ticket: string;
   compact: boolean;
-  onDone: () => void;
+  onDone: (restored: boolean) => void;
   onBack: () => void;
 }) {
   const loginWithToken = useAuthStore((state) => state.loginWithToken);
@@ -88,8 +89,9 @@ function TwoFactorStep({
     setError(null);
     setPending(true);
     try {
-      loginWithToken(await verifyTwoFactorLogin(ticket, code.trim()));
-      onDone();
+      const { token, restored } = await verifyTwoFactorLogin(ticket, code.trim());
+      loginWithToken(token);
+      onDone(restored);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
       setPending(false);
@@ -163,6 +165,7 @@ export function AuthForm({
   onSwitch?: () => void;
 }) {
   const router = useRouter();
+  const { message } = App.useApp();
   const login = useAuthStore((state) => state.login);
   const signup = useAuthStore((state) => state.signup);
   const [error, setError] = useState<string | null>(null);
@@ -178,7 +181,8 @@ export function AuthForm({
   const { title, submit, switchText, switchLabel, switchHref, footnote } =
     content[mode];
 
-  function finish() {
+  function finish(restored = false) {
+    if (restored) message.success(DELETION_CANCELLED_NOTICE, 8);
     if (onAuthenticated) onAuthenticated();
     else router.push(safeNext(new URLSearchParams(window.location.search).get("next")) ?? "/");
   }
@@ -203,6 +207,7 @@ export function AuthForm({
 
     try {
       const password = String(form.get("password"));
+      let restored = false;
       if (mode === "login") {
         const result = await login({
           identifier: String(form.get("identifier")).trim(),
@@ -214,6 +219,7 @@ export function AuthForm({
           setPending(false);
           return;
         }
+        restored = result.restored;
       } else {
         await signup({
           email: String(form.get("email")),
@@ -222,7 +228,7 @@ export function AuthForm({
           turnstileToken: token ?? undefined,
         });
       }
-      finish();
+      finish(restored);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
       setPending(false);

@@ -25,6 +25,7 @@ import {
   type MediaProfile as Profile,
 } from "@/lib/api";
 import { statusLabel } from "@/lib/library";
+import { longDate } from "@/lib/time";
 import { useCollapsingHeader } from "@/lib/use-collapsing-header";
 import { usePaged } from "@/lib/use-paged";
 import { useAuthStore } from "@/stores/auth-store";
@@ -80,13 +81,7 @@ function outsideLinks(profile: Profile) {
 function formatDetail(value: unknown): string | null {
   if (value === null || value === undefined || value === "") return null;
   if (Array.isArray(value)) return value.length ? value.join(", ") : null;
-  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
-    return new Date(value).toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  }
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T/.test(value)) return longDate(value);
   if (typeof value === "string") {
     if (/^[A-Z0-9]{1,4}$/.test(value)) return value;
     return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase().replaceAll("_", " ");

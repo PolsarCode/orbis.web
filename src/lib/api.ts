@@ -38,7 +38,9 @@ export type Profile = {
   twoFactorEnabled: boolean;
 };
 
-export type LoginResult = { token: string } | { twoFactorTicket: string };
+export type SignedIn = { token: string; restored: boolean };
+
+export type LoginResult = SignedIn | { twoFactorTicket: string };
 
 export type TwoFactorSetup = { secret: string; qrCode: string };
 
@@ -105,6 +107,7 @@ export type CommunitySearchResult = {
 
 export const EMAIL_UNCONFIRMED_EVENT = "orbis:email-unconfirmed";
 export const ACCOUNT_SUSPENDED_EVENT = "orbis:account-suspended";
+export const SESSION_ENDED_EVENT = "orbis:session-ended";
 
 export async function api(path: string, init?: RequestInit) {
   let res: Response;
@@ -115,6 +118,13 @@ export async function api(path: string, init?: RequestInit) {
   }
   if (res.status === 429) {
     throw new Error(await errorMessage(res, "You’re doing that too often. Try again in a minute."));
+  }
+  if (
+    res.status === 401 &&
+    typeof window !== "undefined" &&
+    new Headers(init?.headers).has("Authorization")
+  ) {
+    window.dispatchEvent(new Event(SESSION_ENDED_EVENT));
   }
   if (res.status === 403 && typeof window !== "undefined") {
     const body = await res
@@ -172,7 +182,7 @@ async function errorMessage(res: Response, fallback: string) {
 async function authenticate(
   path: string,
   credentials: Credentials,
-): Promise<{ access_token?: string; two_factor_ticket?: string }> {
+): Promise<{ access_token?: string; two_factor_ticket?: string; restored?: boolean }> {
   const res = await postJson(path, credentials);
 
   if (res.status === 401) {
@@ -204,18 +214,18 @@ export async function signup(details: SignupDetails): Promise<string> {
 }
 
 export async function login(credentials: LoginCredentials): Promise<LoginResult> {
-  const { access_token, two_factor_ticket } = await authenticate("/auth/login", credentials);
+  const { access_token, two_factor_ticket, restored } = await authenticate("/auth/login", credentials);
   if (two_factor_ticket) return { twoFactorTicket: two_factor_ticket };
   if (!access_token) throw new Error("Something went wrong. Please try again.");
-  return { token: access_token };
+  return { token: access_token, restored: restored === true };
 }
 
-export async function verifyTwoFactorLogin(ticket: string, code: string): Promise<string> {
+export async function verifyTwoFactorLogin(ticket: string, code: string): Promise<SignedIn> {
   const res = await postJson("/auth/login/two-factor", { ticket, code });
 
   if (!res.ok) throw new Error(await errorMessage(res, "That code didn’t work. Check it and try again."));
-  const { access_token } = await res.json();
-  return access_token;
+  const { access_token, restored } = await res.json();
+  return { token: access_token, restored: restored === true };
 }
 
 export async function setupTwoFactor(token: string): Promise<TwoFactorSetup> {
@@ -263,6 +273,55 @@ export async function getProfile(token: string): Promise<Profile | null> {
   const res = await send(token, "/users");
 
   return res.ok ? res.json() : null;
+}
+
+export async function downloadMyData(token: string): Promise<{ blob: Blob; filename: string }> {
+  const res = await send(token, "/users/me/export");
+
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t download your data. Please try again."));
+  const disposition = res.headers.get("Content-Disposition") ?? "";
+  const filename = /filename="?([^";]+)"?/i.exec(disposition)?.[1] ?? "orbis-data.json";
+  return { blob: await res.blob(), filename };
+}
+
+export type OwnedCommunityFate = {
+  id: number;
+  name: string;
+  successor: { username: string; name: string | null } | null;
+};
+
+export type DeletionPreview = { ownedCommunities: OwnedCommunityFate[] };
+
+export async function getDeletionPreview(token: string): Promise<DeletionPreview> {
+  const res = await send(token, "/users/me/deletion");
+
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t load what happens to your communities."));
+  return res.json();
+}
+
+export async function requestDeletionCode(
+  token: string,
+): Promise<{ code: string; expiresIn: number }> {
+  const res = await send(token, "/users/me/deletion/code", "POST");
+
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t start deleting your account. Please try again."));
+  return res.json();
+}
+
+export class DeletionCodeExpiredError extends Error {}
+
+const EXPIRED_DELETION_CODE = ["The code expired. Start over.", "Start the deletion again."];
+
+export async function confirmDeletion(token: string, code: string): Promise<{ deleteAt: string }> {
+  const res = await send(token, "/users/me/deletion", "POST", { code });
+
+  if (!res.ok) {
+    const message = await errorMessage(res, "Couldn’t delete your account. Please try again.");
+    throw EXPIRED_DELETION_CODE.includes(message)
+      ? new DeletionCodeExpiredError(message)
+      : new Error(message);
+  }
+  return res.json();
 }
 
 export type Author = {
@@ -691,7 +750,7 @@ export async function searchCommunities(
 
 export type CommunityBan = {
   user: Author;
-  bannedBy: Author;
+  bannedBy: Author | null;
   reason: string | null;
   createdAt: string;
 };
@@ -1186,7 +1245,7 @@ export async function removeFriend(token: string, userId: number): Promise<void>
   }
 }
 
-export type ChatPerson = FriendUser;
+export type ChatPerson = FriendUser & { deleted?: boolean };
 
 export type ChatReply = {
   id: number;
@@ -2523,6 +2582,7 @@ export type UnfinishedDiscord = { id: number; name: string; discordGuildName: st
 
 export type OAuthResult = {
   access_token?: string;
+  restored?: boolean;
   linked?: OAuthProvider;
   communityId?: number;
   signup?: { token: string; username: string; avatarUrl: string | null };

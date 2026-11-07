@@ -3,6 +3,7 @@
 import { App } from "antd";
 import {
   CircleCheck,
+  Database,
   Link2,
   Lock,
   RotateCcw,
@@ -16,6 +17,7 @@ import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import type { Profile } from "@/lib/api";
 import { useOnboardingStore } from "@/stores/onboarding-store";
+import { DeleteAccountSettings, DownloadDataSettings } from "./account-data-settings";
 import { AppearOfflineSwitch } from "./appear-offline-switch";
 import { OAuthConnections } from "./oauth-connections";
 import { ChangelogSwitch } from "./changelog-switch";
@@ -184,6 +186,17 @@ export function ProfileSettings({ profile }: { profile: Profile }) {
                 </div>
               )}
             </Molecule.SettingsSection>
+          ),
+        },
+        {
+          key: "data",
+          label: "Your data",
+          icon: <Database size={16} aria-hidden />,
+          content: (
+            <div className="grid items-start gap-4 xl:grid-cols-2">
+              <DownloadDataSettings />
+              <DeleteAccountSettings />
+            </div>
           ),
         },
       ]}

@@ -9,6 +9,7 @@ import {
   type CommunitySearchResult,
 } from "@/lib/api";
 import { displayName } from "@/lib/display-name";
+import { useSignOutRedirect } from "@/lib/use-sign-out-redirect";
 import { useAuthStore } from "@/stores/auth-store";
 import { useCommunityStore } from "@/stores/community-store";
 import { PageTour } from "./onboarding";
@@ -101,6 +102,7 @@ function CommunityDetails({ community }: { community: CommunitySearchResult }) {
 
 export function CommunitySearch() {
   const router = useRouter();
+  useSignOutRedirect();
   const { join, joining, error } = useJoin();
   const [results, setResults] = useState<CommunitySearchResult[] | null>(null);
   const [failed, setFailed] = useState(false);

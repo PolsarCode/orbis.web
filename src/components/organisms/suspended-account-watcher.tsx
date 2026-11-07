@@ -2,10 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { ACCOUNT_SUSPENDED_EVENT } from "@/lib/api";
+import { ACCOUNT_SUSPENDED_EVENT, SESSION_ENDED_EVENT } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
 
 export const SUSPENSION_NOTICE_KEY = "orbis:suspension-notice";
+
+function endSession() {
+  useAuthStore.getState().logout();
+}
 
 export function SuspendedAccountWatcher() {
   const router = useRouter();
@@ -23,7 +27,11 @@ export function SuspendedAccountWatcher() {
     }
 
     window.addEventListener(ACCOUNT_SUSPENDED_EVENT, signOut);
-    return () => window.removeEventListener(ACCOUNT_SUSPENDED_EVENT, signOut);
+    window.addEventListener(SESSION_ENDED_EVENT, endSession);
+    return () => {
+      window.removeEventListener(ACCOUNT_SUSPENDED_EVENT, signOut);
+      window.removeEventListener(SESSION_ENDED_EVENT, endSession);
+    };
   }, [router]);
 
   return null;

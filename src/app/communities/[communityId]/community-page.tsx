@@ -11,6 +11,7 @@ import { getCommunity, type Community } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
 import { pageTitle } from "@/lib/site-title";
 import { useDocumentTitle } from "@/lib/use-document-title";
+import { useSignOutRedirect } from "@/lib/use-sign-out-redirect";
 
 export type LoadedCommunity = { id: string; community: Community | null; failed?: boolean };
 
@@ -56,6 +57,7 @@ export function CommunitySubpage({
 }) {
   const { communityId } = useParams<{ communityId: string }>();
   const router = useRouter();
+  useSignOutRedirect();
   const [loaded, setLoaded] = useState<LoadedCommunity | null>(null);
 
   useEffect(() => {

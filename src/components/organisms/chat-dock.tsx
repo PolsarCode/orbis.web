@@ -111,7 +111,7 @@ export function ChatHeading({
       <Molecule.ConversationAvatar conversation={conversation} size={size} />
       <span className="flex min-w-0 flex-col">
         <span className="truncate text-sm font-semibold">{title}</span>
-        {subtitle && (
+        {subtitle && !direct?.deleted && (
           <span className="truncate text-xs text-muted">
             {direct
               ? `@${direct.username}`
@@ -122,7 +122,7 @@ export function ChatHeading({
     </>
   );
 
-  return direct ? (
+  return direct && !direct.deleted ? (
     <Link
       href={`/users/${direct.username}`}
       className="focus-ring flex min-w-0 items-center gap-2 rounded-lg p-1 hover:bg-rail-item"
@@ -180,7 +180,9 @@ export function MuteChatButton({ conversation }: { conversation: Conversation })
 export function AddPeopleButton({ conversation }: { conversation: Conversation }) {
   const [open, setOpen] = useState(false);
   const showChat = useShowChat();
-  if (conversation.status !== "accepted") return null;
+  if (conversation.status !== "accepted" || conversation.members.some(({ deleted }) => deleted)) {
+    return null;
+  }
 
   return (
     <>

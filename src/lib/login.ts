@@ -11,3 +11,5 @@ export function safeNext(next: string | null) {
     ? next
     : null;
 }
+
+export const DELETION_CANCELLED_NOTICE = "Welcome back. Your account deletion was cancelled.";

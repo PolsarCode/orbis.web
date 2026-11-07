@@ -13,6 +13,7 @@ import {
   type Profile,
   type TwoFactorSetup,
 } from "@/lib/api";
+import { saveFile } from "@/lib/save-file";
 import { requireToken, useAuthStore } from "@/stores/auth-store";
 
 function secretChunks(secret: string) {
@@ -75,12 +76,7 @@ function RecoveryCodes({
       "",
       "Each code works once. Use one to log in if you can't use your authenticator app.",
     ].join("\n");
-    const url = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "orbis-recovery-codes.txt";
-    link.click();
-    URL.revokeObjectURL(url);
+    saveFile(new Blob([text], { type: "text/plain" }), "orbis-recovery-codes.txt");
   }
 
   return (
