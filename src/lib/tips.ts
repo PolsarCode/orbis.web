@@ -101,6 +101,11 @@ export const tips: Tip[] = [
     body: "Open the ⋯ menu on your post, or use Edit under your comment, to change or delete it. If you run a community, you can delete anything posted in it.",
   },
   {
+    id: "edit-history",
+    title: "See what changed in an edit",
+    body: "Click “edited” next to the time on a post, comment, or forum reply to see its earlier versions and when each one was posted.",
+  },
+  {
     id: "twitch-clips",
     title: "Watch Twitch clips on Orbis",
     body: "Communities and people with Twitch connected have a Clips tab with their most-watched clips. To hide yours, go to Connections in your settings.",

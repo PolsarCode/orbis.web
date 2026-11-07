@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import * as Atom from "@atom";
 import { SkeletonCard } from "./feed-skeleton";
+import { RetryAlert } from "./retry-alert";
 
 type LoadMoreProps = {
   onLoadMore: () => void;
@@ -32,12 +32,7 @@ export function LoadMore({ onLoadMore, loading, failed }: LoadMoreProps) {
   return (
     <div ref={sentinel} className="flex min-h-12 flex-col justify-center">
       {failed ? (
-        <div role="alert" className="flex flex-col items-center gap-2 py-4 text-center">
-          <p className="text-sm text-muted">Couldn&apos;t load more posts.</p>
-          <Atom.Button variant="secondary" onClick={onLoadMore}>
-            Try again
-          </Atom.Button>
-        </div>
+        <RetryAlert onRetry={onLoadMore}>Couldn&apos;t load more posts.</RetryAlert>
       ) : (
         loading && (
           <div role="status">

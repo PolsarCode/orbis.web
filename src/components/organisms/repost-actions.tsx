@@ -1,7 +1,7 @@
 "use client";
 
-import { App, Dropdown, Segmented, Tooltip, type MenuProps } from "antd";
-import { MessageSquareQuote, Repeat, Undo2 } from "lucide-react";
+import { App, Dropdown, Segmented, type MenuProps } from "antd";
+import { MessageSquareQuote, Repeat, Undo2, Users } from "lucide-react";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
@@ -109,48 +109,55 @@ export function RepostActions<T extends FeedEntry>({
     message.success("Quote posted.");
   }
 
+  const reason = !signedIn
+    ? null
+    : readOnly
+      ? "Confirm your email first to repost or quote."
+      : canShare
+        ? null
+        : "You can’t repost or quote this.";
+  const shareItems: NonNullable<MenuProps["items"]> = reason
+    ? [{ key: "reason", label: reason, disabled: true }]
+    : [
+        ...(item.reposted
+          ? [{ key: "undo", label: "Undo repost", icon: <Undo2 size={14} /> }]
+          : item.canRepost
+            ? [{ key: "repost", label: "Repost", icon: <Repeat size={14} /> }]
+            : []),
+        ...(item.canQuote
+          ? [{ key: "quote", label: "Quote", icon: <MessageSquareQuote size={14} /> }]
+          : []),
+      ];
   const items: MenuProps["items"] = [
-    ...(item.reposted
-      ? [{ key: "undo", label: "Undo repost", icon: <Undo2 size={14} /> }]
-      : item.canRepost
-        ? [{ key: "repost", label: "Repost", icon: <Repeat size={14} /> }]
-        : []),
-    ...(item.canQuote
-      ? [{ key: "quote", label: "Quote", icon: <MessageSquareQuote size={14} /> }]
+    ...shareItems,
+    ...(item.repostCount > 0
+      ? [
+          { type: "divider" as const },
+          { key: "list", label: "See reposts and quotes", icon: <Users size={14} /> },
+        ]
       : []),
   ];
-  const disabledReason = signedIn && !canShare ? "You can’t repost or quote this." : undefined;
+  const count = `${item.repostCount} ${item.repostCount === 1 ? "repost" : "reposts"}`;
   const tone = item.reposted ? "font-semibold text-accent" : "text-muted hover:text-foreground";
-  const iconButton = (
+  const button = (
     <button
       type="button"
-      aria-label={
-        item.reposted ? (item.canQuote ? "Undo repost or quote" : "Undo repost") : "Repost or quote"
-      }
-      aria-disabled={disabledReason ? true : undefined}
+      aria-label={`${count}. Repost, quote, or see who shared`}
+      aria-haspopup={signedIn ? "menu" : undefined}
       onClick={signedIn ? undefined : requireLogin}
-      className={`focus-ring inline-flex rounded-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
-        disabledReason ? "cursor-not-allowed text-muted opacity-60" : `cursor-pointer ${tone}`
-      }`}
+      className={`focus-ring inline-flex w-fit cursor-pointer items-center gap-1.5 rounded-sm transition-colors ${tone}`}
     >
       <Repeat size={14} />
+      {count}
     </button>
   );
 
   return (
     <span
-      className="inline-flex w-fit items-center gap-1.5 text-xs"
+      className="inline-flex w-fit items-center text-xs"
       onClick={(event) => event.stopPropagation()}
     >
-      {!signedIn ? (
-        iconButton
-      ) : disabledReason ? (
-        <Tooltip title={disabledReason} classNames={{ root: "touch-visible" }}>
-          {iconButton}
-        </Tooltip>
-      ) : readOnly ? (
-        <Molecule.ReadOnlyGate action="repost or quote">{iconButton}</Molecule.ReadOnlyGate>
-      ) : (
+      {signedIn ? (
         <Dropdown
           trigger={["click"]}
           placement="bottomLeft"
@@ -159,16 +166,11 @@ export function RepostActions<T extends FeedEntry>({
             onClick: ({ key }) => (key === "undo" ? undo() : setDialog(key as Dialog)),
           }}
         >
-          {iconButton}
+          {button}
         </Dropdown>
+      ) : (
+        button
       )}
-      <button
-        type="button"
-        onClick={() => (signedIn ? setDialog("list") : requireLogin())}
-        className={`focus-ring inline-flex w-fit cursor-pointer rounded-sm transition-colors ${tone}`}
-      >
-        {item.repostCount} {item.repostCount === 1 ? "repost" : "reposts"}
-      </button>
       <Molecule.Dialog open={dialog === "repost"} onCancel={() => setDialog(null)} width={520}>
         <RepostForm item={item} onCancel={() => setDialog(null)} onReposted={reposted} />
       </Molecule.Dialog>
@@ -360,14 +362,7 @@ function ListState({
   empty?: string;
 }) {
   if (failed) {
-    return (
-      <div role="alert" className="flex flex-col items-center gap-2 py-4 text-center">
-        <p className="text-sm text-muted">This list couldn’t be loaded.</p>
-        <Atom.Button variant="secondary" onClick={onRetry}>
-          Try again
-        </Atom.Button>
-      </div>
-    );
+    return <Molecule.RetryAlert onRetry={onRetry}>This list couldn’t be loaded.</Molecule.RetryAlert>;
   }
   if (empty) return <p className="py-6 text-center text-sm text-muted">{empty}</p>;
   return (

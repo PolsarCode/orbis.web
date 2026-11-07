@@ -174,7 +174,10 @@ function VisibleForumPostCard({
             <time dateTime={post.createdAt} title={new Date(post.createdAt).toLocaleString()}>
               {timeAgo(post.createdAt)}
             </time>
-            <Molecule.EditedMark editedAt={post.editedAt} />
+            <Molecule.EditedMark
+              editedAt={post.editedAt}
+              target={{ type: "forumPost", id: post.id, communityId, createdAt: post.createdAt }}
+            />
           </span>
         </div>
         <Link
@@ -227,12 +230,7 @@ function VisibleForumPostCard({
           onCancel={() => setEditing(false)}
         />
       ) : (
-        <Molecule.SpoilerGate spoiler={post.spoiler}>
-          {post.content && (
-            <div className="rich-text" dangerouslySetInnerHTML={{ __html: post.content }} />
-          )}
-          {post.linkUrl && <Molecule.LinkPreview url={post.linkUrl} />}
-        </Molecule.SpoilerGate>
+        <Molecule.ContentBody content={post.content} linkUrl={post.linkUrl} spoiler={post.spoiler} />
       )}
       <div className="flex items-center gap-4">
         <Molecule.LikeButton

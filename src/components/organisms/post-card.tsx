@@ -162,7 +162,10 @@ function VisiblePostCard({
               >
                 {timeAgo(post.createdAt)}
               </time>{" "}
-              <Molecule.EditedMark editedAt={post.editedAt} />
+              <Molecule.EditedMark
+                editedAt={post.editedAt}
+                target={{ type: "post", id: post.id, createdAt: post.createdAt }}
+              />
             </span>
           </span>
         </div>

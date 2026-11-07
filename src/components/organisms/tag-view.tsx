@@ -16,6 +16,7 @@ import {
   getTag,
   setTagFollowing,
   type Author,
+  type EditTarget,
   type FeedEntry,
   type Post,
   type TagItem,
@@ -116,10 +117,12 @@ function ItemHeader({
   author,
   createdAt,
   editedAt,
+  target,
 }: {
   author: Author;
   createdAt: string;
   editedAt?: string | null;
+  target: EditTarget;
 }) {
   return (
     <header className="flex items-center gap-3">
@@ -134,7 +137,7 @@ function ItemHeader({
           <time dateTime={createdAt} title={new Date(createdAt).toLocaleString()}>
             {timeAgo(createdAt)}
           </time>{" "}
-          <Molecule.EditedMark editedAt={editedAt} />
+          <Molecule.EditedMark editedAt={editedAt} target={{ ...target, createdAt }} />
         </span>
       </div>
     </header>
@@ -158,13 +161,17 @@ function CommentItem({
         <MessageCircle size={13} aria-hidden className="shrink-0" />
         <span className="truncate">{commentContext(item.target)}</span>
       </p>
-      <ItemHeader author={comment.author} createdAt={comment.createdAt} editedAt={comment.editedAt} />
-      <Molecule.SpoilerGate spoiler={comment.spoiler}>
-        {comment.content && (
-          <div className="rich-text" dangerouslySetInnerHTML={{ __html: comment.content }} />
-        )}
-        {comment.linkUrl && <Molecule.LinkPreview url={comment.linkUrl} />}
-      </Molecule.SpoilerGate>
+      <ItemHeader
+        author={comment.author}
+        createdAt={comment.createdAt}
+        editedAt={comment.editedAt}
+        target={{ type: "comment", id: comment.id }}
+      />
+      <Molecule.ContentBody
+        content={comment.content}
+        linkUrl={comment.linkUrl}
+        spoiler={comment.spoiler}
+      />
       <Atom.Button
         size="small"
         variant="secondary"
@@ -193,22 +200,24 @@ function ForumItem({ item }: { item: TagForumPost }) {
           {forumPost.opening ? "Forum thread" : "Forum reply"} in {thread.community.name}
         </span>
       </p>
-      <ItemHeader author={forumPost.author} createdAt={forumPost.createdAt} editedAt={forumPost.editedAt} />
+      <ItemHeader
+        author={forumPost.author}
+        createdAt={forumPost.createdAt}
+        editedAt={forumPost.editedAt}
+        target={{ type: "forumPost", id: forumPost.id, communityId: thread.community.id }}
+      />
       <Link
         href={href}
         className="focus-ring w-fit rounded-sm font-display text-xl leading-tight font-bold transition-colors hover:text-accent"
       >
         {thread.title}
       </Link>
-      <Molecule.SpoilerGate spoiler={forumPost.spoiler}>
-        {forumPost.content && (
-          <div
-            className="rich-text line-clamp-6"
-            dangerouslySetInnerHTML={{ __html: forumPost.content }}
-          />
-        )}
-        {forumPost.linkUrl && <Molecule.LinkPreview url={forumPost.linkUrl} />}
-      </Molecule.SpoilerGate>
+      <Molecule.ContentBody
+        content={forumPost.content}
+        linkUrl={forumPost.linkUrl}
+        spoiler={forumPost.spoiler}
+        className="line-clamp-6"
+      />
       <Atom.ButtonLink
         href={href}
         size="small"

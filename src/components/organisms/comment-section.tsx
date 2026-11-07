@@ -99,7 +99,14 @@ function CommentItem({
               >
                 {timeAgo(node.createdAt)}
               </time>
-              <Molecule.EditedMark editedAt={node.editedAt} />
+              <Molecule.EditedMark
+                editedAt={node.editedAt}
+                target={
+                  node.hidden
+                    ? undefined
+                    : { type: "comment", id: node.id, createdAt: node.createdAt }
+                }
+              />
             </p>
             {editing ? (
               <PostComposer
@@ -120,15 +127,11 @@ function CommentItem({
                   : "This comment is hidden while admins review it."}
               </p>
             ) : (
-              <Molecule.SpoilerGate spoiler={node.spoiler}>
-                {node.content && (
-                  <div
-                    className="rich-text"
-                    dangerouslySetInnerHTML={{ __html: node.content }}
-                  />
-                )}
-                {node.linkUrl && <Molecule.LinkPreview url={node.linkUrl} />}
-              </Molecule.SpoilerGate>
+              <Molecule.ContentBody
+                content={node.content}
+                linkUrl={node.linkUrl}
+                spoiler={node.spoiler}
+              />
             )}
             <div className="flex items-center gap-2">
               <Molecule.LikeButton

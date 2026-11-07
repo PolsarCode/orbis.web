@@ -1525,6 +1525,35 @@ export async function deleteComment(token: string, commentId: number): Promise<v
   if (!res.ok) throw new Error(await errorMessage(res, "Could not delete the comment."));
 }
 
+export type EditVersion = {
+  content: string;
+  linkUrl: string | null;
+  spoiler: string | null;
+  createdAt: string;
+};
+
+export type EditHistory = EditVersion[];
+
+export type EditTarget =
+  | { type: "post"; id: number }
+  | { type: "comment"; id: number }
+  | { type: "forumPost"; id: number; communityId: number };
+
+export async function getEditHistory(
+  token: string | null,
+  target: EditTarget,
+): Promise<EditHistory> {
+  const path =
+    target.type === "forumPost"
+      ? forumPath(target.communityId, `posts/${target.id}/edits`)
+      : `/${target.type === "post" ? "posts" : "comments"}/${target.id}/edits`;
+  const res = await api(path, { headers: authHeaders(token) });
+
+  if (res.status === 404) throw new Error("This content isn’t available.");
+  if (!res.ok) throw new Error("Could not load the edit history.");
+  return res.json();
+}
+
 export async function setLike(
   token: string,
   { type, id }: Likeable,
