@@ -286,19 +286,7 @@ export function AuthForm({
                     required
                     autoComplete="email"
                   />
-                  <Molecule.FormField
-                    label="Username"
-                    name="username"
-                    size="large"
-                    required
-                    minLength={3}
-                    maxLength={20}
-                    pattern="[A-Za-z0-9_]+"
-                    title="3–20 characters: letters, numbers, or underscores"
-                    extra="Use 3–20 letters, numbers, or underscores. No spaces or symbols."
-                    autoCapitalize="none"
-                    autoComplete="username"
-                  />
+                  <Molecule.UsernameField />
                 </>
               )}
               <Molecule.FormField

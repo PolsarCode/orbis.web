@@ -1,6 +1,6 @@
 "use client";
 
-import { Modal, Switch } from "antd";
+import { Switch } from "antd";
 import { Download, IdCard, Users } from "lucide-react";
 import { useState, type MouseEvent } from "react";
 import * as Atom from "@atom";
@@ -282,15 +282,7 @@ export function InviteCardButton({ community }: { community: Community }) {
       >
         Invite Card
       </Atom.Button>
-      <Modal
-        open={open}
-        title={null}
-        onCancel={() => setOpen(false)}
-        footer={null}
-        width={560}
-        destroyOnHidden
-        styles={{ container: { padding: 24 } }}
-      >
+      <Molecule.Dialog open={open} onCancel={() => setOpen(false)} width={560}>
         <div className="flex flex-col gap-6">
           <Molecule.ModalHeader
             eyebrow="Invite Card"
@@ -328,7 +320,7 @@ export function InviteCardButton({ community }: { community: Community }) {
             </Atom.Button>
           </div>
         </div>
-      </Modal>
+      </Molecule.Dialog>
     </>
   );
 }

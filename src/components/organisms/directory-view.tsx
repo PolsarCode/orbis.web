@@ -1,7 +1,7 @@
 "use client";
 
 import { Pagination, Tooltip } from "antd";
-import { Boxes, Globe, LayoutGrid, List, Lock, MailCheck, MailWarning, Users } from "lucide-react";
+import { Boxes, Globe, Lock, MailCheck, MailWarning, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -17,7 +17,7 @@ import {
   type NumberedPage,
 } from "@/lib/api";
 import { displayName } from "@/lib/display-name";
-import { useAuthStore } from "@/stores/auth-store";
+import { requireToken, useAuthStore } from "@/stores/auth-store";
 import { useDirectoryPreferencesStore } from "@/stores/directory-preferences-store";
 import { AdminToggle } from "./admin-toggle";
 import { VerifyToggle } from "./verify-toggle";
@@ -81,12 +81,6 @@ function usePagedList<T>(load: (token: string, page: number) => Promise<Numbered
     retry: () => setAttempt((count) => count + 1),
     replace,
   };
-}
-
-function signedInToken() {
-  const { token } = useAuthStore.getState();
-  if (!token) throw new Error("Please log in again.");
-  return token;
 }
 
 function DirectoryList<T>({
@@ -160,7 +154,7 @@ function UserControls({
         onToggle={async (verified) =>
           onChange({
             ...user,
-            isVerified: await setProfileVerified(signedInToken(), user.username, verified),
+            isVerified: await setProfileVerified(requireToken(), user.username, verified),
           })
         }
       />
@@ -189,7 +183,7 @@ function CommunityControls({
         onToggle={async (verified) =>
           onChange({
             ...community,
-            isVerified: await setCommunityVerified(signedInToken(), community.id, verified),
+            isVerified: await setCommunityVerified(requireToken(), community.id, verified),
           })
         }
       />
@@ -392,28 +386,12 @@ function ViewToggle() {
   const setView = useDirectoryPreferencesStore((state) => state.setView);
 
   return (
-    <div role="group" aria-label="Directory view" className="flex items-center gap-0.5">
-      {(
-        [
-          { value: "cards", label: "Cards", icon: <LayoutGrid size={16} /> },
-          { value: "list", label: "List", icon: <List size={16} /> },
-        ] as const
-      ).map((option) => (
-        <Tooltip key={option.value} title={option.label}>
-          <button
-            type="button"
-            aria-label={option.label}
-            aria-pressed={view === option.value}
-            onClick={() => setView(option.value)}
-            className={`icon-button cursor-pointer ${
-              view === option.value ? "bg-rail-item text-foreground" : ""
-            }`}
-          >
-            {option.icon}
-          </button>
-        </Tooltip>
-      ))}
-    </div>
+    <Molecule.ViewToggle
+      label="Directory view"
+      options={Molecule.cardListViews}
+      view={view}
+      onChange={setView}
+    />
   );
 }
 
@@ -468,19 +446,15 @@ export function DirectoryView() {
         className="flex shrink-0 items-end gap-6 border-b border-divider px-4 sm:px-8"
       >
         {tabs.map(({ value, label, icon }) => (
-          <Link
+          <Atom.TabLink
             key={value}
             href={value === "users" ? "/directory" : `/directory?tab=${value}`}
-            aria-current={tab === value ? "page" : undefined}
-            className={`focus-ring -mb-px flex shrink-0 items-center gap-2 rounded-t-sm border-b-2 px-1 py-3 text-sm transition-colors ${
-              tab === value
-                ? "border-accent text-accent"
-                : "border-transparent font-semibold text-foreground hover:text-accent"
-            }`}
+            active={tab === value}
+            className="-mb-px"
           >
             {icon}
             {label}
-          </Link>
+          </Atom.TabLink>
         ))}
         <div className="ml-auto self-center">
           <ViewToggle />

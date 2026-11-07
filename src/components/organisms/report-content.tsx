@@ -1,6 +1,6 @@
 "use client";
 
-import { App, Input, Modal, Radio, Tooltip } from "antd";
+import { App, Input, Radio, Tooltip } from "antd";
 import { EyeOff } from "lucide-react";
 import { useState } from "react";
 import * as Atom from "@atom";
@@ -66,15 +66,7 @@ export function ReportModal({
   }
 
   return (
-    <Modal
-      open={open}
-      title={null}
-      footer={null}
-      width={460}
-      destroyOnHidden
-      onCancel={close}
-      styles={{ container: { padding: 24 } }}
-    >
+    <Molecule.Dialog open={open} width={460} onCancel={close}>
       <div className="flex flex-col gap-6">
         <Molecule.ModalHeader
           eyebrow="Report"
@@ -113,7 +105,7 @@ export function ReportModal({
           </Atom.Button>
         </div>
       </div>
-    </Modal>
+    </Molecule.Dialog>
   );
 }
 

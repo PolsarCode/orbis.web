@@ -2,43 +2,14 @@
 
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import { App, ConfigProvider, theme } from "antd";
-import { useEffect, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { palette } from "@/lib/palette";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { useThemeStore } from "@/stores/theme-store";
 
-const darkQuery = "(prefers-color-scheme: dark)";
-const hoverQuery = "(hover: hover)";
-
-function subscribeTo(query: string) {
-  return (onChange: () => void) => {
-    const media = window.matchMedia(query);
-    media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
-  };
-}
-
-const subscribeDark = subscribeTo(darkQuery);
-const subscribeHover = subscribeTo(hoverQuery);
-
-function usePrefersDark() {
-  return useSyncExternalStore(
-    subscribeDark,
-    () => window.matchMedia(darkQuery).matches,
-    () => false,
-  );
-}
-
-function useCanHover() {
-  return useSyncExternalStore(
-    subscribeHover,
-    () => window.matchMedia(hoverQuery).matches,
-    () => true,
-  );
-}
-
 export function AntdProvider({ children }: { children: ReactNode }) {
-  const prefersDark = usePrefersDark();
-  const touch = !useCanHover();
+  const prefersDark = useMediaQuery("(prefers-color-scheme: dark)", false);
+  const touch = !useMediaQuery("(hover: hover)", true);
   const mode = useThemeStore((state) => state.mode);
   const isDark = mode === "dark" || (mode === "system" && prefersDark);
   const colors = isDark ? palette.dark : palette.light;

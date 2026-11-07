@@ -14,8 +14,7 @@ import {
 } from "lucide-react";
 import { App, Tooltip } from "antd";
 import Image from "next/image";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   useCallback,
   useEffect,
@@ -23,7 +22,6 @@ import {
   useState,
   type ComponentProps,
   type ReactNode,
-  type UIEvent,
 } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
@@ -45,15 +43,17 @@ import {
   type Profile as OwnProfile,
   type PublicProfile as Profile,
 } from "@/lib/api";
+import { useCollapsingHeader } from "@/lib/use-collapsing-header";
 import { usePaged } from "@/lib/use-paged";
 import { useTabScroller } from "@/lib/use-tab-scroller";
 import { displayName } from "@/lib/display-name";
-import { useAuthStore } from "@/stores/auth-store";
+import { requireToken, useAuthStore } from "@/stores/auth-store";
 import { useCommunityStore } from "@/stores/community-store";
 import { useFriendsStore } from "@/stores/friends-store";
 import { useLayoutStore } from "@/stores/layout-store";
 import { useMessagesStore } from "@/stores/messages-store";
 import { MessageButton } from "./chat-dock";
+import { JoinAction, useJoin } from "./community-search";
 import { FriendAction } from "./member-list";
 import { PostComposer } from "./post-composer";
 import { PostList } from "./post-list";
@@ -276,22 +276,18 @@ function ProfileTabs({ profile, tab }: { profile: Profile; tab: Tab }) {
       {tabs
         .filter(({ value }) => value !== "clips" || profile.hasClips)
         .map(({ value, label, icon }) => (
-          <Link
+          <Atom.TabLink
             key={value}
             href={`/users/${profile.username}${value === "posts" ? "" : `?tab=${value}`}`}
-            aria-current={tab === value ? "page" : undefined}
-            className={`focus-ring -mb-px flex shrink-0 items-center gap-2 rounded-t-sm border-b-2 px-1 py-3 text-sm transition-colors ${
-              tab === value
-                ? "border-accent text-accent"
-                : "border-transparent font-semibold text-foreground hover:text-accent"
-            }`}
+            active={tab === value}
+            className="-mb-px"
           >
             {icon}
             {label}
             {counts[value] !== undefined && (
               <span className="text-xs font-normal text-muted">{counts[value]}</span>
             )}
-          </Link>
+          </Atom.TabLink>
         ))}
       <p className="ml-auto hidden shrink-0 items-center gap-1.5 self-center text-xs text-muted sm:flex">
         <CalendarDays size={14} aria-hidden />
@@ -385,8 +381,7 @@ function Wall({
   const signedIn = useAuthStore((state) => Boolean(state.token));
 
   async function handlePost(content: string, linkUrl?: string, spoiler?: string | null) {
-    const { token } = useAuthStore.getState();
-    if (!token) throw new Error("Please log in again.");
+    const token = requireToken();
     feed.prepend(await createWallPost(token, profile.username, content, linkUrl, spoiler));
   }
 
@@ -497,24 +492,9 @@ function FriendsTab({ profile, myId }: { profile: Profile; myId?: number }) {
 }
 
 function CommunitiesTab({ profile }: { profile: Profile }) {
-  const router = useRouter();
   const joined = useCommunityStore((state) => state.communities);
-  const joinCommunity = useCommunityStore((state) => state.joinCommunity);
-  const [joining, setJoining] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { join, joining, error } = useJoin();
   const hidden = profile.communityCount - profile.communities.length;
-
-  async function handleJoin(communityId: number) {
-    setError(null);
-    setJoining(communityId);
-    try {
-      await joinCommunity(communityId);
-      router.push(`/communities/${communityId}`);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong.");
-      setJoining(null);
-    }
-  }
 
   if (profile.communities.length === 0) {
     return (
@@ -545,26 +525,14 @@ function CommunitiesTab({ profile }: { profile: Profile }) {
               href={`/communities/${community.id}`}
               badge={community.isOwner ? <Atom.RoleBadge role="owner" /> : undefined}
               action={
-                joined.some(({ id }) => id === community.id) ? (
-                  <Atom.ButtonLink
-                    href={`/communities/${community.id}`}
-                    variant="secondary"
-                    size="small"
-                  >
-                    Open
-                  </Atom.ButtonLink>
-                ) : (
-                  <Molecule.ReadOnlyGate action="join">
-                    <Atom.Button
-                      size="small"
-                      loading={joining === community.id}
-                      disabled={joining !== null && joining !== community.id}
-                      onClick={() => handleJoin(community.id)}
-                    >
-                      Join
-                    </Atom.Button>
-                  </Molecule.ReadOnlyGate>
-                )
+                <JoinAction
+                  community={{
+                    id: community.id,
+                    joined: joined.some(({ id }) => id === community.id),
+                  }}
+                  joining={joining}
+                  onJoin={join}
+                />
               }
             />
           </li>
@@ -688,7 +656,7 @@ export function UserProfile({ username }: { username: string }) {
   const livePresence = useFriendsStore((state) => state.presence);
   const liveStatuses = useFriendsStore((state) => state.statuses);
   const [loaded, setLoaded] = useState<Loaded | null>(null);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, handleScroll] = useCollapsingHeader();
   const isSelf = me?.username === username.toLowerCase();
   const requested = useSearchParams().get("tab");
   const tab: Tab = tabs.find(({ value }) => value === requested)?.value ?? "posts";
@@ -701,28 +669,25 @@ export function UserProfile({ username }: { username: string }) {
       .catch(() => setLoaded({ username, profile: null, failed: true }));
   }, [username]);
 
+  function patchProfile(patch: Partial<Profile>) {
+    setLoaded((current) =>
+      current?.profile ? { ...current, profile: { ...current.profile, ...patch } } : current,
+    );
+  }
+
   function editor(
     upload: (token: string, file: File) => Promise<OwnProfile>,
     remove: (token: string) => Promise<OwnProfile>,
   ): ImageEditor {
     async function save(request: (token: string) => Promise<OwnProfile>) {
-      const { token } = useAuthStore.getState();
-      if (!token) throw new Error("Please log in again.");
+      const token = requireToken();
       const updated = await request(token);
       useAuthStore.setState({ profile: updated });
-      setLoaded((current) =>
-        current?.profile
-          ? {
-              ...current,
-              profile: {
-                ...current.profile,
-                avatarUrl: updated.avatarUrl,
-                coverUrl: updated.coverUrl,
-                backgroundUrl: updated.backgroundUrl,
-              },
-            }
-          : current,
-      );
+      patchProfile({
+        avatarUrl: updated.avatarUrl,
+        coverUrl: updated.coverUrl,
+        backgroundUrl: updated.backgroundUrl,
+      });
     }
 
     return {
@@ -732,20 +697,14 @@ export function UserProfile({ username }: { username: string }) {
   }
 
   async function handleVerified(isVerified: boolean) {
-    const { token } = useAuthStore.getState();
-    if (!token) throw new Error("Please log in again.");
+    const token = requireToken();
 
     const verified = await setProfileVerified(token, username, isVerified);
-    setLoaded((current) =>
-      current?.profile
-        ? { ...current, profile: { ...current.profile, isVerified: verified } }
-        : current,
-    );
+    patchProfile({ isVerified: verified });
   }
 
   async function handleBlocked(blocked: boolean) {
-    const { token } = useAuthStore.getState();
-    if (!token) throw new Error("Please log in again.");
+    const token = requireToken();
 
     await setUserBlocked(token, username, blocked);
     useFriendsStore.getState().fetchFriends();
@@ -755,19 +714,10 @@ export function UserProfile({ username }: { username: string }) {
   }
 
   async function handleMuted(muted: boolean) {
-    const { token } = useAuthStore.getState();
-    if (!token) throw new Error("Please log in again.");
+    const token = requireToken();
 
     await setUserMuted(token, username, muted);
-    setLoaded((current) =>
-      current?.profile ? { ...current, profile: { ...current.profile, muted } } : current,
-    );
-  }
-
-  function handleScroll(event: UIEvent<HTMLDivElement>) {
-    const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
-    const room = scrollHeight - clientHeight;
-    setCollapsed((current) => (current ? scrollTop > 0 : scrollTop > 32 && room > 240));
+    patchProfile({ muted });
   }
 
   const current = loaded?.username === username ? loaded : null;
@@ -842,24 +792,9 @@ export function UserProfile({ username }: { username: string }) {
           canSuspend,
           canResetTwoFactor: canSuspend,
           onVerify: handleVerified,
-          onAdminChange: (isAdmin) =>
-            setLoaded((current) =>
-              current?.profile
-                ? { ...current, profile: { ...current.profile, isAdmin } }
-                : current,
-            ),
-          onSuspensionChange: (suspension) =>
-            setLoaded((current) =>
-              current?.profile
-                ? { ...current, profile: { ...current.profile, suspension } }
-                : current,
-            ),
-          onTwoFactorReset: () =>
-            setLoaded((current) =>
-              current?.profile
-                ? { ...current, profile: { ...current.profile, twoFactorEnabled: false } }
-                : current,
-            ),
+          onAdminChange: (isAdmin) => patchProfile({ isAdmin }),
+          onSuspensionChange: (suspension) => patchProfile({ suspension }),
+          onTwoFactorReset: () => patchProfile({ twoFactorEnabled: false }),
         }
       : undefined;
 

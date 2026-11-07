@@ -3,33 +3,17 @@ import { create } from "zustand";
 const PANEL_KEY = "panel-collapsed";
 const DOCK_KEY = "library-dock-open";
 
-function savedPanel() {
+function savedFlag(key: string) {
   try {
-    return localStorage.getItem(PANEL_KEY) === "true";
+    return localStorage.getItem(key) === "true";
   } catch {
     return false;
   }
 }
 
-function savePanel(collapsed: boolean) {
+function saveFlag(key: string, value: boolean) {
   try {
-    localStorage.setItem(PANEL_KEY, String(collapsed));
-  } catch {
-    return;
-  }
-}
-
-function savedDock() {
-  try {
-    return localStorage.getItem(DOCK_KEY) === "true";
-  } catch {
-    return false;
-  }
-}
-
-function saveDock(open: boolean) {
-  try {
-    localStorage.setItem(DOCK_KEY, String(open));
+    localStorage.setItem(key, String(value));
   } catch {
     return;
   }
@@ -65,15 +49,15 @@ export const useLayoutStore = create<LayoutState>()((set, get) => ({
       return;
     }
     const panelCollapsed = !get().panelCollapsed;
-    savePanel(panelCollapsed);
+    saveFlag(PANEL_KEY, panelCollapsed);
     set({ panelCollapsed });
   },
-  restorePanel: () => set({ panelCollapsed: savedPanel() }),
+  restorePanel: () => set({ panelCollapsed: savedFlag(PANEL_KEY) }),
   setDockOpen: (dockOpen) => {
-    saveDock(dockOpen);
+    saveFlag(DOCK_KEY, dockOpen);
     set({ dockOpen });
   },
-  restoreDock: () => set({ dockOpen: savedDock() }),
+  restoreDock: () => set({ dockOpen: savedFlag(DOCK_KEY) }),
   closeDrawer: () => set({ drawerOpen: false }),
   setRailOpen: (railOpen) => set({ railOpen }),
   setFeedbackOpen: (feedbackOpen) => set({ feedbackOpen }),

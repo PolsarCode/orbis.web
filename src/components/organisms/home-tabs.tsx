@@ -1,7 +1,7 @@
 "use client";
 
 import { Bookmark, Hash, Newspaper } from "lucide-react";
-import Link from "next/link";
+import * as Atom from "@atom";
 import { useTabScroller } from "@/lib/use-tab-scroller";
 
 export const homeTabs = [
@@ -24,19 +24,15 @@ export function HomeTabs({ tab }: { tab: HomeTab }) {
       className="flex shrink-0 items-end gap-6 overflow-x-auto border-b border-divider px-4 sm:px-8"
     >
       {homeTabs.map(({ value, label, icon }) => (
-        <Link
+        <Atom.TabLink
           key={value}
           href={value === "feed" ? "/" : `/?tab=${value}`}
-          aria-current={tab === value ? "page" : undefined}
-          className={`focus-ring -mb-px flex shrink-0 items-center gap-2 rounded-t-sm border-b-2 px-1 py-3 text-sm transition-colors ${
-            tab === value
-              ? "border-accent text-accent"
-              : "border-transparent font-semibold text-foreground hover:text-accent"
-          }`}
+          active={tab === value}
+          className="-mb-px"
         >
           {icon}
           {label}
-        </Link>
+        </Atom.TabLink>
       ))}
     </nav>
   );

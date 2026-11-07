@@ -10,7 +10,7 @@ import type {
   PresenceStatus,
 } from "@/lib/api";
 import { showDesktopNotifications } from "@/lib/desktop-notifications";
-import { useAuthStore } from "./auth-store";
+import { requireToken, useAuthStore } from "./auth-store";
 import { useCommunityStore } from "./community-store";
 import { useMessagesStore } from "./messages-store";
 import { useNotificationsStore } from "./notifications-store";
@@ -188,9 +188,7 @@ export const useFriendsStore = create<FriendsState>()((set, get) => ({
     return suggestionsRequest;
   },
   dismissSuggestion: async (userId) => {
-    const { token } = useAuthStore.getState();
-    if (!token) throw new Error("Please log in again.");
-
+    const token = requireToken();
     const previous = get().suggestions;
     set({ suggestions: previous.filter((person) => person.userId !== userId) });
     try {
@@ -201,9 +199,7 @@ export const useFriendsStore = create<FriendsState>()((set, get) => ({
     }
   },
   addFriend: async (target, options) => {
-    const { token } = useAuthStore.getState();
-    if (!token) throw new Error("Please log in again.");
-
+    const token = requireToken();
     try {
       await api.addFriend(token, target, options?.fromSuggestion);
       set((state) => ({

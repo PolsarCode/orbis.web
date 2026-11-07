@@ -1,6 +1,5 @@
 "use client";
 
-import { Modal } from "antd";
 import { Check } from "lucide-react";
 import { useState } from "react";
 import * as Atom from "@atom";
@@ -20,19 +19,11 @@ export function FolderSettingsModal({
   onUngroup: () => void;
 }) {
   return (
-    <Modal
-      open={folder !== null}
-      title={null}
-      onCancel={onClose}
-      footer={null}
-      width={440}
-      destroyOnHidden
-      styles={{ container: { padding: 24 } }}
-    >
+    <Molecule.Dialog open={folder !== null} onCancel={onClose} width={440}>
       {folder && (
         <FolderForm folder={folder} onClose={onClose} onSave={onSave} onUngroup={onUngroup} />
       )}
-    </Modal>
+    </Molecule.Dialog>
   );
 }
 

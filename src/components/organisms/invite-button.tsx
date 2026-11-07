@@ -35,23 +35,12 @@ import {
   inviteUrl,
   inviteUses,
 } from "@/lib/invites";
+import { useNow } from "@/lib/use-now";
 import { useAuthStore } from "@/stores/auth-store";
 import { useFriendsStore } from "@/stores/friends-store";
 
 const DEFAULT_MAX_AGE = 604800;
 const MAX_RECIPIENTS = 20;
-
-function useNow(active: boolean) {
-  const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    if (!active) return;
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, [active]);
-
-  return now;
-}
 
 function CopyButton({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);
@@ -369,24 +358,20 @@ function InviteTabs({
         {tabs.map((tab) => {
           const selected = tab.key === active;
           return (
-            <button
+            <Atom.TabButton
               key={tab.key}
               id={`invite-tab-${tab.key}`}
-              type="button"
+              active={selected}
               role="tab"
               aria-selected={selected}
               aria-controls={`invite-panel-${tab.key}`}
               tabIndex={selected ? 0 : -1}
               onClick={() => onSelect(tab.key)}
-              className={`focus-ring -mb-px flex shrink-0 cursor-pointer items-center gap-2 rounded-t-sm border-b-2 px-1 py-3 text-sm whitespace-nowrap transition-colors ${
-                selected
-                  ? "border-accent text-accent"
-                  : "border-transparent font-semibold text-foreground hover:text-accent"
-              }`}
+              className="-mb-px"
             >
               {tab.icon}
               {tab.label}
-            </button>
+            </Atom.TabButton>
           );
         })}
       </div>

@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, type KeyboardEvent, type ReactNode } from "react";
+import * as Atom from "@atom";
 import * as Template from "@template";
 import { useTabScroller } from "@/lib/use-tab-scroller";
 
@@ -52,24 +53,19 @@ function Tabs({ label, tabs, aside }: SettingsTabsProps) {
           {tabs.map((tab) => {
             const selected = tab.key === active.key;
             return (
-              <button
+              <Atom.TabButton
                 key={tab.key}
                 id={`settings-tab-${tab.key}`}
-                type="button"
+                active={selected}
                 role="tab"
                 aria-selected={selected}
                 aria-controls={`settings-panel-${tab.key}`}
                 tabIndex={selected ? 0 : -1}
                 onClick={() => select(tab.key)}
-                className={`focus-ring flex shrink-0 cursor-pointer items-center gap-2 rounded-t-sm border-b-2 px-1 py-3 text-sm whitespace-nowrap transition-colors ${
-                  selected
-                    ? "border-accent text-accent"
-                    : "border-transparent font-semibold text-foreground hover:text-accent"
-                }`}
               >
                 {tab.icon}
                 {tab.label}
-              </button>
+              </Atom.TabButton>
             );
           })}
         </div>

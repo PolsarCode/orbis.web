@@ -17,9 +17,7 @@ export default function ExplorePage() {
           <Template.PageColumn>
             <Organism.CommunitySearch />
           </Template.PageColumn>
-          <Organism.SidePanel label="Friends">
-            <Organism.FriendsPanel />
-          </Organism.SidePanel>
+          <Organism.FriendsSidePanel />
         </div>
       </main>
     </Template.AppTemplate>

@@ -137,6 +137,33 @@ function authHeaders(token: string | null): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+type Method = "POST" | "PATCH" | "PUT" | "DELETE";
+
+function send(token: string, path: string, method?: Method, body?: unknown) {
+  return api(path, {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...(body !== undefined && { "Content-Type": "application/json" }),
+    },
+    ...(body !== undefined && { body: JSON.stringify(body) }),
+  });
+}
+
+function postJson(path: string, body: unknown) {
+  return api(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+function upload(token: string, path: string, file: File) {
+  const body = new FormData();
+  body.append("file", file);
+  return api(path, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body });
+}
+
 async function errorMessage(res: Response, fallback: string) {
   const { message } = await res.json().catch(() => ({ message: null }));
   return typeof message === "string" ? `${message}.` : fallback;
@@ -146,11 +173,7 @@ async function authenticate(
   path: string,
   credentials: Credentials,
 ): Promise<{ access_token?: string; two_factor_ticket?: string }> {
-  const res = await api(path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(credentials),
-  });
+  const res = await postJson(path, credentials);
 
   if (res.status === 401) {
     throw new Error("Invalid username, email, or password.");
@@ -188,11 +211,7 @@ export async function login(credentials: LoginCredentials): Promise<LoginResult>
 }
 
 export async function verifyTwoFactorLogin(ticket: string, code: string): Promise<string> {
-  const res = await api("/auth/login/two-factor", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ticket, code }),
-  });
+  const res = await postJson("/auth/login/two-factor", { ticket, code });
 
   if (!res.ok) throw new Error(await errorMessage(res, "That code didn’t work. Check it and try again."));
   const { access_token } = await res.json();
@@ -200,21 +219,14 @@ export async function verifyTwoFactorLogin(ticket: string, code: string): Promis
 }
 
 export async function setupTwoFactor(token: string): Promise<TwoFactorSetup> {
-  const res = await api("/users/me/two-factor/setup", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, "/users/me/two-factor/setup", "POST");
 
   if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t start setting up two-factor sign-in."));
   return res.json();
 }
 
 export async function enableTwoFactor(token: string, code: string): Promise<string[]> {
-  const res = await api("/users/me/two-factor/enable", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ code }),
-  });
+  const res = await send(token, "/users/me/two-factor/enable", "POST", { code });
 
   if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t turn on two-factor sign-in."));
   const { recoveryCodes } = await res.json();
@@ -222,39 +234,25 @@ export async function enableTwoFactor(token: string, code: string): Promise<stri
 }
 
 export async function disableTwoFactor(token: string, code: string): Promise<void> {
-  const res = await api("/users/me/two-factor/disable", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ code }),
-  });
+  const res = await send(token, "/users/me/two-factor/disable", "POST", { code });
 
   if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t turn off two-factor sign-in."));
 }
 
 export async function resetTwoFactor(token: string, username: string): Promise<void> {
-  const res = await api(`/users/${encodeURIComponent(username)}/two-factor`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/users/${encodeURIComponent(username)}/two-factor`, "DELETE");
 
   if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t remove two-factor sign-in."));
 }
 
 export async function confirmEmail(token: string): Promise<void> {
-  const res = await api("/auth/confirm-email", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token }),
-  });
+  const res = await postJson("/auth/confirm-email", { token });
 
   if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t confirm your email."));
 }
 
 export async function resendConfirmation(token: string): Promise<{ confirmed: boolean }> {
-  const res = await api("/auth/confirm-email/resend", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, "/auth/confirm-email/resend", "POST");
 
   if (res.status === 429) throw new Error("You’ve asked for a few already. Try again in an hour.");
   if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t send the email."));
@@ -262,9 +260,7 @@ export async function resendConfirmation(token: string): Promise<{ confirmed: bo
 }
 
 export async function getProfile(token: string): Promise<Profile | null> {
-  const res = await api("/users", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, "/users");
 
   return res.ok ? res.json() : null;
 }
@@ -456,9 +452,7 @@ export async function getDirectoryUsers(
   token: string,
   page: number,
 ): Promise<NumberedPage<DirectoryUser>> {
-  const res = await api(`/admin/users?page=${page}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/admin/users?page=${page}`);
 
   if (!res.ok) throw new Error("Could not load users.");
   return res.json();
@@ -468,9 +462,7 @@ export async function getDirectoryCommunities(
   token: string,
   page: number,
 ): Promise<NumberedPage<DirectoryCommunity>> {
-  const res = await api(`/admin/communities?page=${page}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/admin/communities?page=${page}`);
 
   if (!res.ok) throw new Error("Could not load communities.");
   return res.json();
@@ -522,14 +514,7 @@ export async function updatePreferences(
     Pick<Profile, "theme" | "appearOffline" | "status" | "isPublic" | "showNsfw" | "showChangelog">
   >,
 ): Promise<Profile> {
-  const res = await api("/users/me/preferences", {
-    method: "PATCH",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(preferences),
-  });
+  const res = await send(token, "/users/me/preferences", "PATCH", preferences);
 
   if (!res.ok) throw new Error("Could not save your preferences.");
   return res.json();
@@ -539,14 +524,7 @@ export async function uploadAvatar(
   token: string,
   file: File,
 ): Promise<Profile> {
-  const body = new FormData();
-  body.append("file", file);
-
-  const res = await api("/users/me/avatar", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body,
-  });
+  const res = await upload(token, "/users/me/avatar", file);
 
   if (res.status === 413) throw new Error("Pictures must be 10 MB or smaller.");
   if (!res.ok) {
@@ -556,19 +534,14 @@ export async function uploadAvatar(
 }
 
 export async function removeAvatar(token: string): Promise<Profile> {
-  const res = await api("/users/me/avatar", {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, "/users/me/avatar", "DELETE");
 
   if (!res.ok) throw new Error("Could not remove your picture.");
   return res.json();
 }
 
 export async function getCommunities(token: string): Promise<Community[]> {
-  const res = await api("/communities", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, "/communities");
 
   return res.ok ? res.json() : [];
 }
@@ -599,9 +572,7 @@ export type RailFolder = {
 export type RailItem = { type: "community"; communityId: number } | RailFolder;
 
 export async function getRailLayout(token: string): Promise<RailItem[]> {
-  const res = await api("/communities/layout", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, "/communities/layout");
 
   if (!res.ok) throw new Error("Could not load your communities.");
   return res.json();
@@ -623,14 +594,7 @@ export async function updateRailLayout(
           },
         },
   );
-  const res = await api("/communities/layout", {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ items }),
-  });
+  const res = await send(token, "/communities/layout", "PUT", { items });
 
   if (!res.ok) throw new Error("Could not save your communities.");
   return res.json();
@@ -641,14 +605,7 @@ export async function createCommunity(
   name: string,
   isPublic: boolean,
 ): Promise<Community> {
-  const res = await api("/communities", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ name, isPublic }),
-  });
+  const res = await send(token, "/communities", "POST", { name, isPublic });
 
   if (res.status === 403) throw new Error(await errorMessage(res, "You can’t create more communities."));
   if (!res.ok) throw new Error("Could not create the community. Please try again.");
@@ -662,14 +619,7 @@ export async function updateCommunity(
     Pick<Community, "name" | "isPublic" | "description" | "links" | CommunityConnectionSetting>
   >,
 ): Promise<Community> {
-  const res = await api(`/communities/${communityId}`, {
-    method: "PATCH",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(changes),
-  });
+  const res = await send(token, `/communities/${communityId}`, "PATCH", changes);
 
   if (res.status === 403) throw new Error("Only admins can change these settings.");
   if (!res.ok) throw new Error("Could not save the settings. Please try again.");
@@ -678,16 +628,8 @@ export async function updateCommunity(
 
 export type CommunityImage = "icon" | "cover" | "background";
 
-async function sendCommunityImage(
-  token: string,
-  communityId: number,
-  image: CommunityImage,
-  init: RequestInit,
-): Promise<Community> {
-  const res = await api(`/communities/${communityId}/${image}`, {
-    ...init,
-    headers: { Authorization: `Bearer ${token}` },
-  });
+async function communityImage(image: CommunityImage, request: Promise<Response>): Promise<Community> {
+  const res = await request;
 
   if (res.status === 403) throw new Error(`Only admins can change the ${image}.`);
   if (res.status === 413) throw new Error("Images must be 10 MB or smaller.");
@@ -703,9 +645,7 @@ export function uploadCommunityImage(
   image: CommunityImage,
   file: File,
 ): Promise<Community> {
-  const body = new FormData();
-  body.append("file", file);
-  return sendCommunityImage(token, communityId, image, { method: "POST", body });
+  return communityImage(image, upload(token, `/communities/${communityId}/${image}`, file));
 }
 
 export function removeCommunityImage(
@@ -713,17 +653,14 @@ export function removeCommunityImage(
   communityId: number,
   image: CommunityImage,
 ): Promise<Community> {
-  return sendCommunityImage(token, communityId, image, { method: "DELETE" });
+  return communityImage(image, send(token, `/communities/${communityId}/${image}`, "DELETE"));
 }
 
 export async function deleteCommunity(
   token: string,
   communityId: number,
 ): Promise<void> {
-  const res = await api(`/communities/${communityId}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/communities/${communityId}`, "DELETE");
 
   if (res.status === 403) throw new Error("Only the owner can delete this community.");
   if (!res.ok) throw new Error("Could not delete the community. Please try again.");
@@ -735,10 +672,7 @@ export async function setCommunityAdmin(
   userId: number,
   isAdmin: boolean,
 ): Promise<Member[]> {
-  const res = await api(`/communities/${communityId}/admins/${userId}`, {
-    method: isAdmin ? "PUT" : "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/communities/${communityId}/admins/${userId}`, isAdmin ? "PUT" : "DELETE");
 
   if (res.status === 403) throw new Error("Only the owner can change admins.");
   if (!res.ok) throw new Error("Could not update admins. Please try again.");
@@ -749,10 +683,7 @@ export async function searchCommunities(
   token: string,
   query: string,
 ): Promise<CommunitySearchResult[]> {
-  const res = await api(
-    `/communities/search?${new URLSearchParams({ q: query })}`,
-    { headers: { Authorization: `Bearer ${token}` } },
-  );
+  const res = await send(token, withQuery("/communities/search", { q: query }));
 
   if (!res.ok) throw new Error("Could not search communities.");
   return res.json();
@@ -770,10 +701,7 @@ export async function removeMember(
   communityId: number,
   userId: number,
 ): Promise<void> {
-  const res = await api(`/communities/${communityId}/members/${userId}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/communities/${communityId}/members/${userId}`, "DELETE");
   if (!res.ok) throw new Error(await errorMessage(res, "Could not remove them. Please try again."));
 }
 
@@ -783,10 +711,8 @@ export async function banMember(
   userId: number,
   reason?: string,
 ): Promise<void> {
-  const res = await api(`/communities/${communityId}/bans/${userId}`, {
-    method: "PUT",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ reason: reason?.trim() || undefined }),
+  const res = await send(token, `/communities/${communityId}/bans/${userId}`, "PUT", {
+    reason: reason?.trim() || undefined,
   });
   if (!res.ok) throw new Error(await errorMessage(res, "Could not ban them. Please try again."));
 }
@@ -796,26 +722,18 @@ export async function unbanMember(
   communityId: number,
   userId: number,
 ): Promise<void> {
-  const res = await api(`/communities/${communityId}/bans/${userId}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/communities/${communityId}/bans/${userId}`, "DELETE");
   if (!res.ok) throw new Error(await errorMessage(res, "Could not lift the ban. Please try again."));
 }
 
 export async function getBans(token: string, communityId: number): Promise<CommunityBan[]> {
-  const res = await api(`/communities/${communityId}/bans`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/communities/${communityId}/bans`);
   if (!res.ok) throw new Error(await errorMessage(res, "Could not load banned people."));
   return res.json();
 }
 
 export async function leaveCommunity(token: string, communityId: number): Promise<void> {
-  const res = await api(`/communities/${communityId}/leave`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/communities/${communityId}/leave`, "POST");
 
   if (!res.ok) {
     throw new Error(await errorMessage(res, "Could not leave the community. Please try again."));
@@ -826,10 +744,7 @@ export async function joinCommunity(
   token: string,
   communityId: number,
 ): Promise<Community> {
-  const res = await api(`/communities/${communityId}/join`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/communities/${communityId}/join`, "POST");
 
   if (res.status === 404) throw new Error("This community is no longer public.");
   if (res.status === 403) throw new Error(await errorMessage(res, "You can’t join more communities."));
@@ -874,14 +789,7 @@ export async function createInvite(
   communityId: number,
   options: InviteOptions,
 ): Promise<Invite> {
-  const res = await api(`/communities/${communityId}/invites`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(options),
-  });
+  const res = await send(token, `/communities/${communityId}/invites`, "POST", options);
 
   if (!res.ok) throw new Error("Could not create an invite link. Please try again.");
   return res.json();
@@ -891,10 +799,7 @@ export async function createPermanentInvite(
   token: string,
   communityId: number,
 ): Promise<Invite> {
-  const res = await api(`/communities/${communityId}/invites/permanent`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/communities/${communityId}/invites/permanent`, "POST");
 
   if (!res.ok) throw new Error("Couldn’t create the permanent QR. Please try again.");
   return res.json();
@@ -904,9 +809,7 @@ export async function downloadInviteCard(
   token: string,
   communityId: number,
 ): Promise<Blob> {
-  const res = await api(`/communities/${communityId}/invites/permanent/card`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/communities/${communityId}/invites/permanent/card`);
 
   if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t create the card. Please try again."));
   return res.blob();
@@ -918,23 +821,19 @@ export async function setInviteEnabled(
   code: string,
   enabled: boolean,
 ): Promise<Invite> {
-  const res = await api(`/communities/${communityId}/invites/${encodeURIComponent(code)}`, {
-    method: "PATCH",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ enabled }),
-  });
+  const res = await send(
+    token,
+    `/communities/${communityId}/invites/${encodeURIComponent(code)}`,
+    "PATCH",
+    { enabled },
+  );
 
   if (!res.ok) throw new Error("Couldn’t update this QR. Please try again.");
   return res.json();
 }
 
 export async function getInvites(token: string, communityId: number): Promise<Invite[]> {
-  const res = await api(`/communities/${communityId}/invites`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/communities/${communityId}/invites`);
 
   if (!res.ok) throw new Error("Could not load invites.");
   return res.json();
@@ -945,10 +844,7 @@ export async function revokeInvite(
   communityId: number,
   code: string,
 ): Promise<void> {
-  const res = await api(
-    `/communities/${communityId}/invites/${encodeURIComponent(code)}`,
-    { method: "DELETE", headers: { Authorization: `Bearer ${token}` } },
-  );
+  const res = await send(token, `/communities/${communityId}/invites/${encodeURIComponent(code)}`, "DELETE");
 
   if (res.status === 403) throw new Error("Only admins can revoke other people’s invites.");
   if (!res.ok && res.status !== 404) {
@@ -965,10 +861,7 @@ export async function getInvitePreview(code: string): Promise<InvitePreview | nu
 }
 
 export async function acceptInvite(token: string, code: string): Promise<Community> {
-  const res = await api(`/invites/${encodeURIComponent(code)}`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/invites/${encodeURIComponent(code)}`, "POST");
 
   if (res.status === 404) throw new Error("This invite is invalid or has expired.");
   if (res.status === 403) throw new Error(await errorMessage(res, "You can’t join more communities."));
@@ -1020,13 +913,11 @@ export async function createWallPost(
   spoiler?: string | null,
   quote?: ShareTarget,
 ): Promise<Post> {
-  const res = await api(`/users/${encodeURIComponent(username)}/posts`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ content, linkUrl, spoiler, quote }),
+  const res = await send(token, `/users/${encodeURIComponent(username)}/posts`, "POST", {
+    content,
+    linkUrl,
+    spoiler,
+    quote,
   });
 
   if (res.status === 400) {
@@ -1139,14 +1030,12 @@ export async function createMediaPost(
   linkUrl?: string,
   spoiler?: string | null,
 ): Promise<Post> {
-  const res = await api(`/library/media/${type}/${encodeURIComponent(sourceId)}/posts`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ content, linkUrl, spoiler }),
-  });
+  const res = await send(
+    token,
+    `/library/media/${type}/${encodeURIComponent(sourceId)}/posts`,
+    "POST",
+    { content, linkUrl, spoiler },
+  );
 
   if (res.status === 400) throw new Error("Write something before posting.");
   if (!res.ok) throw new Error("Could not post. Please try again.");
@@ -1161,13 +1050,11 @@ export async function createPost(
   spoiler?: string | null,
   quote?: ShareTarget,
 ): Promise<Post> {
-  const res = await api(`/communities/${communityId}/posts`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ content, linkUrl, spoiler, quote }),
+  const res = await send(token, `/communities/${communityId}/posts`, "POST", {
+    content,
+    linkUrl,
+    spoiler,
+    quote,
   });
 
   if (res.status === 400) {
@@ -1199,11 +1086,7 @@ export async function setShowLibraryUpdates(
   communityId: number,
   show: boolean,
 ): Promise<{ showLibraryUpdates: boolean }> {
-  const res = await api(`/communities/${communityId}/library-updates`, {
-    method: "PATCH",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ show }),
-  });
+  const res = await send(token, `/communities/${communityId}/library-updates`, "PATCH", { show });
 
   if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t save that. Please try again."));
   return res.json();
@@ -1253,37 +1136,28 @@ export type FriendList = {
 export type FriendTarget = { userId: number } | { username: string };
 
 export async function searchPeople(token: string, query: string): Promise<FriendUser[]> {
-  const res = await api(`/friends/search?${new URLSearchParams({ q: query })}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, withQuery("/friends/search", { q: query }));
 
   if (!res.ok) throw new Error("Could not search people.");
   return res.json();
 }
 
 export async function getFriends(token: string): Promise<FriendList> {
-  const res = await api("/friends", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, "/friends");
 
   if (!res.ok) throw new Error("Could not load your friends.");
   return res.json();
 }
 
 export async function getFriendSuggestions(token: string): Promise<FriendSuggestion[]> {
-  const res = await api("/friends/suggestions", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, "/friends/suggestions");
 
   if (!res.ok) throw new Error("Could not load suggestions.");
   return res.json();
 }
 
 export async function dismissSuggestion(token: string, userId: number): Promise<void> {
-  const res = await api(`/friends/suggestions/${userId}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/friends/suggestions/${userId}`, "DELETE");
 
   if (!res.ok) throw new Error("Couldn’t remove that suggestion. Try again.");
 }
@@ -1293,14 +1167,7 @@ export async function addFriend(
   target: FriendTarget,
   fromSuggestion = false,
 ): Promise<void> {
-  const res = await api("/friends", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ ...target, ...(fromSuggestion && { fromSuggestion }) }),
-  });
+  const res = await send(token, "/friends", "POST", { ...target, ...(fromSuggestion && { fromSuggestion }) });
 
   if (res.status === 404) {
     throw new Error("No one with that username is on Orbis.");
@@ -1312,10 +1179,7 @@ export async function addFriend(
 }
 
 export async function removeFriend(token: string, userId: number): Promise<void> {
-  const res = await api(`/friends/${userId}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/friends/${userId}`, "DELETE");
 
   if (!res.ok && res.status !== 404) {
     throw new Error("Could not update your friends. Please try again.");
@@ -1373,26 +1237,15 @@ export type ChatHistory = {
   canMessage?: boolean;
 };
 
-function messagesRequest(token: string, path: string, method = "POST", body?: unknown) {
-  return api(`/messages${path}`, {
-    method,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...(body !== undefined && { "Content-Type": "application/json" }),
-    },
-    ...(body !== undefined && { body: JSON.stringify(body) }),
-  });
-}
-
 export async function getConversations(token: string): Promise<Conversation[]> {
-  const res = await messagesRequest(token, "", "GET");
+  const res = await send(token, "/messages");
 
   if (!res.ok) throw new Error("Could not load your messages.");
   return res.json();
 }
 
 export async function openDirectChat(token: string, userId: number): Promise<Conversation> {
-  const res = await messagesRequest(token, `/direct/${userId}`);
+  const res = await send(token, `/messages/direct/${userId}`, "POST");
 
   if (!res.ok) throw new Error(await errorMessage(res, "Could not open this chat."));
   return res.json();
@@ -1403,7 +1256,7 @@ export async function createGroupChat(
   userIds: number[],
   name?: string,
 ): Promise<Conversation> {
-  const res = await messagesRequest(token, "/groups", "POST", { userIds, name });
+  const res = await send(token, "/messages/groups", "POST", { userIds, name });
 
   if (!res.ok) throw new Error(await errorMessage(res, "Could not create the group."));
   return res.json();
@@ -1415,7 +1268,7 @@ export async function getChatHistory(
   before?: number,
 ): Promise<ChatHistory> {
   const query = before === undefined ? "" : `?before=${before}`;
-  const res = await messagesRequest(token, `/${id}${query}`, "GET");
+  const res = await send(token, `/messages/${id}${query}`);
 
   if (!res.ok) throw new Error("Could not load this chat.");
   return res.json();
@@ -1427,7 +1280,7 @@ export async function sendMessage(
   text: string,
   replyToId?: number,
 ): Promise<ChatMessage> {
-  const res = await messagesRequest(token, `/${id}`, "POST", { text, replyToId });
+  const res = await send(token, `/messages/${id}`, "POST", { text, replyToId });
 
   if (!res.ok) {
     throw new Error(await errorMessage(res, "Could not send your message."));
@@ -1441,7 +1294,7 @@ export async function editMessage(
   messageId: number,
   text: string,
 ): Promise<ChatMessage> {
-  const res = await messagesRequest(token, `/${id}/messages/${messageId}`, "PATCH", { text });
+  const res = await send(token, `/messages/${id}/messages/${messageId}`, "PATCH", { text });
 
   if (!res.ok) {
     throw new Error(await errorMessage(res, "Could not edit your message."));
@@ -1455,9 +1308,7 @@ export async function reactToMessage(
   messageId: number,
   emoji: string,
 ): Promise<ChatMessage> {
-  const res = await messagesRequest(token, `/${id}/messages/${messageId}/reaction`, "POST", {
-    emoji,
-  });
+  const res = await send(token, `/messages/${id}/messages/${messageId}/reaction`, "POST", { emoji });
 
   if (!res.ok) {
     throw new Error(await errorMessage(res, "Could not react to this message."));
@@ -1466,11 +1317,11 @@ export async function reactToMessage(
 }
 
 export async function markMessagesRead(token: string, id: number): Promise<void> {
-  await messagesRequest(token, `/${id}/read`);
+  await send(token, `/messages/${id}/read`, "POST");
 }
 
 export async function acceptMessageRequest(token: string, id: number): Promise<void> {
-  const res = await messagesRequest(token, `/${id}/accept`);
+  const res = await send(token, `/messages/${id}/accept`, "POST");
 
   if (!res.ok && res.status !== 404) {
     throw new Error("Could not accept the request. Please try again.");
@@ -1478,7 +1329,7 @@ export async function acceptMessageRequest(token: string, id: number): Promise<v
 }
 
 export async function declineMessageRequest(token: string, id: number): Promise<void> {
-  const res = await messagesRequest(token, `/${id}`, "DELETE");
+  const res = await send(token, `/messages/${id}`, "DELETE");
 
   if (!res.ok && res.status !== 404) {
     throw new Error("Could not delete the request. Please try again.");
@@ -1486,7 +1337,7 @@ export async function declineMessageRequest(token: string, id: number): Promise<
 }
 
 export async function renameGroupChat(token: string, id: number, name: string): Promise<void> {
-  const res = await messagesRequest(token, `/${id}`, "PATCH", { name });
+  const res = await send(token, `/messages/${id}`, "PATCH", { name });
 
   if (!res.ok) throw new Error(await errorMessage(res, "Could not rename the group."));
 }
@@ -1496,7 +1347,7 @@ export async function addGroupMembers(
   id: number,
   userIds: number[],
 ): Promise<void> {
-  const res = await messagesRequest(token, `/${id}/members`, "POST", { userIds });
+  const res = await send(token, `/messages/${id}/members`, "POST", { userIds });
 
   if (!res.ok) throw new Error(await errorMessage(res, "Could not add those people."));
 }
@@ -1506,7 +1357,7 @@ export async function removeGroupMember(
   id: number,
   userId: number,
 ): Promise<void> {
-  const res = await messagesRequest(token, `/${id}/members/${userId}`, "DELETE");
+  const res = await send(token, `/messages/${id}/members/${userId}`, "DELETE");
 
   if (!res.ok) throw new Error(await errorMessage(res, "Could not update the group."));
 }
@@ -1516,7 +1367,7 @@ export async function setConversationMuted(
   id: number,
   muted: boolean,
 ): Promise<{ muted: boolean }> {
-  const res = await messagesRequest(token, `/${id}/mute`, muted ? "POST" : "DELETE");
+  const res = await send(token, `/messages/${id}/mute`, muted ? "POST" : "DELETE");
 
   if (!res.ok) {
     throw new Error(
@@ -1602,24 +1453,14 @@ export async function updatePost(
   linkUrl?: string,
   spoiler?: string | null,
 ): Promise<Post> {
-  const res = await api(`/posts/${postId}`, {
-    method: "PATCH",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ content, linkUrl, spoiler }),
-  });
+  const res = await send(token, `/posts/${postId}`, "PATCH", { content, linkUrl, spoiler });
 
   if (!res.ok) throw new Error(await errorMessage(res, "Could not save the post."));
   return res.json();
 }
 
 export async function deletePost(token: string, postId: number): Promise<void> {
-  const res = await api(`/posts/${postId}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/posts/${postId}`, "DELETE");
 
   if (!res.ok) throw new Error(await errorMessage(res, "Could not delete the post."));
 }
@@ -1629,10 +1470,7 @@ export async function setPostPinned(
   postId: number,
   pinned: boolean,
 ): Promise<void> {
-  const res = await api(`/posts/${postId}/pin`, {
-    method: pinned ? "PUT" : "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/posts/${postId}/pin`, pinned ? "PUT" : "DELETE");
 
   if (!res.ok) {
     throw new Error(
@@ -1661,14 +1499,7 @@ export async function createComment(
   linkUrl?: string,
   spoiler?: string | null,
 ): Promise<Comment> {
-  const res = await api("/comments", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ type, id, parentId, content, linkUrl, spoiler }),
-  });
+  const res = await send(token, "/comments", "POST", { type, id, parentId, content, linkUrl, spoiler });
 
   if (res.status === 400) throw new Error("Write something before commenting.");
   if (!res.ok) throw new Error("Could not post the comment. Please try again.");
@@ -1682,24 +1513,14 @@ export async function updateComment(
   linkUrl?: string,
   spoiler?: string | null,
 ): Promise<Comment> {
-  const res = await api(`/comments/${commentId}`, {
-    method: "PATCH",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ content, linkUrl, spoiler }),
-  });
+  const res = await send(token, `/comments/${commentId}`, "PATCH", { content, linkUrl, spoiler });
 
   if (!res.ok) throw new Error(await errorMessage(res, "Could not save the comment."));
   return res.json();
 }
 
 export async function deleteComment(token: string, commentId: number): Promise<void> {
-  const res = await api(`/comments/${commentId}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/comments/${commentId}`, "DELETE");
 
   if (!res.ok) throw new Error(await errorMessage(res, "Could not delete the comment."));
 }
@@ -1709,14 +1530,7 @@ export async function setLike(
   { type, id }: Likeable,
   liked: boolean,
 ): Promise<LikeResult> {
-  const res = await api("/likes", {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ type, id, liked }),
-  });
+  const res = await send(token, "/likes", "PUT", { type, id, liked });
 
   if (!res.ok) throw new Error("Could not save your like.");
   return res.json();
@@ -1727,14 +1541,7 @@ export async function setBookmark(
   postId: number,
   bookmarked: boolean,
 ): Promise<{ bookmarked: boolean }> {
-  const res = await api("/bookmarks", {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ type: "post", id: postId, bookmarked }),
-  });
+  const res = await send(token, "/bookmarks", "PUT", { type: "post", id: postId, bookmarked });
 
   if (!res.ok) throw new Error("Could not update your bookmarks.");
   return res.json();
@@ -1749,14 +1556,7 @@ export async function repost(
   { type, id }: ShareTarget,
   communityId: number | null,
 ): Promise<RepostResult> {
-  const res = await api(`/reposts/${type}/${id}`, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ communityId }),
-  });
+  const res = await send(token, `/reposts/${type}/${id}`, "PUT", { communityId });
 
   if (res.status === 403) throw new Error(await errorMessage(res, "You can’t repost this."));
   if (res.status === 404) throw new Error("That post isn’t available.");
@@ -1765,10 +1565,7 @@ export async function repost(
 }
 
 export async function undoRepost(token: string, { type, id }: ShareTarget): Promise<RepostResult> {
-  const res = await api(`/reposts/${type}/${id}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/reposts/${type}/${id}`, "DELETE");
 
   if (!res.ok) throw new Error("Could not undo your repost. Please try again.");
   return res.json();
@@ -1900,10 +1697,7 @@ export async function setTagFollowing(
   name: string,
   following: boolean,
 ): Promise<{ following: boolean }> {
-  const res = await api(tagPath(name, "/follow"), {
-    method: following ? "POST" : "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, tagPath(name, "/follow"), following ? "POST" : "DELETE");
 
   if (!res.ok) {
     throw new Error(
@@ -1980,14 +1774,7 @@ export async function reportContent(
   token: string,
   report: { type: ContentReportTarget; id: number; reason: ContentReportReason; details?: string },
 ): Promise<void> {
-  const res = await api("/content-reports", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(report),
-  });
+  const res = await send(token, "/content-reports", "POST", report);
 
   if (res.status === 409 || res.status === 400 || res.status === 404) {
     throw new Error(await errorMessage(res, "Could not send the report."));
@@ -1996,9 +1783,7 @@ export async function reportContent(
 }
 
 export async function getReportedItems(token: string): Promise<ReportedItem[]> {
-  const res = await api("/content-reports", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, "/content-reports");
 
   if (!res.ok) throw new Error("Could not load reported content.");
   return res.json();
@@ -2009,14 +1794,7 @@ export async function resolveReportedItem(
   item: { type: ContentReportTarget; id: number },
   resolution: "resolved" | "dismissed",
 ): Promise<void> {
-  const res = await api("/content-reports/resolution", {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ ...item, resolution }),
-  });
+  const res = await send(token, "/content-reports/resolution", "PUT", { ...item, resolution });
 
   if (!res.ok && res.status !== 404) {
     throw new Error("Could not update the report. Please try again.");
@@ -2031,9 +1809,7 @@ export type ReportComment = {
 };
 
 export async function getReportAdmins(token: string): Promise<ReportAdmin[]> {
-  const res = await api("/reports/admins", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, "/reports/admins");
 
   if (!res.ok) throw new Error("Could not load admins.");
   return res.json();
@@ -2044,23 +1820,14 @@ export async function assignReport(
   reportId: number,
   assigneeId: number | null,
 ): Promise<Report> {
-  const res = await api(`/reports/${reportId}/assignee`, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ assigneeId }),
-  });
+  const res = await send(token, `/reports/${reportId}/assignee`, "PUT", { assigneeId });
 
   if (!res.ok) throw new Error(await errorMessage(res, "Could not assign the report."));
   return res.json();
 }
 
 export async function getReportComments(token: string, reportId: number): Promise<ReportComment[]> {
-  const res = await api(`/reports/${reportId}/comments`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/reports/${reportId}/comments`);
 
   if (!res.ok) throw new Error("Could not load comments.");
   return res.json();
@@ -2071,14 +1838,7 @@ export async function addReportComment(
   reportId: number,
   content: string,
 ): Promise<ReportComment> {
-  const res = await api(`/reports/${reportId}/comments`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ content }),
-  });
+  const res = await send(token, `/reports/${reportId}/comments`, "POST", { content });
 
   if (!res.ok) throw new Error("Could not post the comment. Please try again.");
   return res.json();
@@ -2088,32 +1848,21 @@ export async function submitReport(
   token: string,
   report: { category: ReportCategory; message: string; pageUrl: string },
 ): Promise<{ id: number }> {
-  const res = await api("/reports", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(report),
-  });
+  const res = await send(token, "/reports", "POST", report);
 
   if (!res.ok) throw new Error("Could not send your report. Please try again.");
   return res.json();
 }
 
 export async function getMyReports(token: string): Promise<Report[]> {
-  const res = await api("/reports/mine", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, "/reports/mine");
 
   if (!res.ok) throw new Error("Could not load your reports.");
   return res.json();
 }
 
 export async function getReports(token: string, hidden = false): Promise<Report[]> {
-  const res = await api(hidden ? "/reports?hidden=true" : "/reports", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, hidden ? "/reports?hidden=true" : "/reports");
 
   if (res.status === 403) throw new Error("Only site admins can see reports.");
   if (!res.ok) throw new Error("Could not load reports.");
@@ -2121,9 +1870,7 @@ export async function getReports(token: string, hidden = false): Promise<Report[
 }
 
 export async function searchReports(token: string, query: string): Promise<Report[]> {
-  const res = await api(`/reports/search?${new URLSearchParams({ q: query })}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, withQuery("/reports/search", { q: query }));
 
   if (!res.ok) throw new Error("Could not search tickets.");
   return res.json();
@@ -2135,23 +1882,14 @@ export async function updateReportStatus(
   status: ReportStatus,
   note?: string,
 ): Promise<Report> {
-  const res = await api(`/reports/${reportId}`, {
-    method: "PATCH",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ status, note }),
-  });
+  const res = await send(token, `/reports/${reportId}`, "PATCH", { status, note });
 
   if (!res.ok) throw new Error("Could not move the report. Please try again.");
   return res.json();
 }
 
 export async function getReport(token: string, reportId: number): Promise<Report | null> {
-  const res = await api(`/reports/${reportId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/reports/${reportId}`);
 
   if (res.status === 404) return null;
   if (!res.ok) throw new Error("Could not load the report.");
@@ -2161,9 +1899,7 @@ export async function getReport(token: string, reportId: number): Promise<Report
 export type ReportWebhook = { url: string | null };
 
 export async function getReportWebhook(token: string): Promise<ReportWebhook> {
-  const res = await api("/reports/webhook", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, "/reports/webhook");
 
   if (!res.ok) throw new Error("Could not load the Discord webhook.");
   return res.json();
@@ -2173,14 +1909,7 @@ export async function setReportWebhook(
   token: string,
   webhook: { url: string } | null,
 ): Promise<ReportWebhook> {
-  const res = await api("/reports/webhook", {
-    method: webhook ? "PUT" : "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...(webhook && { "Content-Type": "application/json" }),
-    },
-    ...(webhook && { body: JSON.stringify(webhook) }),
-  });
+  const res = await send(token, "/reports/webhook", webhook ? "PUT" : "DELETE", webhook ?? undefined);
 
   if (res.status === 400) throw new Error(await errorMessage(res, "Check the webhook and site URL."));
   if (res.status === 403) throw new Error("Only the head admin can change the webhook.");
@@ -2193,10 +1922,7 @@ export async function setReportHidden(
   reportId: number,
   hidden: boolean,
 ): Promise<Report> {
-  const res = await api(`/reports/${reportId}/hidden`, {
-    method: hidden ? "PUT" : "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/reports/${reportId}/hidden`, hidden ? "PUT" : "DELETE");
 
   if (!res.ok) {
     throw new Error(
@@ -2251,18 +1977,14 @@ export async function getNotifications(
   if (unread) params.set("unread", "true");
   const query = params.toString();
 
-  const res = await api(`/notifications${query ? `?${query}` : ""}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/notifications${query ? `?${query}` : ""}`);
 
   if (!res.ok) throw new Error("Could not load notifications.");
   return res.json();
 }
 
 export async function getUnreadCount(token: string): Promise<number> {
-  const res = await api("/notifications/unread", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, "/notifications/unread");
 
   if (!res.ok) throw new Error("Could not load notifications.");
   const { unreadCount } = await res.json();
@@ -2270,17 +1992,11 @@ export async function getUnreadCount(token: string): Promise<number> {
 }
 
 export async function markNotificationRead(token: string, id: number): Promise<void> {
-  await api(`/notifications/${id}/read`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  await send(token, `/notifications/${id}/read`, "POST");
 }
 
 export async function markAllNotificationsRead(token: string): Promise<void> {
-  await api("/notifications/read", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  await send(token, "/notifications/read", "POST");
 }
 
 export type OnboardingStep =
@@ -2301,9 +2017,7 @@ export type Onboarding = {
 };
 
 export async function getOnboarding(token: string): Promise<Onboarding> {
-  const res = await api("/users/me/onboarding", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, "/users/me/onboarding");
 
   if (!res.ok) throw new Error("Could not load your checklist.");
   return res.json();
@@ -2318,14 +2032,7 @@ export async function updateOnboarding(
     resetTours?: boolean;
   },
 ): Promise<Onboarding> {
-  const res = await api("/users/me/onboarding", {
-    method: "PATCH",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(changes),
-  });
+  const res = await send(token, "/users/me/onboarding", "PATCH", changes);
 
   if (!res.ok) throw new Error("Could not save your checklist.");
   return res.json();
@@ -2340,14 +2047,12 @@ export async function setAccountSuspension(
   username: string,
   suspension: { duration: SuspensionDuration; reason?: string } | null,
 ): Promise<ProfileSuspension | null> {
-  const res = await api(`/users/${encodeURIComponent(username)}/suspension`, {
-    method: suspension ? "PUT" : "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...(suspension && { "Content-Type": "application/json" }),
-    },
-    ...(suspension && { body: JSON.stringify(suspension) }),
-  });
+  const res = await send(
+    token,
+    `/users/${encodeURIComponent(username)}/suspension`,
+    suspension ? "PUT" : "DELETE",
+    suspension ?? undefined,
+  );
 
   if (!res.ok) {
     throw new Error(await errorMessage(res, "Could not update the suspension. Please try again."));
@@ -2442,7 +2147,7 @@ export type KeywordFilter = {
 export type KeywordFilterDuration = "forever" | "day" | "week" | "month";
 
 export async function getBlockedPeople(token: string): Promise<BlockedPerson[]> {
-  const res = await api("/blocks", { headers: { Authorization: `Bearer ${token}` } });
+  const res = await send(token, "/blocks");
 
   if (!res.ok) throw new Error("Could not load the people you blocked.");
   return (await res.json()).people;
@@ -2453,10 +2158,7 @@ export async function setUserBlocked(
   username: string,
   blocked: boolean,
 ): Promise<{ blocked: boolean }> {
-  const res = await api(`/users/${encodeURIComponent(username)}/block`, {
-    method: blocked ? "POST" : "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/users/${encodeURIComponent(username)}/block`, blocked ? "POST" : "DELETE");
 
   if (!res.ok) {
     throw new Error(
@@ -2470,7 +2172,7 @@ export async function setUserBlocked(
 }
 
 export async function getMutedPeople(token: string): Promise<MutedPerson[]> {
-  const res = await api("/mutes", { headers: { Authorization: `Bearer ${token}` } });
+  const res = await send(token, "/mutes");
 
   if (!res.ok) throw new Error("Could not load the people you muted.");
   return (await res.json()).people;
@@ -2481,10 +2183,7 @@ export async function setUserMuted(
   username: string,
   muted: boolean,
 ): Promise<{ muted: boolean }> {
-  const res = await api(`/users/${encodeURIComponent(username)}/mute`, {
-    method: muted ? "POST" : "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/users/${encodeURIComponent(username)}/mute`, muted ? "POST" : "DELETE");
 
   if (!res.ok) {
     throw new Error(
@@ -2498,7 +2197,7 @@ export async function setUserMuted(
 }
 
 export async function getKeywordFilters(token: string): Promise<KeywordFilter[]> {
-  const res = await api("/keyword-filters", { headers: { Authorization: `Bearer ${token}` } });
+  const res = await send(token, "/keyword-filters");
 
   if (!res.ok) throw new Error("Could not load your keyword filters.");
   return (await res.json()).filters;
@@ -2509,24 +2208,14 @@ export async function addKeywordFilter(
   phrase: string,
   duration: KeywordFilterDuration,
 ): Promise<KeywordFilter> {
-  const res = await api("/keyword-filters", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ phrase, duration }),
-  });
+  const res = await send(token, "/keyword-filters", "POST", { phrase, duration });
 
   if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t add that filter. Try again."));
   return res.json();
 }
 
 export async function removeKeywordFilter(token: string, id: number): Promise<void> {
-  const res = await api(`/keyword-filters/${id}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/keyword-filters/${id}`, "DELETE");
 
   if (!res.ok && res.status !== 404) {
     throw new Error("Couldn’t remove that filter. Try again.");
@@ -2538,10 +2227,7 @@ export async function setSiteAdmin(
   username: string,
   isAdmin: boolean,
 ): Promise<boolean> {
-  const res = await api(`/users/${encodeURIComponent(username)}/admin`, {
-    method: isAdmin ? "PUT" : "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/users/${encodeURIComponent(username)}/admin`, isAdmin ? "PUT" : "DELETE");
 
   if (res.status === 403) throw new Error("Only the head admin can change site admins.");
   if (!res.ok) {
@@ -2555,10 +2241,11 @@ export async function setProfileVerified(
   username: string,
   isVerified: boolean,
 ): Promise<boolean> {
-  const res = await api(`/users/${encodeURIComponent(username)}/verified`, {
-    method: isVerified ? "PUT" : "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(
+    token,
+    `/users/${encodeURIComponent(username)}/verified`,
+    isVerified ? "PUT" : "DELETE",
+  );
 
   if (res.status === 403) throw new Error("Only the head admin can verify profiles.");
   if (!res.ok) {
@@ -2572,10 +2259,7 @@ export async function setCommunityVerified(
   communityId: number,
   isVerified: boolean,
 ): Promise<boolean> {
-  const res = await api(`/communities/${communityId}/verified`, {
-    method: isVerified ? "PUT" : "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/communities/${communityId}/verified`, isVerified ? "PUT" : "DELETE");
 
   if (res.status === 403) throw new Error("Only the head admin can verify communities.");
   if (!res.ok) {
@@ -2585,14 +2269,7 @@ export async function setCommunityVerified(
 }
 
 export async function uploadUserCover(token: string, file: File): Promise<Profile> {
-  const body = new FormData();
-  body.append("file", file);
-
-  const res = await api("/users/me/cover", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body,
-  });
+  const res = await upload(token, "/users/me/cover", file);
 
   if (res.status === 413) throw new Error("Covers must be 10 MB or smaller.");
   if (!res.ok) {
@@ -2602,24 +2279,14 @@ export async function uploadUserCover(token: string, file: File): Promise<Profil
 }
 
 export async function removeUserCover(token: string): Promise<Profile> {
-  const res = await api("/users/me/cover", {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, "/users/me/cover", "DELETE");
 
   if (!res.ok) throw new Error("Could not remove your cover.");
   return res.json();
 }
 
 export async function uploadUserBackground(token: string, file: File): Promise<Profile> {
-  const body = new FormData();
-  body.append("file", file);
-
-  const res = await api("/users/me/background", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body,
-  });
+  const res = await upload(token, "/users/me/background", file);
 
   if (res.status === 413) throw new Error("Wallpapers must be 10 MB or smaller.");
   if (!res.ok) {
@@ -2629,10 +2296,7 @@ export async function uploadUserBackground(token: string, file: File): Promise<P
 }
 
 export async function removeUserBackground(token: string): Promise<Profile> {
-  const res = await api("/users/me/background", {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, "/users/me/background", "DELETE");
 
   if (!res.ok) throw new Error("Could not remove your wallpaper.");
   return res.json();
@@ -2670,9 +2334,7 @@ export async function searchLibrary(
   token: string,
   q: string,
 ): Promise<Record<MediaType, MediaResult[]>> {
-  const res = await api(withQuery("/library/search", { q }), {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, withQuery("/library/search", { q }));
 
   if (!res.ok) throw new Error(await errorMessage(res, "Search isn’t available right now."));
   return res.json();
@@ -2700,9 +2362,7 @@ export async function getMediaList(
 }
 
 export async function getLibrary(token: string): Promise<LibraryEntry[]> {
-  const res = await api("/library", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, "/library");
 
   if (!res.ok) throw new Error("Could not load your library.");
   return res.json();
@@ -2718,14 +2378,7 @@ export async function addToLibrary(
     progress?: number;
   },
 ): Promise<LibraryEntry> {
-  const res = await api("/library", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(item),
-  });
+  const res = await send(token, "/library", "POST", item);
 
   if (!res.ok) throw new Error(await errorMessage(res, "Could not add it to your library."));
   return res.json();
@@ -2736,14 +2389,7 @@ export async function updateLibraryEntry(
   id: number,
   changes: { status?: LibraryStatus; isPublic?: boolean; progress?: number },
 ): Promise<LibraryEntry> {
-  const res = await api(`/library/${id}`, {
-    method: "PATCH",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(changes),
-  });
+  const res = await send(token, `/library/${id}`, "PATCH", changes);
 
   if (!res.ok) throw new Error("Could not update your library.");
   return res.json();
@@ -2779,10 +2425,7 @@ export async function getMediaProfile(
 }
 
 export async function removeFromLibrary(token: string, id: number): Promise<void> {
-  const res = await api(`/library/${id}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/library/${id}`, "DELETE");
 
   if (!res.ok) throw new Error("Could not remove it from your library.");
 }
@@ -2911,34 +2554,21 @@ export async function finishOAuthSignup(
   username: string,
   useProviderAvatar = true,
 ): Promise<{ access_token: string }> {
-  const res = await api("/auth/oauth/signup", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token, username, useProviderAvatar }),
-  });
+  const res = await postJson("/auth/oauth/signup", { token, username, useProviderAvatar });
 
   if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t create your account. Please try again."));
   return res.json();
 }
 
 export async function acceptLinkedAvatar(token: string, offer: string): Promise<string> {
-  const res = await api("/auth/oauth/avatar", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ token: offer }),
-  });
+  const res = await send(token, "/auth/oauth/avatar", "POST", { token: offer });
 
   if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t use that picture. Please try again."));
   return (await res.json()).avatarUrl;
 }
 
 export async function getOAuthConnections(token: string): Promise<OAuthConnections> {
-  const res = await api("/auth/oauth/connections", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, "/auth/oauth/connections");
 
   if (!res.ok) throw new Error("Could not load your connections.");
   return res.json();
@@ -2949,14 +2579,7 @@ export async function setShowLive(
   provider: OAuthProvider,
   showLive: boolean,
 ): Promise<void> {
-  const res = await api(`/auth/oauth/connections/${provider}`, {
-    method: "PATCH",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ showLive }),
-  });
+  const res = await send(token, `/auth/oauth/connections/${provider}`, "PATCH", { showLive });
 
   if (!res.ok) throw new Error(await errorMessage(res, "Could not update this setting."));
 }
@@ -2966,14 +2589,7 @@ export async function setShowClips(
   provider: OAuthProvider,
   showClips: boolean,
 ): Promise<void> {
-  const res = await api(`/auth/oauth/connections/${provider}`, {
-    method: "PATCH",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ showClips }),
-  });
+  const res = await send(token, `/auth/oauth/connections/${provider}`, "PATCH", { showClips });
 
   if (!res.ok) throw new Error(await errorMessage(res, "Could not update this setting."));
 }
@@ -2992,8 +2608,7 @@ export type Clip = {
 export type ClipPage = { items: Clip[]; nextCursor: string | null };
 
 async function clipPage(path: string, token: string | null, cursor?: string): Promise<ClipPage> {
-  const query = cursor ? `?${new URLSearchParams({ cursor })}` : "";
-  const res = await api(`${path}${query}`, { headers: authHeaders(token) });
+  const res = await api(withQuery(path, { cursor: cursor || undefined }), { headers: authHeaders(token) });
 
   if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t load the clips."));
   return res.json();
@@ -3012,33 +2627,21 @@ export async function connectDiscordServer(
   servers: string,
   serverId: string,
 ): Promise<{ communityId: number; name: string } & DiscordStatus> {
-  const res = await api("/auth/oauth/community-server", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ token: servers, serverId }),
-  });
+  const res = await send(token, "/auth/oauth/community-server", "POST", { token: servers, serverId });
 
   if (!res.ok) throw new Error(await errorMessage(res, "Could not connect that server."));
   return res.json();
 }
 
 export async function getUnfinishedDiscord(token: string): Promise<UnfinishedDiscord[]> {
-  const res = await api("/communities/discord-setup", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, "/communities/discord-setup");
 
   if (!res.ok) throw new Error("Could not check your Discord connections.");
   return res.json();
 }
 
 export async function disconnectCommunityDiscord(token: string, communityId: number): Promise<void> {
-  const res = await api(`/communities/${communityId}/discord`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/communities/${communityId}/discord`, "DELETE");
 
   if (!res.ok) throw new Error(await errorMessage(res, "Could not disconnect Discord."));
 }
@@ -3062,9 +2665,7 @@ export async function getDiscordChannel(
   token: string,
   communityId: number,
 ): Promise<DiscordChannel | null> {
-  const res = await api(`/communities/${communityId}/discord-channel`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/communities/${communityId}/discord-channel`);
 
   if (!res.ok) throw new Error(await errorMessage(res, "Could not load the Discord channel."));
   return (await res.json()).channel;
@@ -3075,42 +2676,26 @@ export async function updateDiscordChannel(
   communityId: number,
   settings: DiscordChannelSettings,
 ): Promise<DiscordChannel | null> {
-  const res = await api(`/communities/${communityId}/discord-channel`, {
-    method: "PATCH",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(settings),
-  });
+  const res = await send(token, `/communities/${communityId}/discord-channel`, "PATCH", settings);
 
   if (!res.ok) throw new Error(await errorMessage(res, "Could not save that."));
   return (await res.json()).channel;
 }
 
 export async function disconnectDiscordChannel(token: string, communityId: number): Promise<void> {
-  const res = await api(`/communities/${communityId}/discord-channel`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/communities/${communityId}/discord-channel`, "DELETE");
 
   if (!res.ok) throw new Error(await errorMessage(res, "Could not disconnect the channel."));
 }
 
 export async function disconnectCommunityTwitch(token: string, communityId: number): Promise<void> {
-  const res = await api(`/communities/${communityId}/twitch`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/communities/${communityId}/twitch`, "DELETE");
 
   if (!res.ok) throw new Error(await errorMessage(res, "Could not disconnect Twitch."));
 }
 
 export async function disconnectOAuth(token: string, provider: OAuthProvider): Promise<void> {
-  const res = await api(`/auth/oauth/connections/${provider}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, `/auth/oauth/connections/${provider}`, "DELETE");
 
   if (!res.ok) throw new Error(await errorMessage(res, "Could not disconnect. Please try again."));
 }
@@ -3131,16 +2716,14 @@ export type SteamStatus = {
 };
 
 export async function getSteamStatus(token: string): Promise<SteamStatus> {
-  const res = await api("/steam", { headers: { Authorization: `Bearer ${token}` } });
+  const res = await send(token, "/steam");
 
   if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t load your Steam connection."));
   return res.json();
 }
 
 export async function getSteamConnectUrl(token: string, nonce: string): Promise<string> {
-  const res = await api(withQuery("/steam/connect-url", { nonce }), {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, withQuery("/steam/connect-url", { nonce }));
 
   if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t start connecting Steam. Please try again."));
   const { url } = (await res.json()) as { url: string };
@@ -3151,11 +2734,7 @@ export async function connectSteam(
   token: string,
   body: { state: string; nonce: string; params: Record<string, string> },
 ): Promise<SteamStatus> {
-  const res = await api("/steam/connect", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  const res = await send(token, "/steam/connect", "POST", body);
 
   if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t connect Steam. Please try again."));
   return res.json();
@@ -3165,11 +2744,7 @@ export async function updateSteamSettings(
   token: string,
   changes: { trackGames?: boolean; showPlaying?: boolean },
 ): Promise<SteamStatus> {
-  const res = await api("/steam", {
-    method: "PATCH",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify(changes),
-  });
+  const res = await send(token, "/steam", "PATCH", changes);
 
   if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t save that. Please try again."));
   return res.json();
@@ -3178,20 +2753,14 @@ export async function updateSteamSettings(
 export async function importSteamGames(
   token: string,
 ): Promise<{ imported: number; status: SteamStatus }> {
-  const res = await api("/steam/import", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, "/steam/import", "POST");
 
   if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t import your Steam games. Please try again."));
   return res.json();
 }
 
 export async function disconnectSteam(token: string): Promise<void> {
-  const res = await api("/steam", {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await send(token, "/steam", "DELETE");
 
   if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t disconnect Steam. Please try again."));
 }
@@ -3301,18 +2870,11 @@ function forumPath(communityId: number, path: string) {
 async function forumWrite(
   token: string,
   path: string,
-  method: "POST" | "PATCH" | "PUT" | "DELETE",
+  method: Method,
   fallback: string,
   body?: unknown,
 ) {
-  const res = await api(path, {
-    method,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...(body !== undefined && { "Content-Type": "application/json" }),
-    },
-    ...(body !== undefined && { body: JSON.stringify(body) }),
-  });
+  const res = await send(token, path, method, body);
   if (!res.ok) throw new Error(await errorMessage(res, fallback));
   return res;
 }

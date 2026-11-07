@@ -13,13 +13,7 @@ import {
   type Profile,
   type TwoFactorSetup,
 } from "@/lib/api";
-import { useAuthStore } from "@/stores/auth-store";
-
-function token() {
-  const { token } = useAuthStore.getState();
-  if (!token) throw new Error("Please log in again.");
-  return token;
-}
+import { requireToken, useAuthStore } from "@/stores/auth-store";
 
 function secretChunks(secret: string) {
   return secret.match(/.{1,4}/g) ?? [secret];
@@ -206,7 +200,7 @@ export function TwoFactorSettings({ profile }: { profile: Profile }) {
             onSubmit={(event) => {
               event.preventDefault();
               run(async () => {
-                await disableTwoFactor(token(), code.trim());
+                await disableTwoFactor(requireToken(), code.trim());
                 await fetchProfile();
                 reset();
                 message.success("Two-factor sign-in is off.");
@@ -256,7 +250,7 @@ export function TwoFactorSettings({ profile }: { profile: Profile }) {
         onSubmit={(event) => {
           event.preventDefault();
           run(async () => {
-            const codes = await enableTwoFactor(token(), code.trim());
+            const codes = await enableTwoFactor(requireToken(), code.trim());
             await fetchProfile();
             reset();
             setRecoveryCodes(codes);
@@ -340,7 +334,7 @@ export function TwoFactorSettings({ profile }: { profile: Profile }) {
           loading={pending}
           onClick={() =>
             run(async () => {
-              setSetup(await setupTwoFactor(token()));
+              setSetup(await setupTwoFactor(requireToken()));
               setCode("");
             })
           }

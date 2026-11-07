@@ -8,6 +8,56 @@ import { useIsPhone } from "@/lib/use-is-phone";
 
 export const HEADER_POPOVER_LIMIT = 10;
 
+export function HeaderPanel({
+  open,
+  onOpenChange,
+  content,
+  children,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  content: ReactNode;
+  children: ReactNode;
+}) {
+  const isPhone = useIsPhone();
+
+  return (
+    <>
+      <Popover
+        open={open && !isPhone}
+        onOpenChange={onOpenChange}
+        trigger="click"
+        placement="bottomRight"
+        arrow={false}
+        align={{ offset: [0, 8] }}
+        styles={{
+          container: {
+            padding: 20,
+            borderRadius: 12,
+            boxShadow: "none",
+            border: "1px solid var(--divider)",
+          },
+        }}
+        content={content}
+      >
+        {children}
+      </Popover>
+      <Modal
+        open={open && isPhone}
+        onCancel={() => onOpenChange(false)}
+        footer={null}
+        title={null}
+        closable={false}
+        width={640}
+        className="!top-3 !pb-0"
+        styles={{ container: { padding: 20 } }}
+      >
+        {content}
+      </Modal>
+    </>
+  );
+}
+
 export function HeaderPopover({
   open,
   onOpenChange,
@@ -28,7 +78,6 @@ export function HeaderPopover({
   children: ReactNode;
 }) {
   const router = useRouter();
-  const isPhone = useIsPhone();
   const body = (
     <div className="flex w-full flex-col gap-3 sm:w-[340px] sm:max-w-[calc(100vw-4rem)]">
       <div className="flex items-center justify-between gap-2">
@@ -50,39 +99,9 @@ export function HeaderPopover({
   );
 
   return (
-    <>
-      <Popover
-        open={open && !isPhone}
-        onOpenChange={onOpenChange}
-        trigger="click"
-        placement="bottomRight"
-        arrow={false}
-        align={{ offset: [0, 8] }}
-        styles={{
-          container: {
-            padding: 20,
-            borderRadius: 12,
-            boxShadow: "none",
-            border: "1px solid var(--divider)",
-          },
-        }}
-        content={body}
-      >
-        {children}
-      </Popover>
-      <Modal
-        open={open && isPhone}
-        onCancel={() => onOpenChange(false)}
-        footer={null}
-        title={null}
-        closable={false}
-        width={640}
-        className="!top-3 !pb-0"
-        styles={{ container: { padding: 20 } }}
-      >
-        {body}
-      </Modal>
-    </>
+    <HeaderPanel open={open} onOpenChange={onOpenChange} content={body}>
+      {children}
+    </HeaderPanel>
   );
 }
 

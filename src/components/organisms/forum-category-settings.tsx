@@ -56,9 +56,9 @@ import {
 } from "@/lib/api";
 import { FOLDER_COLORS } from "@/lib/rail-layout";
 import { useReadOnly } from "@/lib/read-only";
-import { useAuthStore } from "@/stores/auth-store";
+import { requireToken, useAuthStore } from "@/stores/auth-store";
 import { CategoryGlyph, CategoryIcon, SUGGESTED_ICONS, iconLabel, loadIconIndex } from "./forum-icons";
-import { AdminOnlyMark, FeedMark, forumToken } from "./forum-shared";
+import { AdminOnlyMark, FeedMark } from "./forum-shared";
 
 const CATEGORY_LIMIT = 30;
 const SECTION_LIMIT = 10;
@@ -495,7 +495,7 @@ function SectionSettings({
     setPending(true);
     setError(null);
     try {
-      const section = await createForumSection(forumToken(), communityId, adding);
+      const section = await createForumSection(requireToken(), communityId, adding);
       onChange({ ...forum, sections: [...sections, section] });
       setAdding("");
     } catch (reason) {
@@ -511,7 +511,7 @@ function SectionSettings({
     setPending(true);
     setError(null);
     try {
-      const updated = await updateForumSection(forumToken(), communityId, editing.id, {
+      const updated = await updateForumSection(requireToken(), communityId, editing.id, {
         name: editing.name,
       });
       onChange({
@@ -533,7 +533,7 @@ function SectionSettings({
       sections: sections.map((item) => (item.id === section.id ? { ...item, adminOnly } : item)),
     });
     try {
-      await updateForumSection(forumToken(), communityId, section.id, { adminOnly });
+      await updateForumSection(requireToken(), communityId, section.id, { adminOnly });
     } catch (reason) {
       onChange(forum);
       message.error(errorText(reason));
@@ -550,7 +550,7 @@ function SectionSettings({
     onChange({ ...forum, sections: next });
     try {
       await reorderForumSections(
-        forumToken(),
+        requireToken(),
         communityId,
         next.map(({ id }) => id),
       );
@@ -572,7 +572,7 @@ function SectionSettings({
       okButtonProps: { danger: true },
       cancelText: "Cancel",
       onOk: () =>
-        deleteForumSection(forumToken(), communityId, section.id)
+        deleteForumSection(requireToken(), communityId, section.id)
           .then(() =>
             onChange({
               sections: sections.filter(({ id }) => id !== section.id),
@@ -802,10 +802,10 @@ function CategorySettings({
     onChange({ ...forum, categories: next });
     try {
       if (sectionBefore !== sectionAfter) {
-        await updateForumCategory(forumToken(), communityId, movedId, { sectionId: sectionAfter });
+        await updateForumCategory(requireToken(), communityId, movedId, { sectionId: sectionAfter });
       }
       await reorderForumCategories(
-        forumToken(),
+        requireToken(),
         communityId,
         next.map(({ id }) => id),
       );
@@ -822,7 +822,7 @@ function CategorySettings({
       categories: categories.map((item) => (item.id === category.id ? { ...item, ...changes } : item)),
     });
     try {
-      await updateForumCategory(forumToken(), communityId, category.id, changes);
+      await updateForumCategory(requireToken(), communityId, category.id, changes);
     } catch (reason) {
       onChange(forum);
       message.error(errorText(reason));
@@ -835,7 +835,7 @@ function CategorySettings({
     setPending(true);
     setError(null);
     try {
-      const category = await createForumCategory(forumToken(), communityId, adding);
+      const category = await createForumCategory(requireToken(), communityId, adding);
       onChange({ ...forum, categories: [...categories, category] });
       setAdding({ ...emptyDraft, sectionId: adding.sectionId });
     } catch (reason) {
@@ -851,7 +851,7 @@ function CategorySettings({
     setPending(true);
     setError(null);
     try {
-      const updated = await updateForumCategory(forumToken(), communityId, editing.id, editing.draft);
+      const updated = await updateForumCategory(requireToken(), communityId, editing.id, editing.draft);
       onChange({
         ...forum,
         categories: categories.map((item) => (item.id === updated.id ? { ...item, ...updated } : item)),
@@ -875,7 +875,7 @@ function CategorySettings({
       okButtonProps: { danger: true },
       cancelText: "Cancel",
       onOk: () =>
-        deleteForumCategory(forumToken(), communityId, category.id)
+        deleteForumCategory(requireToken(), communityId, category.id)
           .then(() =>
             onChange({ ...forum, categories: categories.filter(({ id }) => id !== category.id) }),
           )

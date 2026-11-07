@@ -1,6 +1,6 @@
 "use client";
 
-import { Modal, Popconfirm } from "antd";
+import { Popconfirm } from "antd";
 import { X } from "lucide-react";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import * as Atom from "@atom";
@@ -172,15 +172,7 @@ export function NewGroupModal({
   }
 
   return (
-    <Modal
-      open={open}
-      title={null}
-      onCancel={handleClose}
-      footer={null}
-      width={480}
-      destroyOnHidden
-      styles={{ container: { padding: 24 } }}
-    >
+    <Molecule.Dialog open={open} onCancel={handleClose} width={480}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <Molecule.ModalHeader
           eyebrow="New group"
@@ -210,7 +202,7 @@ export function NewGroupModal({
           </Atom.Button>
         </div>
       </form>
-    </Modal>
+    </Molecule.Dialog>
   );
 }
 
@@ -262,15 +254,7 @@ export function AddPeopleModal({
   }
 
   return (
-    <Modal
-      open={open}
-      title={null}
-      onCancel={handleClose}
-      footer={null}
-      width={480}
-      destroyOnHidden
-      styles={{ container: { padding: 24 } }}
-    >
+    <Molecule.Dialog open={open} onCancel={handleClose} width={480}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <Molecule.ModalHeader
           eyebrow={isGroup ? "Add people" : "New group"}
@@ -297,7 +281,7 @@ export function AddPeopleModal({
           </Atom.Button>
         </div>
       </form>
-    </Modal>
+    </Molecule.Dialog>
   );
 }
 
@@ -335,15 +319,7 @@ export function GroupSettingsModal({
   }
 
   return (
-    <Modal
-      open={open}
-      title={null}
-      onCancel={onClose}
-      footer={null}
-      width={480}
-      destroyOnHidden
-      styles={{ container: { padding: 24 } }}
-    >
+    <Molecule.Dialog open={open} onCancel={onClose} width={480}>
       <div className="flex flex-col gap-6">
         <Molecule.ModalHeader eyebrow="Group settings" title={conversation.name ?? "Group chat"} />
         {accepted && (
@@ -465,7 +441,7 @@ export function GroupSettingsModal({
           </Atom.Button>
         </div>
       </div>
-    </Modal>
+    </Molecule.Dialog>
   );
 }
 

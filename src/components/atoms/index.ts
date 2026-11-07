@@ -15,3 +15,4 @@ export * from "./text-link";
 export * from "./live-tag";
 export * from "./verified-badge";
 export * from "./wallpaper-placeholder";
+export * from "./tab";

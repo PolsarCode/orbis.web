@@ -26,6 +26,8 @@ export function steamAchievementsUrl({ steamId, appId }: SteamLink) {
   return `https://steamcommunity.com/profiles/${steamId}/stats/${appId}/achievements`;
 }
 
+type SteamPillProps = { steam: SteamLink; title: string; className?: string };
+
 const pillClass =
   "focus-ring flex h-7 items-center justify-center gap-1.5 rounded-full bg-[#171a21] px-2.5 text-[11px] font-semibold whitespace-nowrap text-white shadow-sm transition-colors hover:bg-[#2a475e] pointer-coarse:h-9";
 
@@ -33,11 +35,7 @@ export function SteamHours({
   steam,
   title,
   className = "",
-}: {
-  steam: SteamLink;
-  title: string;
-  className?: string;
-}) {
+}: SteamPillProps) {
   const played = steam.minutes > 0 ? steamPlaytime(steam.minutes) : "Not played";
 
   return (
@@ -61,11 +59,7 @@ export function SteamAchievements({
   steam,
   title,
   className = "",
-}: {
-  steam: SteamLink;
-  title: string;
-  className?: string;
-}) {
+}: SteamPillProps) {
   if (!steam.achievements) return null;
   const { achieved, total } = steam.achievements;
 
@@ -90,11 +84,7 @@ export function SteamBadge({
   steam,
   title,
   className = "",
-}: {
-  steam: SteamLink;
-  title: string;
-  className?: string;
-}) {
+}: SteamPillProps) {
   const played = steam.minutes > 0 ? steamPlaytime(steam.minutes) : null;
 
   return (

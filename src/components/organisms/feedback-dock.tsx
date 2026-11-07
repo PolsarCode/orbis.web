@@ -1,6 +1,6 @@
 "use client";
 
-import { Input, Modal, Segmented, Tooltip } from "antd";
+import { Input, Segmented, Tooltip } from "antd";
 import { BookUser, CircleCheck, Inbox, MessageSquareWarning } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -63,15 +63,7 @@ function FeedbackModal({ open, onClose }: { open: boolean; onClose: () => void }
   }
 
   return (
-    <Modal
-      open={open}
-      title={null}
-      onCancel={handleClose}
-      footer={null}
-      width={520}
-      destroyOnHidden
-      styles={{ container: { padding: 24 } }}
-    >
+    <Molecule.Dialog open={open} onCancel={handleClose} width={520}>
       {ticket !== null ? (
         <div className="flex flex-col items-start gap-6">
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-success text-success-foreground">
@@ -136,7 +128,7 @@ function FeedbackModal({ open, onClose }: { open: boolean; onClose: () => void }
         </div>
       </form>
       )}
-    </Modal>
+    </Molecule.Dialog>
   );
 }
 

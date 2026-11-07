@@ -2,19 +2,10 @@
 
 import { TwitchFilled } from "@ant-design/icons";
 import { Tooltip } from "antd";
-import { useEffect, useState } from "react";
 import type { NextStream } from "@/lib/api";
+import { useNow } from "@/lib/use-now";
 
 const STARTING_SOON_MS = 60 * 60 * 1000;
-
-function useNow() {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-  return now;
-}
 
 function countdown(ms: number) {
   const seconds = Math.floor(ms / 1000);

@@ -45,7 +45,7 @@ export function folderOf(layout: RailItem[], communityId: number) {
   );
 }
 
-function withoutCommunity(layout: RailItem[], communityId: number): RailItem[] {
+export function withoutCommunity(layout: RailItem[], communityId: number): RailItem[] {
   return layout.flatMap((item): RailItem[] =>
     item.type === "community"
       ? item.communityId === communityId

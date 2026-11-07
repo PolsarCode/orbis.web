@@ -30,10 +30,9 @@ import { useDocumentTitle } from "@/lib/use-document-title";
 import { useAuthStore } from "@/stores/auth-store";
 import { DiscussionModal } from "./discussion-modal";
 import { threadHref } from "./forum-shared";
-import { FriendsPanel } from "./friends-panel";
+import { FriendsSidePanel } from "./friends-panel";
 import { HomeTabs } from "./home-tabs";
 import { PostCard } from "./post-card";
-import { SidePanel } from "./side-panel";
 import { SearchScope } from "./site-search";
 
 type TagComment = Extract<TagItem, { kind: "comment" }>;
@@ -420,9 +419,7 @@ export function TagView({ name }: { name: string }) {
       <HomeTabs tab="trending" />
       <div className="flex min-h-0 flex-1">
         <Template.PageColumn>{content}</Template.PageColumn>
-        <SidePanel label="Friends">
-          <FriendsPanel />
-        </SidePanel>
+        <FriendsSidePanel />
       </div>
       <DiscussionModal
         item={open}

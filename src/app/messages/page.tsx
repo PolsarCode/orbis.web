@@ -14,9 +14,7 @@ export default function MessagesPage() {
         </Template.PageHeader>
         <div className="flex min-h-0 flex-1">
           <Organism.MessagesView />
-          <Organism.SidePanel label="Friends">
-            <Organism.FriendsPanel />
-          </Organism.SidePanel>
+          <Organism.FriendsSidePanel />
         </div>
       </main>
     </Template.AppTemplate>

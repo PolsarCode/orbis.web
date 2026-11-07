@@ -1,6 +1,6 @@
 "use client";
 
-import { Modal, Switch } from "antd";
+import { Switch } from "antd";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import * as Atom from "@atom";
@@ -45,32 +45,14 @@ export function CreateCommunityModal({ open, onClose }: CreateCommunityModalProp
   }
 
   return (
-    <Modal
-      open={open}
-      title={null}
-      onCancel={handleClose}
-      footer={null}
-      width={520}
-      destroyOnHidden
-      styles={{ container: { padding: 24 } }}
-    >
+    <Molecule.Dialog open={open} onCancel={handleClose} width={520}>
       <form id={formId} onSubmit={handleSubmit} className="flex flex-col gap-6">
         <Molecule.ModalHeader
           eyebrow="Create a community"
           title="Create a new community."
           description="Give your community a name. You can change it and its visibility later in settings."
         />
-        <Molecule.FormField
-          label="Community name"
-          name="name"
-          size="large"
-          required
-          maxLength={100}
-          pattern=".*\S.*"
-          title="Enter a name"
-          autoComplete="off"
-          autoFocus
-        />
+        <Molecule.CommunityNameField autoFocus />
         <label className="flex items-start justify-between gap-4">
           <span className="flex flex-col gap-1">
             <span className="text-sm">Public community</span>
@@ -90,6 +72,6 @@ export function CreateCommunityModal({ open, onClose }: CreateCommunityModalProp
           </Atom.Button>
         </div>
       </form>
-    </Modal>
+    </Molecule.Dialog>
   );
 }

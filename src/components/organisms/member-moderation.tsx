@@ -4,16 +4,10 @@ import { App, Input, Modal } from "antd";
 import { useState } from "react";
 import * as Atom from "@atom";
 import { banMember, removeMember } from "@/lib/api";
-import { useAuthStore } from "@/stores/auth-store";
+import { requireToken } from "@/stores/auth-store";
 import { COMMUNITY_MEMBERS_CHANGED_EVENT } from "@/stores/community-store";
 
 export type ModerationTarget = { communityId: number; userId: number; name: string };
-
-function authToken() {
-  const { token } = useAuthStore.getState();
-  if (!token) throw new Error("Please log in again.");
-  return token;
-}
 
 function membersChanged(communityId: number) {
   window.dispatchEvent(new CustomEvent(COMMUNITY_MEMBERS_CHANGED_EVENT, { detail: communityId }));
@@ -38,7 +32,7 @@ function BanModal({
     setPending(true);
     setError(null);
     try {
-      await banMember(authToken(), target.communityId, target.userId, reason);
+      await banMember(requireToken(), target.communityId, target.userId, reason);
       onBanned();
       onClose();
     } catch (cause) {
@@ -97,7 +91,7 @@ export function useMemberModeration({
       okButtonProps: { danger: true },
       cancelText: "Cancel",
       onOk: () =>
-        removeMember(authToken(), target.communityId, target.userId)
+        removeMember(requireToken(), target.communityId, target.userId)
           .then(() => {
             message.success(`Removed ${target.name}`);
             membersChanged(target.communityId);

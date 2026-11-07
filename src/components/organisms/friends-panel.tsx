@@ -218,6 +218,14 @@ function TrendingSection({ tags, window }: { tags: TrendingTag[]; window: TagWin
   );
 }
 
+export function FriendsSidePanel() {
+  return (
+    <SidePanel label="Friends">
+      <FriendsPanel />
+    </SidePanel>
+  );
+}
+
 export function FriendsPanel() {
   const friends = useFriendsStore((state) => state.friends);
   const loaded = useFriendsStore((state) => state.loaded);
@@ -435,21 +443,16 @@ export function FriendRequests() {
       >
         <div className="-mb-px flex min-w-0 items-end gap-6 overflow-x-auto overflow-y-hidden [scrollbar-width:none]">
           {tabs.map(({ value, label, count, icon }) => (
-            <button
+            <Atom.TabButton
               key={value}
-              type="button"
+              active={tab === value}
               aria-pressed={tab === value}
               onClick={() => setTab(value)}
-              className={`focus-ring flex shrink-0 cursor-pointer items-center gap-2 rounded-t-sm border-b-2 px-1 py-3 text-sm whitespace-nowrap transition-colors ${
-                tab === value
-                  ? "border-accent text-accent"
-                  : "border-transparent font-semibold text-foreground hover:text-accent"
-              }`}
             >
               {icon}
               {label}
               <span className="text-xs text-muted tabular-nums">{count}</span>
-            </button>
+            </Atom.TabButton>
           ))}
         </div>
       </nav>
@@ -518,9 +521,7 @@ export function FriendRequests() {
             <SuggestionsList />
           </div>
         </Template.PageColumn>
-        <SidePanel label="Friends">
-          <FriendsPanel />
-        </SidePanel>
+        <FriendsSidePanel />
       </div>
     </>
   );

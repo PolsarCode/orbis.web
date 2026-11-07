@@ -1,6 +1,6 @@
 "use client";
 
-import { Input, Modal, Switch } from "antd";
+import { Input, Switch } from "antd";
 import { Ban, Link2, MessagesSquare, ShieldCheck, SlidersHorizontal, Ticket } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -27,7 +27,6 @@ import { displayName } from "@/lib/display-name";
 import { inviteExpiry, inviteUses } from "@/lib/invites";
 import {
   clearDiscordServers,
-  oauthColors,
   readDiscordServers,
   startOAuth,
   type PendingServers,
@@ -39,7 +38,7 @@ import { DiscordChannelSettings } from "./discord-channel-settings";
 import { DISCORD_CHECK_MS, DiscordWidgetSteps } from "./discord-setup";
 import { CommunityBanSettings } from "./community-ban-settings";
 import { ForumCategorySettings } from "./forum-category-settings";
-import { OAuthIcon } from "./oauth-buttons";
+import { OAuthConnectionRow } from "./oauth-buttons";
 import { SettingsTabs } from "./settings-tabs";
 
 function GeneralSettings({ community }: { community: Community }) {
@@ -82,15 +81,7 @@ function GeneralSettings({ community }: { community: Community }) {
   return (
     <Molecule.SettingsSection title="General">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <Molecule.FormField
-          label="Community name"
-          name="name"
-          size="large"
-          required
-          maxLength={100}
-          pattern=".*\S.*"
-          title="Enter a name"
-          autoComplete="off"
+        <Molecule.CommunityNameField
           value={name}
           onChange={(event) => {
             setName(event.target.value);
@@ -546,19 +537,11 @@ function TwitchSettings({ community }: { community: Community }) {
       title="Twitch"
       description="Connect the community’s Twitch channel. While it’s live, members see a LIVE badge on the community."
     >
-      <div className="flex items-center gap-3">
-        <span
-          aria-hidden
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white ${oauthColors.twitch}`}
-        >
-          <OAuthIcon provider="twitch" />
-        </span>
-        <div className="flex min-w-0 flex-1 flex-col">
-          <span className="text-sm font-semibold">Twitch</span>
-          <span className="truncate text-xs text-muted">
-            {login ? `Connected to twitch.tv/${login}` : "Not connected"}
-          </span>
-        </div>
+      <OAuthConnectionRow
+        provider="twitch"
+        title="Twitch"
+        status={login ? `Connected to twitch.tv/${login}` : "Not connected"}
+      >
         {login ? (
           <Atom.Button size="small" variant="secondary" loading={pending} onClick={disconnect}>
             Disconnect
@@ -568,7 +551,7 @@ function TwitchSettings({ community }: { community: Community }) {
             Connect
           </Atom.Button>
         )}
-      </div>
+      </OAuthConnectionRow>
       {login && (
         <div className="flex flex-col gap-4">
           <ConnectionSwitch
@@ -720,23 +703,17 @@ function DiscordSettings({ community }: { community: Community }) {
       title="Discord"
       description="Connect the community’s Discord server to show how many people are online there, with a button to join it. Only the online count and invite link are read, and nothing is added to your server."
     >
-      <div className="flex items-center gap-3">
-        <span
-          aria-hidden
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white ${oauthColors.discord}`}
-        >
-          <OAuthIcon provider="discord" />
-        </span>
-        <div className="flex min-w-0 flex-1 flex-col">
-          <span className="text-sm font-semibold">Discord</span>
-          <span className="truncate text-xs text-muted">
-            {server
-              ? `Connected to ${server.name}${
-                  server.online === null ? "" : ` · ${server.online.toLocaleString()} online`
-                }`
-              : "Not connected"}
-          </span>
-        </div>
+      <OAuthConnectionRow
+        provider="discord"
+        title="Discord"
+        status={
+          server
+            ? `Connected to ${server.name}${
+                server.online === null ? "" : ` · ${server.online.toLocaleString()} online`
+              }`
+            : "Not connected"
+        }
+      >
         {server ? (
           <Atom.Button size="small" variant="secondary" loading={pending} onClick={disconnect}>
             Disconnect
@@ -746,7 +723,7 @@ function DiscordSettings({ community }: { community: Community }) {
             Connect
           </Atom.Button>
         )}
-      </div>
+      </OAuthConnectionRow>
       {server && server.online === null && (
         <div className="flex flex-col items-start gap-2">
           <p className="text-xs text-muted">
@@ -788,17 +765,13 @@ function DiscordSettings({ community }: { community: Community }) {
         </p>
       )}
       {error && !choice && <Atom.ErrorMessage>{error}</Atom.ErrorMessage>}
-      <Modal
+      <Molecule.Dialog
         open={choice !== null || setup}
-        title={null}
-        footer={null}
         onCancel={picking ? undefined : closeModal}
         mask={{ closable: !picking }}
         closable={!picking}
         width={440}
         centered
-        destroyOnHidden
-        styles={{ container: { padding: 24 } }}
       >
         {step === "setup" && server ? (
           <div className="flex flex-col gap-6">
@@ -860,7 +833,7 @@ function DiscordSettings({ community }: { community: Community }) {
             {error && <Atom.ErrorMessage>{error}</Atom.ErrorMessage>}
           </div>
         )}
-      </Modal>
+      </Molecule.Dialog>
     </Molecule.SettingsSection>
   );
 }

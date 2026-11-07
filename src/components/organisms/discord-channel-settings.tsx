@@ -14,10 +14,10 @@ import {
   type DiscordChannel,
   type DiscordChannelSettings as Settings,
 } from "@/lib/api";
-import { oauthColors, startOAuth } from "@/lib/oauth";
+import { startOAuth } from "@/lib/oauth";
 import { useAuthStore } from "@/stores/auth-store";
 import { useCommunityStore } from "@/stores/community-store";
-import { OAuthIcon } from "./oauth-buttons";
+import { OAuthConnectionRow } from "./oauth-buttons";
 
 const sendOptions: { key: keyof Settings; label: string; description?: string }[] = [
   { key: "sendPosts", label: "Feed posts" },
@@ -118,17 +118,7 @@ export function DiscordChannelSettings({ community }: { community: Community }) 
       title="Discord channel"
       description="Send what’s new in this community to a channel in your Discord server. Each message shows the author’s name and picture, with a link to the post on Orbis."
     >
-      <div className="flex items-center gap-3">
-        <span
-          aria-hidden
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white ${oauthColors.discord} ${muted}`}
-        >
-          <OAuthIcon provider="discord" />
-        </span>
-        <div className={`flex min-w-0 flex-1 flex-col ${muted}`}>
-          <span className="text-sm font-semibold">Discord channel</span>
-          <span className="truncate text-xs text-muted">{status}</span>
-        </div>
+      <OAuthConnectionRow provider="discord" title="Discord channel" status={status} dimmed={!isPublic}>
         {channel ? (
           <div className="flex shrink-0 gap-2">
             {lost && (
@@ -159,7 +149,7 @@ export function DiscordChannelSettings({ community }: { community: Community }) 
             </Atom.Button>
           </Molecule.ReadOnlyGate>
         )}
-      </div>
+      </OAuthConnectionRow>
       {channel && !lost && isPublic && (
         <a
           href={`https://discord.com/channels/${channel.guildId}/${channel.channelId}`}

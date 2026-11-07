@@ -71,3 +71,9 @@ export const useAuthStore = create<AuthState>()(
     { name: "auth", partialize: ({ token }) => ({ token }) },
   ),
 );
+
+export function requireToken() {
+  const { token } = useAuthStore.getState();
+  if (!token) throw new Error("Please log in again.");
+  return token;
+}

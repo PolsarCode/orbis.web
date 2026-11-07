@@ -1,6 +1,6 @@
 "use client";
 
-import { Dropdown, Modal } from "antd";
+import { Dropdown } from "antd";
 import { ChevronDown, Download } from "lucide-react";
 import { useState, useSyncExternalStore, type ReactNode } from "react";
 import * as Atom from "@atom";
@@ -153,15 +153,7 @@ export function DesktopDownloadButton({ assets }: { assets: DesktopAsset[] }) {
           </button>
         </Dropdown>
       )}
-      <Modal
-        open={opened !== null}
-        title={null}
-        footer={null}
-        width={520}
-        destroyOnHidden
-        onCancel={() => setOpened(null)}
-        styles={{ container: { padding: 24 } }}
-      >
+      <Molecule.Dialog open={opened !== null} width={520} onCancel={() => setOpened(null)}>
         {opened && guide && (
           <div className="flex flex-col gap-6">
             <Molecule.ModalHeader
@@ -190,7 +182,7 @@ export function DesktopDownloadButton({ assets }: { assets: DesktopAsset[] }) {
             </p>
           </div>
         )}
-      </Modal>
+      </Molecule.Dialog>
     </div>
   );
 }

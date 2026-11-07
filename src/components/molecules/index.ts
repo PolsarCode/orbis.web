@@ -37,3 +37,5 @@ export * from "./edited-mark";
 export * from "./spoiler-gate";
 export * from "./hidden-gate";
 export * from "./reposted-by";
+export * from "./view-toggle";
+export * from "./dialog";

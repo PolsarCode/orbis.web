@@ -15,6 +15,38 @@ export function OAuthIcon({ provider }: { provider: OAuthProvider }) {
   return <span className="flex text-lg leading-none">{icons[provider]}</span>;
 }
 
+export function OAuthConnectionRow({
+  provider,
+  title,
+  status,
+  dimmed = false,
+  children,
+}: {
+  provider: OAuthProvider;
+  title: string;
+  status: ReactNode;
+  dimmed?: boolean;
+  children: ReactNode;
+}) {
+  const muted = dimmed ? "opacity-50" : "";
+
+  return (
+    <div className="flex items-center gap-3">
+      <span
+        aria-hidden
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white ${oauthColors[provider]} ${muted}`}
+      >
+        <OAuthIcon provider={provider} />
+      </span>
+      <div className={`flex min-w-0 flex-1 flex-col ${muted}`}>
+        <span className="text-sm font-semibold">{title}</span>
+        <span className="truncate text-xs text-muted">{status}</span>
+      </div>
+      {children}
+    </div>
+  );
+}
+
 export function OAuthButtons() {
   const [providers, setProviders] = useState<OAuthProvider[] | null>(null);
   const [pending, setPending] = useState<OAuthProvider | null>(null);

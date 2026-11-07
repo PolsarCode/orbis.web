@@ -1,6 +1,6 @@
 "use client";
 
-import { App, Dropdown, InputNumber, Select, Tooltip } from "antd";
+import { App, Dropdown, InputNumber, Select } from "antd";
 import {
   Bookmark,
   Check,
@@ -8,9 +8,7 @@ import {
   ChevronUp,
   CirclePlay,
   CircleX,
-  LayoutGrid,
   Library,
-  List,
   LoaderCircle,
   Lock,
   Minus,
@@ -21,7 +19,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactElement, type ReactNode } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import * as Template from "@template";
@@ -45,9 +43,8 @@ import {
   type LibraryStatusFilter as StatusFilter,
 } from "@/stores/library-preferences-store";
 import { mediaTypes } from "./activity-card";
-import { FriendsPanel } from "./friends-panel";
+import { FriendsSidePanel } from "./friends-panel";
 import { EntryMenu } from "./library-controls";
-import { SidePanel } from "./side-panel";
 import { PageTour } from "./onboarding";
 import { SearchScope } from "./site-search";
 import { pageTitle } from "@/lib/site-title";
@@ -248,13 +245,68 @@ const statusTones = {
   planned: "special",
 } as const satisfies Record<LibraryStatus, Atom.PillTone>;
 
-function readOnlyTip(readOnly: boolean, action: string, control: ReactNode) {
-  return readOnly ? (
-    <Tooltip title={`Confirm your email first to ${action}.`} classNames={{ root: "touch-visible" }}>
-      {control}
-    </Tooltip>
-  ) : (
-    control
+function StatusMenu({
+  action,
+  type,
+  current,
+  pending,
+  onPick,
+  children,
+}: {
+  action: string;
+  type?: MediaType;
+  current?: LibraryStatus;
+  pending: boolean;
+  onPick: (status: LibraryStatus) => void;
+  children: ReactElement;
+}) {
+  return (
+    <Molecule.ReadOnlyGate action={action}>
+      <Dropdown
+        disabled={pending}
+        trigger={["click"]}
+        menu={{
+          items: libraryStatuses.map((status) => {
+            const StatusIcon = statusIcons[status];
+            return {
+              key: status,
+              label: statusLabel(status, type),
+              icon: <StatusIcon size={14} />,
+              extra: status === current ? <Check size={14} /> : undefined,
+            };
+          }),
+          onClick: ({ key }) => onPick(key as LibraryStatus),
+        }}
+      >
+        {children}
+      </Dropdown>
+    </Molecule.ReadOnlyGate>
+  );
+}
+
+function StatusPillFace({
+  tone,
+  icon,
+  label,
+  pending,
+}: {
+  tone?: Atom.PillTone;
+  icon: ReactNode;
+  label: string;
+  pending: boolean;
+}) {
+  return (
+    <Atom.Pill tone={tone} className="h-7 w-full! justify-between px-3 pointer-coarse:h-9">
+      <span className="flex min-w-0 items-center gap-1.5">
+        {icon}
+        <span className="truncate">{label}</span>
+      </span>
+      {pending ? (
+        <LoaderCircle size={13} aria-hidden className="shrink-0 animate-spin" />
+      ) : (
+        <ChevronDown size={13} aria-hidden className="shrink-0" />
+      )}
+    </Atom.Pill>
   );
 }
 
@@ -266,7 +318,6 @@ export function AddStatusPill({
   onAdded: (entry: LibraryEntry) => void;
 }) {
   const { message } = App.useApp();
-  const readOnly = useReadOnly();
   const [pending, setPending] = useState<LibraryStatus | null>(null);
   const PendingIcon = pending && statusIcons[pending];
 
@@ -291,23 +342,12 @@ export function AddStatusPill({
     }
   }
 
-  return readOnlyTip(
-    readOnly,
-    "add to your library",
-    <Dropdown
-      disabled={readOnly || pending !== null}
-      trigger={["click"]}
-      menu={{
-        items: libraryStatuses.map((status) => {
-          const StatusIcon = statusIcons[status];
-          return {
-            key: status,
-            label: statusLabel(status, media.type),
-            icon: <StatusIcon size={14} />,
-          };
-        }),
-        onClick: ({ key }) => add(key as LibraryStatus),
-      }}
+  return (
+    <StatusMenu
+      action="add to your library"
+      type={media.type}
+      pending={pending !== null}
+      onPick={add}
     >
       <button
         type="button"
@@ -317,26 +357,20 @@ export function AddStatusPill({
         aria-busy={pending !== null}
         className="focus-ring w-full cursor-pointer rounded-full disabled:cursor-not-allowed aria-busy:cursor-progress"
       >
-        <Atom.Pill
+        <StatusPillFace
           tone={pending ? statusTones[pending] : undefined}
-          className="h-7 w-full! justify-between px-3 pointer-coarse:h-9"
-        >
-          <span className="flex min-w-0 items-center gap-1.5">
-            {PendingIcon ? (
+          icon={
+            PendingIcon ? (
               <PendingIcon size={13} aria-hidden className="shrink-0" />
             ) : (
               <Plus size={13} aria-hidden className="shrink-0" />
-            )}
-            <span className="truncate">{pending ? statusLabel(pending, media.type) : "Add"}</span>
-          </span>
-          {pending ? (
-            <LoaderCircle size={13} aria-hidden className="shrink-0 animate-spin" />
-          ) : (
-            <ChevronDown size={13} aria-hidden className="shrink-0" />
-          )}
-        </Atom.Pill>
+            )
+          }
+          label={pending ? statusLabel(pending, media.type) : "Add"}
+          pending={pending !== null}
+        />
       </button>
-    </Dropdown>,
+    </StatusMenu>
   );
 }
 
@@ -348,7 +382,6 @@ export function StatusPill({
   onChange: (entry: LibraryEntry) => void;
 }) {
   const { message } = App.useApp();
-  const readOnly = useReadOnly();
   const [pending, setPending] = useState<LibraryStatus | null>(null);
   const shown = pending ?? entry.status;
   const label = statusLabel(shown, entry.mediaType);
@@ -367,24 +400,13 @@ export function StatusPill({
     }
   }
 
-  return readOnlyTip(
-    readOnly,
-    "change your library",
-    <Dropdown
-      disabled={readOnly || pending !== null}
-      trigger={["click"]}
-      menu={{
-        items: libraryStatuses.map((status) => {
-          const StatusIcon = statusIcons[status];
-          return {
-            key: status,
-            label: statusLabel(status, entry.mediaType),
-            icon: <StatusIcon size={14} />,
-            extra: status === entry.status ? <Check size={14} /> : undefined,
-          };
-        }),
-        onClick: ({ key }) => change(key as LibraryStatus),
-      }}
+  return (
+    <StatusMenu
+      action="change your library"
+      type={entry.mediaType}
+      current={entry.status}
+      pending={pending !== null}
+      onPick={change}
     >
       <button
         type="button"
@@ -394,22 +416,14 @@ export function StatusPill({
         aria-busy={pending !== null}
         className="focus-ring w-full cursor-pointer rounded-full aria-busy:cursor-progress"
       >
-        <Atom.Pill
+        <StatusPillFace
           tone={statusTones[shown]}
-          className="h-7 w-full! justify-between px-3 pointer-coarse:h-9"
-        >
-          <span className="flex min-w-0 items-center gap-1.5">
-            <Icon size={13} aria-hidden className="shrink-0" />
-            <span className="truncate">{label}</span>
-          </span>
-          {pending ? (
-            <LoaderCircle size={13} aria-hidden className="shrink-0 animate-spin" />
-          ) : (
-            <ChevronDown size={13} aria-hidden className="shrink-0" />
-          )}
-        </Atom.Pill>
+          icon={<Icon size={13} aria-hidden className="shrink-0" />}
+          label={label}
+          pending={pending !== null}
+        />
       </button>
-    </Dropdown>,
+    </StatusMenu>
   );
 }
 
@@ -802,28 +816,12 @@ function ViewToggle() {
   const setView = useLibraryPreferencesStore((state) => state.setView);
 
   return (
-    <div role="group" aria-label="Library view" className="flex items-center gap-0.5">
-      {(
-        [
-          { value: "cards", label: "Cards", icon: <LayoutGrid size={16} /> },
-          { value: "list", label: "List", icon: <List size={16} /> },
-        ] as const
-      ).map((option) => (
-        <Tooltip key={option.value} title={option.label}>
-          <button
-            type="button"
-            aria-label={option.label}
-            aria-pressed={view === option.value}
-            onClick={() => setView(option.value)}
-            className={`icon-button cursor-pointer ${
-              view === option.value ? "bg-rail-item text-foreground" : ""
-            }`}
-          >
-            {option.icon}
-          </button>
-        </Tooltip>
-      ))}
-    </div>
+    <Molecule.ViewToggle
+      label="Library view"
+      options={Molecule.cardListViews}
+      view={view}
+      onChange={setView}
+    />
   );
 }
 
@@ -873,21 +871,16 @@ export function LibraryTabs({
           const Icon = statusIcons[value];
           const active = status === value;
           return (
-            <button
+            <Atom.TabButton
               key={value}
-              type="button"
+              active={active}
               aria-pressed={active}
               onClick={() => setStatus(value)}
-              className={`focus-ring flex shrink-0 cursor-pointer items-center gap-2 rounded-t-sm border-b-2 px-1 py-3 text-sm whitespace-nowrap transition-colors ${
-                active
-                  ? "border-accent text-accent"
-                  : "border-transparent font-semibold text-foreground hover:text-accent"
-              }`}
             >
               <Icon size={16} aria-hidden />
               {value === "all" ? "All" : statusLabel(value, typeForLabels)}
               {entries && <span className="text-xs font-normal text-muted">{count(value)}</span>}
-            </button>
+            </Atom.TabButton>
           );
         })}
       </div>
@@ -1012,9 +1005,7 @@ export function LibraryView() {
             )}
           </div>
         </Template.PageColumn>
-        <SidePanel label="Friends">
-          <FriendsPanel />
-        </SidePanel>
+        <FriendsSidePanel />
       </div>
     </>
   );

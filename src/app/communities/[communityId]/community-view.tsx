@@ -1,19 +1,14 @@
 "use client";
 
 import { Clapperboard, Globe, Lock, MessagesSquare, Newspaper } from "lucide-react";
-import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useEffectEvent, useState, type ReactNode, type UIEvent } from "react";
+import { useEffect, useEffectEvent, useState, type ReactNode } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import * as Organism from "@organism";
 import * as Template from "@template";
-import {
-  canManage,
-  getCommunity,
-  type Community,
-  type CommunityImage,
-} from "@/lib/api";
+import { canManage, getCommunity, type CommunityImage } from "@/lib/api";
+import { useCollapsingHeader } from "@/lib/use-collapsing-header";
 import { useTabScroller } from "@/lib/use-tab-scroller";
 import { useAuthStore } from "@/stores/auth-store";
 import {
@@ -23,8 +18,7 @@ import {
 } from "@/stores/community-store";
 import { pageTitle } from "@/lib/site-title";
 import { useDocumentTitle } from "@/lib/use-document-title";
-
-type Loaded = { id: string; community: Community | null; failed?: boolean };
+import { CommunityPageStates, type LoadedCommunity } from "./community-page";
 
 const tabs = [
   { value: "feed", label: "Posts", icon: <Newspaper size={16} /> },
@@ -52,7 +46,7 @@ export function CommunityView({
 }) {
   const { communityId } = useParams<{ communityId: string }>();
   const router = useRouter();
-  const [loaded, setLoaded] = useState<Loaded | null>(null);
+  const [loaded, setLoaded] = useState<LoadedCommunity | null>(null);
   const requested = useSearchParams().get("tab");
   const tab: Tab = members
     ? "members"
@@ -60,7 +54,7 @@ export function CommunityView({
       ? "forum"
       : (pages.find((value) => value === requested) ?? "feed");
   const [tabsRef, tabsFade] = useTabScroller<HTMLElement>(tab);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, handleScroll] = useCollapsingHeader();
   const setCommunityImage = useCommunityStore(
     (state) => state.setCommunityImage,
   );
@@ -117,14 +111,6 @@ export function CommunityView({
       current?.id === communityId && current.community
         ? { ...current, community: { ...current.community, isVerified } }
         : current,
-    );
-  }
-
-  function handleScroll(event: UIEvent<HTMLDivElement>) {
-    const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
-    const room = scrollHeight - clientHeight;
-    setCollapsed((current) =>
-      current ? scrollTop > 0 : scrollTop > 32 && room > 240,
     );
   }
 
@@ -187,40 +173,25 @@ export function CommunityView({
     ) : undefined;
 
   return (
-    <Template.AppTemplate>
-      {!current ? (
-        <Template.CenteredTemplate>
-          <Atom.Loader />
-        </Template.CenteredTemplate>
-      ) : current.failed ? (
-        <Template.CenteredTemplate>
-          <Molecule.ConnectionError onRetry={() => window.location.reload()} />
-        </Template.CenteredTemplate>
-      ) : !current.community ? (
-        <Template.CenteredTemplate>
-          <Atom.Heading>Community not found</Atom.Heading>
-          <p className="text-sm text-muted">
-            It doesn&apos;t exist, or it isn&apos;t public.
-          </p>
-        </Template.CenteredTemplate>
-      ) : (
+    <CommunityPageStates current={current} missing="It doesn't exist, or it isn't public.">
+      {(community) => (
         <main className="flex min-h-0 flex-1 flex-col">
           <Organism.CommunitySearchScope
-            key={current.community.id}
-            communityId={current.community.id}
-            communityName={current.community.name}
+            key={community.id}
+            communityId={community.id}
+            communityName={community.name}
           />
           <Organism.CommunityHeader
-            community={current.community}
+            community={community}
             collapsed={collapsed}
-            onImage={canManage(current.community) ? handleImage : undefined}
+            onImage={canManage(community) ? handleImage : undefined}
             onVerified={handleVerified}
           />
           {!joinPrompt && <Organism.PageTour name="community" />}
           {!forum && (
             <Organism.LinkedDiscussion
-              key={`linked-${current.community.id}`}
-              communityId={current.community.id}
+              key={`linked-${community.id}`}
+              communityId={community.id}
             />
           )}
           <nav
@@ -233,75 +204,71 @@ export function CommunityView({
               .filter(
                 ({ value }) =>
                   value !== "clips" ||
-                  (current.community!.twitchLogin && current.community!.showTwitchClips !== false),
+                  (community.twitchLogin && community.showTwitchClips !== false),
               )
               .map(({ value, label, icon }) => (
-                <Link
+                <Atom.TabLink
                   key={value}
-                  href={tabHref(current.community!.id, value)}
+                  href={tabHref(community.id, value)}
                   data-tour={value === "forum" ? "community-forum" : undefined}
-                  aria-current={tab === value ? "page" : undefined}
-                  className={`focus-ring -mb-px flex shrink-0 items-center gap-2 rounded-t-sm border-b-2 px-1 py-3 text-sm transition-colors ${
-                    tab === value
-                      ? "border-accent text-accent"
-                      : "border-transparent font-semibold text-foreground hover:text-accent"
-                  }`}
+                  active={tab === value}
+                  className="-mb-px"
                 >
                   {icon}
                   {label}
-                </Link>
+                </Atom.TabLink>
               ))}
             <p className="ml-auto hidden shrink-0 items-center gap-2 self-center text-xs text-muted sm:flex">
-              {current.community.isPublic ? (
+              {community.isPublic ? (
                 <Globe size={14} aria-hidden />
               ) : (
                 <Lock size={14} aria-hidden />
               )}
-              {current.community.isPublic
+              {community.isPublic
                 ? "Public community"
                 : "Private community"}
-              {current.community.memberCount !== undefined &&
-                ` · ${current.community.memberCount.toLocaleString()} ${
-                  current.community.memberCount === 1 ? "member" : "members"
+              {community.memberCount !== undefined &&
+                ` · ${community.memberCount.toLocaleString()} ${
+                  community.memberCount === 1 ? "member" : "members"
                 }`}
             </p>
           </nav>
           <div className="relative isolate flex min-h-0 flex-1">
             <Molecule.PageWallpaper
-              src={current.community.backgroundUrl}
+              src={community.backgroundUrl}
               onUpload={
-                canManage(current.community)
+                canManage(community)
                   ? (file) => handleImage("background", file)
                   : undefined
               }
               onRemove={
-                canManage(current.community)
+                canManage(community)
                   ? () => handleImage("background", null)
                   : undefined
               }
             />
             <Template.PageColumn onScroll={handleScroll}>
               {forum ? (
-                <Organism.ForumProvider community={current.community} joinPrompt={joinPrompt}>
+                <Organism.ForumProvider community={community} joinPrompt={joinPrompt}>
                   {forum}
                 </Organism.ForumProvider>
               ) : tab === "clips" &&
-              current.community.twitchLogin &&
-              current.community.showTwitchClips !== false ? (
+              community.twitchLogin &&
+              community.showTwitchClips !== false ? (
                 <Organism.TwitchClips
-                  key={current.community.id}
-                  communityId={current.community.id}
-                  name={current.community.name}
+                  key={community.id}
+                  communityId={community.id}
+                  name={community.name}
                 />
               ) : tab === "members" ? (
                 <Organism.MemberList
-                  key={current.community.id}
-                  communityId={current.community.id}
+                  key={community.id}
+                  communityId={community.id}
                 />
               ) : (
                 <Organism.CommunityFeed
-                  key={`${current.community.id}-${tab}`}
-                  communityId={current.community.id}
+                  key={`${community.id}-${tab}`}
+                  communityId={community.id}
                   joinPrompt={joinPrompt}
                 />
               )}
@@ -310,24 +277,24 @@ export function CommunityView({
               {!joinPrompt && (
                 <div className="flex gap-2">
                   <Organism.InviteButton
-                    key={`invite-${current.community.id}`}
-                    community={current.community}
+                    key={`invite-${community.id}`}
+                    community={community}
                   />
                   <Organism.InviteCardButton
-                    key={`card-${current.community.id}`}
-                    community={current.community}
+                    key={`card-${community.id}`}
+                    community={community}
                   />
                 </div>
               )}
               <Organism.MemberPresence
-                key={`${current.community.id}-${current.community.role ?? "visitor"}`}
-                communityId={current.community.id}
-                seeAllHref={`/communities/${current.community.id}/members`}
+                key={`${community.id}-${community.role ?? "visitor"}`}
+                communityId={community.id}
+                seeAllHref={`/communities/${community.id}/members`}
               />
             </Organism.SidePanel>
           </div>
         </main>
       )}
-    </Template.AppTemplate>
+    </CommunityPageStates>
   );
 }

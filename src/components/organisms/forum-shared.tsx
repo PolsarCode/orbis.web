@@ -1,12 +1,20 @@
 "use client";
 
 import { Pagination, Tooltip } from "antd";
-import { ChevronRight, Megaphone, ShieldCheck } from "lucide-react";
+import { ChevronRight, Megaphone, MessagesSquare, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { createContext, useContext, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useEffectEvent,
+  useState,
+  type ReactNode,
+} from "react";
+import * as Atom from "@atom";
+import * as Molecule from "@molecule";
 import type { Community, ForumCategoryRef } from "@/lib/api";
-import { useAuthStore } from "@/stores/auth-store";
 
 type ForumContextValue = { community: Community; joinPrompt?: ReactNode };
 
@@ -101,12 +109,6 @@ export function threadHref(communityId: number, threadId: number, postId?: numbe
   return postId === undefined ? href : `${href}?post=${postId}`;
 }
 
-export function forumToken() {
-  const { token } = useAuthStore.getState();
-  if (!token) throw new Error("Please log in again.");
-  return token;
-}
-
 export function scrollColumnToTop(element: HTMLElement | null) {
   let node = element?.parentElement ?? null;
   while (node) {
@@ -122,6 +124,71 @@ export function scrollColumnToTop(element: HTMLElement | null) {
 export function positiveParam(value: string | null) {
   const number = Number(value);
   return Number.isInteger(number) && number > 0 ? number : undefined;
+}
+
+export function useForumLoad<T>(key: string, load: () => Promise<T>) {
+  const [attempt, setAttempt] = useState(0);
+  const [loaded, setLoaded] = useState<{
+    key: string;
+    attempt: number;
+    data: T | null;
+    error?: string;
+  } | null>(null);
+  const run = useEffectEvent(load);
+
+  useEffect(() => {
+    let ignore = false;
+    run()
+      .then((result) => {
+        if (!ignore) setLoaded({ key, attempt, data: result });
+      })
+      .catch((error: Error) => {
+        if (!ignore) setLoaded({ key, attempt, data: null, error: error.message });
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [key, attempt]);
+
+  return {
+    loaded,
+    setLoaded,
+    data: loaded?.key === key ? loaded.data : null,
+    ready: loaded?.key === key && loaded.attempt === attempt,
+    retry: () => setAttempt((count) => count + 1),
+  };
+}
+
+export function ForumLoadError({
+  communityId,
+  title,
+  error,
+  onRetry,
+}: {
+  communityId: number;
+  title: string;
+  error?: string;
+  onRetry: () => void;
+}) {
+  return (
+    <Molecule.FeedState
+      eyebrow="Forum"
+      icon={<MessagesSquare size={24} strokeWidth={1.5} />}
+      title={title}
+      description={error ?? "Please try again."}
+      action={
+        <div className="flex flex-wrap gap-2">
+          <Atom.Button variant="secondary" onClick={onRetry}>
+            Try again
+          </Atom.Button>
+          <Atom.ButtonLink href={forumHref(communityId)} variant="text">
+            Back to the forum
+          </Atom.ButtonLink>
+        </div>
+      }
+      role="alert"
+    />
+  );
 }
 
 export function ForumBreadcrumb({ items }: { items: { label: string; href?: string }[] }) {

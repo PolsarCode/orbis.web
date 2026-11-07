@@ -1,8 +1,8 @@
 "use client";
 
-import { App, Input, Modal, Popover, Radio, Switch } from "antd";
+import { App, Input, Popover, Radio, Switch } from "antd";
 import { Ban, ShieldOff, Timer, UserCheck } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import {
@@ -13,7 +13,8 @@ import {
   type SuspensionDuration,
 } from "@/lib/api";
 import { inviteCountdown } from "@/lib/invites";
-import { useAuthStore } from "@/stores/auth-store";
+import { useNow } from "@/lib/use-now";
+import { requireToken } from "@/stores/auth-store";
 
 const REASON_MAX = 500;
 
@@ -31,18 +32,6 @@ function suspensionLabel(suspension: ProfileSuspension) {
     timeStyle: "short",
   });
   return `Suspended until ${until}`;
-}
-
-function useNow(active: boolean) {
-  const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    if (!active) return;
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, [active]);
-
-  return now;
 }
 
 export function SuspensionCountdown({ suspension }: { suspension: ProfileSuspension }) {
@@ -79,12 +68,6 @@ export function SuspensionCountdown({ suspension }: { suspension: ProfileSuspens
   );
 }
 
-function token() {
-  const { token } = useAuthStore.getState();
-  if (!token) throw new Error("Please log in again.");
-  return token;
-}
-
 function Suspension({
   username,
   name,
@@ -104,7 +87,7 @@ function Suspension({
   async function update(next: { duration: SuspensionDuration; reason?: string } | null) {
     setPending(true);
     try {
-      const result = await setAccountSuspension(token(), username, next);
+      const result = await setAccountSuspension(requireToken(), username, next);
       onChange(result);
       setReason("");
       message.success(
@@ -207,7 +190,7 @@ function TwoFactor({
       cancelText: "Cancel",
       onOk: async () => {
         try {
-          await resetTwoFactor(token(), username);
+          await resetTwoFactor(requireToken(), username);
           onReset();
           message.success(`${name}’s two-factor sign-in is removed.`);
         } catch (e) {
@@ -284,7 +267,7 @@ export function ProfileAdmin({
     setPending(setting);
     try {
       if (setting === "verified") await onVerify(value);
-      else onAdminChange(await setSiteAdmin(token(), username, value));
+      else onAdminChange(await setSiteAdmin(requireToken(), username, value));
     } catch (e) {
       message.error(e instanceof Error ? e.message : "Something went wrong.");
     } finally {
@@ -294,15 +277,7 @@ export function ProfileAdmin({
 
   return (
     <>
-      <Modal
-        open={open}
-        title={null}
-        footer={null}
-        width={440}
-        destroyOnHidden
-        onCancel={onClose}
-        styles={{ container: { padding: 24 } }}
-      >
+      <Molecule.Dialog open={open} width={440} onCancel={onClose}>
         <div className="flex flex-col gap-6">
           <Molecule.ModalHeader eyebrow="Admin" title={name} />
           {(canVerify || canChangeAdmin) && (
@@ -360,7 +335,7 @@ export function ProfileAdmin({
             </section>
           )}
         </div>
-      </Modal>
+      </Molecule.Dialog>
     </>
   );
 }

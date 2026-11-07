@@ -370,17 +370,13 @@ function DoneModal({
   const name = report ? displayName(report.author) : "";
 
   return (
-    <Modal
+    <Molecule.Dialog
       open={report !== null}
-      title={null}
-      footer={null}
       width={480}
-      destroyOnHidden
       onCancel={() => {
         setNote("");
         onCancel();
       }}
-      styles={{ container: { padding: 24 } }}
     >
       {report && (
         <div className="flex flex-col gap-6">
@@ -434,7 +430,7 @@ function DoneModal({
           </div>
         </div>
       )}
-    </Modal>
+    </Molecule.Dialog>
   );
 }
 
@@ -1064,15 +1060,7 @@ export function DiscordWebhookButton() {
       <Atom.Button size="small" variant="secondary" icon={<Webhook size={14} />} onClick={handleOpen}>
         Discord
       </Atom.Button>
-      <Modal
-        open={open}
-        title={null}
-        footer={null}
-        width={520}
-        destroyOnHidden
-        onCancel={() => setOpen(false)}
-        styles={{ container: { padding: 24 } }}
-      >
+      <Molecule.Dialog open={open} width={520} onCancel={() => setOpen(false)}>
         <form
           className="flex flex-col gap-6"
           onSubmit={(event) => {
@@ -1125,7 +1113,7 @@ export function DiscordWebhookButton() {
             </Atom.Button>
           </div>
         </form>
-      </Modal>
+      </Molecule.Dialog>
     </>
   );
 }

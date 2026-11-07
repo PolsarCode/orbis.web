@@ -2,7 +2,7 @@
 
 import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { Modal, Tooltip } from "antd";
+import { Tooltip } from "antd";
 import { EyeOff, Link2, Lock } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import * as Atom from "@atom";
@@ -387,15 +387,7 @@ export function PostComposer({
         </p>
       )}
       {error && <Atom.ErrorMessage>{error}</Atom.ErrorMessage>}
-      <Modal
-        open={linkOpen}
-        title={null}
-        onCancel={() => setLinkOpen(false)}
-        footer={null}
-        width={420}
-        destroyOnHidden
-        styles={{ container: { padding: 24 } }}
-      >
+      <Molecule.Dialog open={linkOpen} onCancel={() => setLinkOpen(false)} width={420}>
         <form onSubmit={insertLink} className="flex flex-col gap-6">
           <Molecule.ModalHeader
             eyebrow="Add link"
@@ -424,7 +416,7 @@ export function PostComposer({
             </Atom.Button>
           </div>
         </form>
-      </Modal>
+      </Molecule.Dialog>
     </div>
   );
 }

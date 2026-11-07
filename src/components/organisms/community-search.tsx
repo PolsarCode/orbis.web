@@ -40,7 +40,7 @@ export function JoinAction({
   joining,
   onJoin,
 }: {
-  community: CommunitySearchResult;
+  community: Pick<CommunitySearchResult, "id" | "joined">;
   joining: number | null;
   onJoin: (communityId: number) => void;
 }) {

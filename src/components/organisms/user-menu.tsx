@@ -1,6 +1,5 @@
 "use client";
 
-import { Modal, Popover } from "antd";
 import {
   AppWindow,
   BookUser,
@@ -17,9 +16,9 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import { inDesktopApp } from "@/lib/desktop";
-import { useIsPhone } from "@/lib/use-is-phone";
 import { useAuthStore } from "@/stores/auth-store";
 import { useLayoutStore } from "@/stores/layout-store";
+import { HeaderPanel } from "./header-popover";
 import { StatusPicker } from "./status-picker";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -32,7 +31,6 @@ export function UserMenu() {
   const logout = useAuthStore((state) => state.logout);
   const setFeedbackOpen = useLayoutStore((state) => state.setFeedbackOpen);
   const [open, setOpen] = useState(false);
-  const isPhone = useIsPhone();
   const desktop = useSyncExternalStore(noSubscription, inDesktopApp, () => false);
 
   useEffect(() => {
@@ -134,52 +132,22 @@ export function UserMenu() {
   );
 
   return (
-    <>
-      <Popover
-        open={open && !isPhone}
-        onOpenChange={setOpen}
-        trigger="click"
-        placement="bottomRight"
-        arrow={false}
-        align={{ offset: [0, 8] }}
-        styles={{
-          container: {
-            padding: 20,
-            borderRadius: 12,
-            boxShadow: "none",
-            border: "1px solid var(--divider)",
-          },
-        }}
-        content={menu}
+    <HeaderPanel open={open} onOpenChange={setOpen} content={menu}>
+      <button
+        type="button"
+        aria-label={`Account: ${username}`}
+        data-tour="account"
+        aria-expanded={open}
+        className="focus-ring rounded-full"
       >
-        <button
-          type="button"
-          aria-label={`Account: ${username}`}
-          data-tour="account"
-          aria-expanded={open}
-          className="focus-ring rounded-full"
-        >
-          <Atom.Avatar
-            size="rail"
-            label={profile?.username ?? "?"}
-            src={profile?.avatarUrl}
-            seed={profile?.userId ?? 0}
-            presence={profile?.appearOffline ? "offline" : (profile?.status ?? "online")}
-          />
-        </button>
-      </Popover>
-      <Modal
-        open={open && isPhone}
-        onCancel={() => setOpen(false)}
-        footer={null}
-        title={null}
-        closable={false}
-        width={640}
-        className="!top-3 !pb-0"
-        styles={{ container: { padding: 20 } }}
-      >
-        {menu}
-      </Modal>
-    </>
+        <Atom.Avatar
+          size="rail"
+          label={profile?.username ?? "?"}
+          src={profile?.avatarUrl}
+          seed={profile?.userId ?? 0}
+          presence={profile?.appearOffline ? "offline" : (profile?.status ?? "online")}
+        />
+      </button>
+    </HeaderPanel>
   );
 }

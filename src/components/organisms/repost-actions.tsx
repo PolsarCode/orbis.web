@@ -1,6 +1,6 @@
 "use client";
 
-import { App, Dropdown, Modal, Segmented, Tooltip, type MenuProps } from "antd";
+import { App, Dropdown, Segmented, Tooltip, type MenuProps } from "antd";
 import { MessageSquareQuote, Repeat, Undo2 } from "lucide-react";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import * as Atom from "@atom";
@@ -169,39 +169,15 @@ export function RepostActions<T extends FeedEntry>({
       >
         {item.repostCount} {item.repostCount === 1 ? "repost" : "reposts"}
       </button>
-      <Modal
-        open={dialog === "repost"}
-        onCancel={() => setDialog(null)}
-        footer={null}
-        width={520}
-        destroyOnHidden
-        title={null}
-        styles={{ container: { padding: 24 } }}
-      >
+      <Molecule.Dialog open={dialog === "repost"} onCancel={() => setDialog(null)} width={520}>
         <RepostForm item={item} onCancel={() => setDialog(null)} onReposted={reposted} />
-      </Modal>
-      <Modal
-        open={dialog === "quote"}
-        onCancel={() => setDialog(null)}
-        footer={null}
-        width={640}
-        destroyOnHidden
-        title={null}
-        styles={{ container: { padding: 24 } }}
-      >
+      </Molecule.Dialog>
+      <Molecule.Dialog open={dialog === "quote"} onCancel={() => setDialog(null)} width={640}>
         <QuoteForm item={item} onQuoted={quoted} onPosted={() => setDialog(null)} />
-      </Modal>
-      <Modal
-        open={dialog === "list"}
-        onCancel={() => setDialog(null)}
-        footer={null}
-        width={640}
-        destroyOnHidden
-        title={null}
-        styles={{ container: { padding: 24 } }}
-      >
+      </Molecule.Dialog>
+      <Molecule.Dialog open={dialog === "list"} onCancel={() => setDialog(null)} width={640}>
         <RepostList target={{ type: item.type, id: item.id }} />
-      </Modal>
+      </Molecule.Dialog>
     </span>
   );
 }

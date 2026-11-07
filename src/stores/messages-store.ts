@@ -2,7 +2,7 @@ import { create } from "zustand";
 import * as api from "@/lib/api";
 import type { ChatHistory, ChatMessage, ChatPerson, Conversation } from "@/lib/api";
 import { playMessageSound } from "@/lib/chat-sound";
-import { useAuthStore } from "./auth-store";
+import { requireToken, useAuthStore } from "./auth-store";
 
 export type { ChatPerson };
 
@@ -73,12 +73,6 @@ export function personOf({ userId, username, name, avatarUrl }: ChatPerson) {
   return { userId, username, name, avatarUrl };
 }
 
-function tokenOrThrow() {
-  const { token } = useAuthStore.getState();
-  if (!token) throw new Error("Please log in again.");
-  return token;
-}
-
 function appendMessage(history: History | undefined, message: ChatMessage) {
   if (!history || history.messages.some(({ id }) => id === message.id)) return history;
   return { ...history, messages: [...history.messages, message] };
@@ -116,7 +110,7 @@ export const useMessagesStore = create<MessagesState>()((set, get) => {
     },
     loadHistory: async (id) => {
       try {
-        const history = await api.getChatHistory(tokenOrThrow(), id);
+        const history = await api.getChatHistory(requireToken(), id);
         set(({ histories }) => ({ histories: { ...histories, [id]: history } }));
       } catch {
         set(({ histories }) => ({
@@ -133,7 +127,7 @@ export const useMessagesStore = create<MessagesState>()((set, get) => {
 
       patchHistory(id, (current) => ({ ...current, loadingOlder: true }));
       try {
-        const older = await api.getChatHistory(tokenOrThrow(), id, history.messages[0].id);
+        const older = await api.getChatHistory(requireToken(), id, history.messages[0].id);
         patchHistory(id, (current) => ({
           ...current,
           messages: [...older.messages, ...current.messages],
@@ -145,15 +139,15 @@ export const useMessagesStore = create<MessagesState>()((set, get) => {
       }
     },
     send: async (id, text, replyToId) => {
-      const message = await api.sendMessage(tokenOrThrow(), id, text, replyToId);
+      const message = await api.sendMessage(requireToken(), id, text, replyToId);
       patchHistory(id, (history) => appendMessage(history, message));
     },
     edit: async (id, messageId, text) => {
-      const message = await api.editMessage(tokenOrThrow(), id, messageId, text);
+      const message = await api.editMessage(requireToken(), id, messageId, text);
       get().updated({ conversationId: id, message });
     },
     react: async (id, messageId, emoji) => {
-      const message = await api.reactToMessage(tokenOrThrow(), id, messageId, emoji);
+      const message = await api.reactToMessage(requireToken(), id, messageId, emoji);
       get().updated({ conversationId: id, message });
     },
     updated: ({ conversationId, message }) =>
@@ -256,12 +250,12 @@ export const useMessagesStore = create<MessagesState>()((set, get) => {
       );
       if (existing) return existing.id;
 
-      const conversation = await api.openDirectChat(tokenOrThrow(), person.userId);
+      const conversation = await api.openDirectChat(requireToken(), person.userId);
       get().upsert(conversation);
       return conversation.id;
     },
     createGroup: async (userIds, name) => {
-      const conversation = await api.createGroupChat(tokenOrThrow(), userIds, name);
+      const conversation = await api.createGroupChat(requireToken(), userIds, name);
       get().upsert(conversation);
       return conversation.id;
     },
@@ -287,25 +281,25 @@ export const useMessagesStore = create<MessagesState>()((set, get) => {
     select: (selected) => set({ selected }),
     setPageOpen: (pageOpen) => set({ pageOpen }),
     acceptRequest: async (id) => {
-      await api.acceptMessageRequest(tokenOrThrow(), id);
+      await api.acceptMessageRequest(requireToken(), id);
       patchConversation(id, { status: "accepted" });
     },
     declineRequest: async (id) => {
-      await api.declineMessageRequest(tokenOrThrow(), id);
+      await api.declineMessageRequest(requireToken(), id);
       get().removed(id);
     },
     rename: async (id, name) => {
-      await api.renameGroupChat(tokenOrThrow(), id, name);
+      await api.renameGroupChat(requireToken(), id, name);
     },
     addMembers: async (id, userIds) => {
-      await api.addGroupMembers(tokenOrThrow(), id, userIds);
+      await api.addGroupMembers(requireToken(), id, userIds);
     },
     removeMember: async (id, userId) => {
-      await api.removeGroupMember(tokenOrThrow(), id, userId);
+      await api.removeGroupMember(requireToken(), id, userId);
       if (userId === useAuthStore.getState().profile?.userId) get().removed(id);
     },
     setMuted: async (id, muted) => {
-      await api.setConversationMuted(tokenOrThrow(), id, muted);
+      await api.setConversationMuted(requireToken(), id, muted);
       patchConversation(id, { muted });
     },
   };

@@ -27,9 +27,7 @@ export function DocumentTemplate({
           </div>
         </main>
         <div className="hidden authenticated:contents">
-          <Organism.SidePanel label="Friends">
-            <Organism.FriendsPanel />
-          </Organism.SidePanel>
+          <Organism.FriendsSidePanel />
         </div>
       </div>
     </AppTemplate>

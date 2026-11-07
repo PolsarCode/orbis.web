@@ -17,14 +17,13 @@ import {
 import {
   clearPendingAvatar,
   OAUTH_PROVIDERS,
-  oauthColors,
   oauthLabels,
   readPendingAvatar,
   startOAuth,
   type PendingAvatar,
 } from "@/lib/oauth";
 import { useAuthStore } from "@/stores/auth-store";
-import { OAuthIcon } from "./oauth-buttons";
+import { OAuthConnectionRow } from "./oauth-buttons";
 
 function LinkedAvatarPrompt() {
   const { message } = App.useApp();
@@ -177,44 +176,38 @@ export function OAuthConnections() {
 
           return (
             <li key={provider} className="flex flex-col gap-3 py-3">
-              <div className="flex items-center gap-3">
-              <span
-                aria-hidden
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white ${oauthColors[provider]}`}
-              >
-                <OAuthIcon provider={provider} />
-              </span>
-              <div className="flex min-w-0 flex-1 flex-col">
-                <span className="text-sm font-semibold">{oauthLabels[provider]}</span>
-                <span className="truncate text-xs text-muted">
-                  {connection
+              <OAuthConnectionRow
+                provider={provider}
+                title={oauthLabels[provider]}
+                status={
+                  connection
                     ? locked
                       ? `Connected as ${connection.username}. It’s how you log in, so it can’t be disconnected.`
                       : `Connected as ${connection.username}`
-                    : "Not connected"}
-                </span>
-              </div>
-              {connection ? (
-                <Atom.Button
-                  size="small"
-                  variant="secondary"
-                  disabled={locked || pending !== null}
-                  loading={pending === provider}
-                  onClick={() => disconnect(provider)}
-                >
-                  Disconnect
-                </Atom.Button>
-              ) : (
-                <Atom.Button
-                  size="small"
-                  disabled={pending !== null}
-                  loading={pending === provider}
-                  onClick={() => connect(provider)}
-                >
-                  Connect
-                </Atom.Button>
-              )}
-              </div>
+                    : "Not connected"
+                }
+              >
+                {connection ? (
+                  <Atom.Button
+                    size="small"
+                    variant="secondary"
+                    disabled={locked || pending !== null}
+                    loading={pending === provider}
+                    onClick={() => disconnect(provider)}
+                  >
+                    Disconnect
+                  </Atom.Button>
+                ) : (
+                  <Atom.Button
+                    size="small"
+                    disabled={pending !== null}
+                    loading={pending === provider}
+                    onClick={() => connect(provider)}
+                  >
+                    Connect
+                  </Atom.Button>
+                )}
+              </OAuthConnectionRow>
               {provider === "twitch" && connection && (
                 <div className="flex flex-col gap-4 pl-11">
                   <Molecule.SettingsRow

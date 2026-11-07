@@ -2,9 +2,8 @@
 
 import { SlidersHorizontal } from "lucide-react";
 import * as Molecule from "@molecule";
-import { FriendsPanel } from "./friends-panel";
+import { FriendsSidePanel } from "./friends-panel";
 import { SettingsTabs } from "./settings-tabs";
-import { SidePanel } from "./side-panel";
 import { StartupSwitch } from "./startup-switch";
 
 export function ApplicationSettings() {
@@ -12,9 +11,7 @@ export function ApplicationSettings() {
     <SettingsTabs
       label="Application settings sections"
       aside={
-        <SidePanel label="Friends">
-          <FriendsPanel />
-        </SidePanel>
+        <FriendsSidePanel />
       }
       tabs={[
         {

@@ -1,6 +1,6 @@
 "use client";
 
-import { App, Dropdown, InputNumber, Modal, Radio, Switch, Tooltip } from "antd";
+import { App, Dropdown, InputNumber, Radio, Switch } from "antd";
 import { Check, Globe, Lock, MoreHorizontal, Plus, Trash2 } from "lucide-react";
 import { useId, useState } from "react";
 import * as Atom from "@atom";
@@ -14,14 +14,7 @@ import {
   type MediaType,
 } from "@/lib/api";
 import { libraryStatuses, statusLabel } from "@/lib/library";
-import { useReadOnly } from "@/lib/read-only";
-import { useAuthStore } from "@/stores/auth-store";
-
-function token() {
-  const { token } = useAuthStore.getState();
-  if (!token) throw new Error("Please log in again.");
-  return token;
-}
+import { requireToken } from "@/stores/auth-store";
 
 export function AddToLibraryButton({
   media,
@@ -45,7 +38,7 @@ export function AddToLibraryButton({
   async function add() {
     setPending(true);
     try {
-      const entry = await addToLibrary(token(), {
+      const entry = await addToLibrary(requireToken(), {
         type: media.type,
         sourceId: media.sourceId,
         status,
@@ -77,15 +70,7 @@ export function AddToLibraryButton({
           {label}
         </Atom.Button>
       </Molecule.ReadOnlyGate>
-      <Modal
-        open={open}
-        title={null}
-        footer={null}
-        width={440}
-        destroyOnHidden
-        onCancel={() => setOpen(false)}
-        styles={{ container: { padding: 24 } }}
-      >
+      <Molecule.Dialog open={open} width={440} onCancel={() => setOpen(false)}>
         <div className="flex flex-col gap-6">
           <Molecule.ModalHeader eyebrow="Add to library" title={media.title} />
           <div className="flex flex-col gap-2">
@@ -145,7 +130,7 @@ export function AddToLibraryButton({
             </Atom.Button>
           </div>
         </div>
-      </Modal>
+      </Molecule.Dialog>
     </>
   );
 }
@@ -162,22 +147,21 @@ export function EntryMenu({
   trigger?: React.ReactElement;
 }) {
   const { message } = App.useApp();
-  const readOnly = useReadOnly();
 
   async function act(key: string) {
     try {
       if (key === "remove") {
-        await removeFromLibrary(token(), entry.id);
+        await removeFromLibrary(requireToken(), entry.id);
         onRemove(entry.id);
       } else if (key === "public" || key === "private") {
         onChange(
-          await updateLibraryEntry(token(), entry.id, {
+          await updateLibraryEntry(requireToken(), entry.id, {
             isPublic: key === "public",
           }),
         );
       } else {
         onChange(
-          await updateLibraryEntry(token(), entry.id, {
+          await updateLibraryEntry(requireToken(), entry.id, {
             status: key as LibraryStatus,
           }),
         );
@@ -189,7 +173,6 @@ export function EntryMenu({
 
   const menu = (
     <Dropdown
-      disabled={readOnly}
       trigger={["click"]}
       menu={{
         items: [
@@ -241,14 +224,5 @@ export function EntryMenu({
     </Dropdown>
   );
 
-  return readOnly ? (
-    <Tooltip
-      title="Confirm your email first to change your library."
-      classNames={{ root: "touch-visible" }}
-    >
-      {menu}
-    </Tooltip>
-  ) : (
-    menu
-  );
+  return <Molecule.ReadOnlyGate action="change your library">{menu}</Molecule.ReadOnlyGate>;
 }

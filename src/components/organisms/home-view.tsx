@@ -7,11 +7,10 @@ import { getBookmarks } from "@/lib/api";
 import type { ChangelogDay } from "@/lib/changelog";
 import { usePaged } from "@/lib/use-paged";
 import { BookmarksSearchScope } from "./content-search";
-import { FriendsPanel } from "./friends-panel";
+import { FriendsSidePanel } from "./friends-panel";
 import { HomeFeed } from "./home-feed";
 import { HomeTabs, homeTabs, type HomeTab } from "./home-tabs";
 import { PostList } from "./post-list";
-import { SidePanel } from "./side-panel";
 import { SearchScope } from "./site-search";
 import { TrendingTags } from "./trending-tags";
 import { pageTitle } from "@/lib/site-title";
@@ -53,9 +52,7 @@ export function HomeView({ latestChangelog }: { latestChangelog: ChangelogDay | 
             <HomeFeed latestChangelog={latestChangelog} />
           )}
         </Template.PageColumn>
-        <SidePanel label="Friends">
-          <FriendsPanel />
-        </SidePanel>
+        <FriendsSidePanel />
       </div>
     </>
   );

@@ -21,11 +21,10 @@ import { OAuthConnections } from "./oauth-connections";
 import { ChangelogSwitch } from "./changelog-switch";
 import { ResendConfirmation } from "./email-confirmation";
 import { NsfwSwitch } from "./nsfw-switch";
-import { FriendsPanel } from "./friends-panel";
+import { FriendsSidePanel } from "./friends-panel";
 import { PrivateProfileSwitch } from "./private-profile-switch";
 import { KeywordFilterSettings, PeopleSafetySettings } from "./safety-settings";
 import { SettingsTabs } from "./settings-tabs";
-import { SidePanel } from "./side-panel";
 import { SteamConnection } from "./steam-connection";
 import { ThemeToggle } from "./theme-toggle";
 import { TwoFactorSettings } from "./two-factor-settings";
@@ -65,9 +64,7 @@ export function ProfileSettings({ profile }: { profile: Profile }) {
     <SettingsTabs
       label="Settings sections"
       aside={
-        <SidePanel label="Friends">
-          <FriendsPanel />
-        </SidePanel>
+        <FriendsSidePanel />
       }
       tabs={[
         {

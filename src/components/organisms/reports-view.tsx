@@ -1,11 +1,11 @@
 "use client";
 
-import { Select, Tooltip } from "antd";
+import { Select } from "antd";
 import { EyeOff, Flag, Inbox, KanbanSquare, List } from "lucide-react";
-import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import * as Atom from "@atom";
+import * as Molecule from "@molecule";
 import * as Template from "@template";
 import { getReportAdmins, type Report, type ReportAdmin } from "@/lib/api";
 import { displayName } from "@/lib/display-name";
@@ -37,30 +37,10 @@ type Tab = (typeof tabs)[number]["value"];
 
 const content = "flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-4 pt-6 pb-24 sm:px-8 sm:pt-8";
 
-function ViewToggle({ view, onChange }: { view: ReportView; onChange: (view: ReportView) => void }) {
-  return (
-    <div role="group" aria-label="Report view" className="flex items-center gap-0.5">
-      {(
-        [
-          { value: "board", label: "Board", icon: <KanbanSquare size={16} /> },
-          { value: "list", label: "List", icon: <List size={16} /> },
-        ] as const
-      ).map((option) => (
-        <Tooltip key={option.value} title={option.label}>
-          <button
-            type="button"
-            aria-label={option.label}
-            aria-pressed={view === option.value}
-            onClick={() => onChange(option.value)}
-            className={`icon-button cursor-pointer ${view === option.value ? "bg-rail-item text-foreground" : ""}`}
-          >
-            {option.icon}
-          </button>
-        </Tooltip>
-      ))}
-    </div>
-  );
-}
+const reportViews = [
+  { value: "board", label: "Board", icon: <KanbanSquare size={16} /> },
+  { value: "list", label: "List", icon: <List size={16} /> },
+] as const;
 
 function AdminReports() {
   const router = useRouter();
@@ -116,19 +96,15 @@ function AdminReports() {
           className="-mb-px flex min-w-0 items-end gap-6 overflow-x-auto overflow-y-hidden [scrollbar-width:none]"
         >
           {tabs.map(({ value, label, icon }) => (
-            <Link
+            <Atom.TabLink
               key={value}
               href={value === "board" ? "/reports" : `/reports?tab=${value}`}
-              aria-current={tab === value ? "page" : undefined}
-              className={`focus-ring flex shrink-0 items-center gap-2 rounded-t-sm border-b-2 px-1 py-3 text-sm whitespace-nowrap transition-colors ${
-                tab === value
-                  ? "border-accent text-accent"
-                  : "border-transparent font-semibold text-foreground hover:text-accent"
-              }`}
+              active={tab === value}
+              className="whitespace-nowrap"
             >
               {icon}
               {label}
-            </Link>
+            </Atom.TabLink>
           ))}
         </div>
         <div
@@ -179,7 +155,12 @@ function AdminReports() {
               })),
             ]}
           />
-          <ViewToggle view={views[tab]} onChange={(view) => setViews({ ...views, [tab]: view })} />
+          <Molecule.ViewToggle
+            label="Report view"
+            options={reportViews}
+            view={views[tab]}
+            onChange={(view) => setViews({ ...views, [tab]: view })}
+          />
         </div>
         {profile?.isHeadAdmin && (
           <span

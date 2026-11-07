@@ -11,7 +11,7 @@ import {
   Star,
 } from "lucide-react";
 import Image from "next/image";
-import { useCallback, useEffect, useState, type UIEvent } from "react";
+import { useCallback, useEffect, useState } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import * as Template from "@template";
@@ -25,6 +25,7 @@ import {
   type MediaProfile as Profile,
 } from "@/lib/api";
 import { statusLabel } from "@/lib/library";
+import { useCollapsingHeader } from "@/lib/use-collapsing-header";
 import { usePaged } from "@/lib/use-paged";
 import { useAuthStore } from "@/stores/auth-store";
 import { mediaTypes } from "./activity-card";
@@ -427,7 +428,7 @@ function People({ profile }: { profile: Profile }) {
 export function MediaProfile({ type, sourceId }: { type: string; sourceId: string }) {
   const key = `${type}/${sourceId}`;
   const [loaded, setLoaded] = useState<Loaded | null>(null);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, handleScroll] = useCollapsingHeader();
 
   useEffect(() => {
     getMediaProfile(useAuthStore.getState().token, type, sourceId)
@@ -440,14 +441,6 @@ export function MediaProfile({ type, sourceId }: { type: string; sourceId: strin
         ),
       );
   }, [key, type, sourceId]);
-
-  function handleScroll(event: UIEvent<HTMLDivElement>) {
-    const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
-    const room = scrollHeight - clientHeight;
-    setCollapsed((current) =>
-      current ? scrollTop > 0 : scrollTop > 32 && room > 240,
-    );
-  }
 
   const current = loaded?.key === key ? loaded : null;
   useDocumentTitle(pageTitle(current?.profile?.title, "Library"));

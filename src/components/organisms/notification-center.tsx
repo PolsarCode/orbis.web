@@ -35,8 +35,7 @@ import { timeAgo } from "@/lib/time";
 import { useTabScroller } from "@/lib/use-tab-scroller";
 import { useAuthStore } from "@/stores/auth-store";
 import { useNotificationsStore } from "@/stores/notifications-store";
-import { FriendsPanel } from "./friends-panel";
-import { SidePanel } from "./side-panel";
+import { FriendsSidePanel } from "./friends-panel";
 import { SearchScope } from "./site-search";
 
 const typeIcons: Record<NotificationType, ReactNode> = {
@@ -283,20 +282,15 @@ export function NotificationCenter() {
           className="-mb-px flex min-w-0 items-end gap-6 overflow-x-auto overflow-y-hidden [scrollbar-width:none]"
         >
           {filters.map(({ value, label, icon }) => (
-            <button
+            <Atom.TabButton
               key={value}
-              type="button"
+              active={filter === value}
               aria-pressed={filter === value}
               onClick={() => setFilter(value)}
-              className={`focus-ring flex shrink-0 cursor-pointer items-center gap-2 rounded-t-sm border-b-2 px-1 py-3 text-sm whitespace-nowrap transition-colors ${
-                filter === value
-                  ? "border-accent text-accent"
-                  : "border-transparent font-semibold text-foreground hover:text-accent"
-              }`}
             >
               {icon}
               {label}
-            </button>
+            </Atom.TabButton>
           ))}
         </div>
         <label className="ml-auto flex shrink-0 items-center gap-2 self-center text-xs whitespace-nowrap max-sm:order-first max-sm:ml-0 max-sm:w-full max-sm:pt-3">
@@ -350,9 +344,7 @@ export function NotificationCenter() {
             )}
           </div>
         </Template.PageColumn>
-        <SidePanel label="Friends">
-          <FriendsPanel />
-        </SidePanel>
+        <FriendsSidePanel />
       </div>
     </>
   );

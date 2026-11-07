@@ -1,6 +1,6 @@
 "use client";
 
-import { Lock, MessageSquare, MessagesSquare, Pin, Plus } from "lucide-react";
+import { Lock, MessageSquare, Pin, Plus } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -9,27 +9,26 @@ import * as Molecule from "@molecule";
 import {
   createForumThread,
   getForumThreads,
-  type ForumThreadPage,
   type ForumThreadSummary,
 } from "@/lib/api";
 import { displayName } from "@/lib/display-name";
 import { pageTitle } from "@/lib/site-title";
 import { timeAgo } from "@/lib/time";
 import { useDocumentTitle } from "@/lib/use-document-title";
-import { useAuthStore } from "@/stores/auth-store";
+import { requireToken, useAuthStore } from "@/stores/auth-store";
 import {
   AdminOnlyMark,
   FeedMark,
   ForumBreadcrumb,
   ForumEmpty,
+  ForumLoadError,
   categoryCrumbs,
   ForumPagination,
-  forumHref,
-  forumToken,
   positiveParam,
   scrollColumnToTop,
   threadHref,
   useForum,
+  useForumLoad,
 } from "./forum-shared";
 import { PostComposer } from "./post-composer";
 
@@ -115,7 +114,7 @@ function NewThread({
       }
       onPost={async (content, linkUrl, spoiler) => {
         if (!title.trim()) throw new Error("Give your thread a title.");
-        const { id } = await createForumThread(forumToken(), communityId, categoryId, {
+        const { id } = await createForumThread(requireToken(), communityId, categoryId, {
           title,
           content,
           linkUrl,
@@ -133,34 +132,13 @@ export function ForumCategoryView() {
   const params = useParams<{ categoryId: string }>();
   const categoryId = Number(params.categoryId);
   const page = positiveParam(useSearchParams().get("page")) ?? 1;
-  const key = `${categoryId}:${page}`;
-  const [attempt, setAttempt] = useState(0);
-  const [loaded, setLoaded] = useState<{
-    key: string;
-    attempt: number;
-    data: ForumThreadPage | null;
-    error?: string;
-  } | null>(null);
+  const { loaded, data, ready, retry } = useForumLoad(`${community.id}:${categoryId}:${page}`, () =>
+    getForumThreads(useAuthStore.getState().token, community.id, categoryId, page),
+  );
   const [composing, setComposing] = useState(false);
   const root = useRef<HTMLDivElement>(null);
-  const data = loaded?.key === key ? loaded.data : null;
   useDocumentTitle(pageTitle(data?.category.name, community.name, data ? null : "Forum"));
 
-  useEffect(() => {
-    let ignore = false;
-    getForumThreads(useAuthStore.getState().token, community.id, categoryId, page)
-      .then((result) => {
-        if (!ignore) setLoaded({ key, attempt, data: result });
-      })
-      .catch((error: Error) => {
-        if (!ignore) setLoaded({ key, attempt, data: null, error: error.message });
-      });
-    return () => {
-      ignore = true;
-    };
-  }, [community.id, categoryId, page, key, attempt]);
-
-  const ready = loaded?.key === key && loaded.attempt === attempt;
   useEffect(() => {
     if (ready) scrollColumnToTop(root.current);
   }, [ready]);
@@ -171,22 +149,11 @@ export function ForumCategoryView() {
   }
   if (!data) {
     return (
-      <Molecule.FeedState
-        eyebrow="Forum"
-        icon={<MessagesSquare size={24} strokeWidth={1.5} />}
+      <ForumLoadError
+        communityId={community.id}
         title="Couldn’t open this category."
-        description={loaded.error ?? "Please try again."}
-        action={
-          <div className="flex flex-wrap gap-2">
-            <Atom.Button variant="secondary" onClick={() => setAttempt((count) => count + 1)}>
-              Try again
-            </Atom.Button>
-            <Atom.ButtonLink href={forumHref(community.id)} variant="text">
-              Back to the forum
-            </Atom.ButtonLink>
-          </div>
-        }
-        role="alert"
+        error={loaded.error}
+        onRetry={retry}
       />
     );
   }

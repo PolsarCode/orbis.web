@@ -1,6 +1,6 @@
 "use client";
 
-import { Modal, Slider } from "antd";
+import { Slider } from "antd";
 import { ZoomIn, ZoomOut } from "lucide-react";
 import Image from "next/image";
 import {
@@ -13,6 +13,7 @@ import {
   type WheelEvent,
 } from "react";
 import * as Atom from "@atom";
+import { Dialog } from "./dialog";
 import { ModalHeader } from "./modal-header";
 
 const MAX_ZOOM = 3;
@@ -337,17 +338,13 @@ export function ImageCropModal({
   onError: (message: string) => void;
 }) {
   return (
-    <Modal
+    <Dialog
       open={open}
-      title={null}
-      footer={null}
       onCancel={saving ? undefined : onCancel}
       mask={{ closable: !saving }}
       closable={!saving}
       width={aspect > 2 ? 760 : 480}
       centered
-      destroyOnHidden
-      styles={{ container: { padding: 24 } }}
     >
       <div className="flex flex-col gap-6">
         <ModalHeader
@@ -369,6 +366,6 @@ export function ImageCropModal({
           />
         )}
       </div>
-    </Modal>
+    </Dialog>
   );
 }

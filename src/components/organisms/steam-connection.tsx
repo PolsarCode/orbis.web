@@ -1,6 +1,6 @@
 "use client";
 
-import { App, Modal, Switch } from "antd";
+import { App, Switch } from "antd";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import * as Atom from "@atom";
@@ -67,15 +67,7 @@ function SteamImportModal({
   }
 
   return (
-    <Modal
-      open={open}
-      title={null}
-      footer={null}
-      width={460}
-      destroyOnHidden
-      onCancel={pending ? undefined : decline}
-      styles={{ container: { padding: 24 } }}
-    >
+    <Molecule.Dialog open={open} width={460} onCancel={pending ? undefined : decline}>
       <div className="flex flex-col gap-6">
         <Molecule.ModalHeader
           eyebrow="Steam"
@@ -99,7 +91,7 @@ function SteamImportModal({
           </Atom.Button>
         </div>
       </div>
-    </Modal>
+    </Molecule.Dialog>
   );
 }
 

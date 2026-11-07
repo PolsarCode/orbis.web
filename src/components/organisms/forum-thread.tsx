@@ -5,7 +5,6 @@ import {
   ArrowRightLeft,
   Lock,
   LockOpen,
-  MessagesSquare,
   MoreHorizontal,
   Pencil,
   Pin,
@@ -41,20 +40,20 @@ import { pageTitle } from "@/lib/site-title";
 import { timeAgo } from "@/lib/time";
 import { useDocumentTitle } from "@/lib/use-document-title";
 import { toggleLike } from "@/lib/votes";
-import { useAuthStore } from "@/stores/auth-store";
+import { requireToken, useAuthStore } from "@/stores/auth-store";
 import { ContentActions } from "./content-actions";
 import { useMemberModeration } from "./member-moderation";
 import {
   ForumBreadcrumb,
+  ForumLoadError,
   ForumPagination,
   categoryCrumbs,
   categoryHref,
-  forumHref,
-  forumToken,
   positiveParam,
   scrollColumnToTop,
   threadHref,
   useForum,
+  useForumLoad,
 } from "./forum-shared";
 import { PostComposer } from "./post-composer";
 import { HiddenNotice } from "./report-content";
@@ -142,12 +141,12 @@ function VisibleForumPostCard({
 
   async function save(content: string, linkUrl?: string, spoiler?: string | null) {
     onChange(
-      await updateForumPost(forumToken(), communityId, post.id, content, linkUrl, spoiler),
+      await updateForumPost(requireToken(), communityId, post.id, content, linkUrl, spoiler),
     );
   }
 
   async function remove() {
-    await deleteForumPost(forumToken(), communityId, post.id);
+    await deleteForumPost(requireToken(), communityId, post.id);
     onDeleted(post);
   }
 
@@ -317,7 +316,7 @@ function MoveThread({
     setPending(true);
     setError(null);
     try {
-      await updateForumThread(forumToken(), communityId, thread.id, { categoryId: category.id });
+      await updateForumThread(requireToken(), communityId, thread.id, { categoryId: category.id });
       onMoved({ id: category.id, name: category.name, section: sectionOf(category.sectionId) });
       onClose();
     } catch (reason) {
@@ -370,7 +369,7 @@ function ThreadMenu({
 
   async function setFlag(flag: "pin" | "lock", on: boolean) {
     try {
-      await setForumThreadFlag(forumToken(), communityId, thread.id, flag, on);
+      await setForumThreadFlag(requireToken(), communityId, thread.id, flag, on);
       onChange(flag === "pin" ? { ...thread, pinned: on } : { ...thread, locked: on });
     } catch (error) {
       message.error(error instanceof Error ? error.message : "Something went wrong.");
@@ -385,7 +384,7 @@ function ThreadMenu({
       okButtonProps: { danger: true },
       cancelText: "Cancel",
       onOk: () =>
-        deleteForumThread(forumToken(), communityId, thread.id)
+        deleteForumThread(requireToken(), communityId, thread.id)
           .then(() => router.push(categoryHref(communityId, thread.category.id)))
           .catch((error: Error) => {
             message.error(error.message);
@@ -487,7 +486,7 @@ function RenameThread({
     setPending(true);
     setError(null);
     try {
-      const updated = await updateForumThread(forumToken(), communityId, thread.id, { title });
+      const updated = await updateForumThread(requireToken(), communityId, thread.id, { title });
       onDone(updated.title);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Something went wrong.");
@@ -526,37 +525,17 @@ export function ForumThreadView() {
   const search = useSearchParams();
   const page = positiveParam(search.get("page"));
   const target = positiveParam(search.get("post"));
-  const key = `${threadId}:${page ?? ""}:${target ?? ""}`;
-  const [attempt, setAttempt] = useState(0);
-  const [loaded, setLoaded] = useState<{
-    key: string;
-    attempt: number;
-    data: ForumThreadDetail | null;
-    error?: string;
-  } | null>(null);
+  const { loaded, setLoaded, data, ready, retry } = useForumLoad(
+    `${community.id}:${threadId}:${page ?? ""}:${target ?? ""}`,
+    () => getForumThread(useAuthStore.getState().token, community.id, threadId, { page, post: target }),
+  );
   const [quoting, setQuoting] = useState<ForumPost | null>(null);
   const [renaming, setRenaming] = useState(false);
   const root = useRef<HTMLElement>(null);
   const composer = useRef<HTMLDivElement>(null);
   const signedIn = useAuthStore((state) => Boolean(state.token));
-  const data = loaded?.key === key ? loaded.data : null;
   useDocumentTitle(pageTitle(data?.thread.title, community.name, data ? null : "Forum"));
 
-  useEffect(() => {
-    let ignore = false;
-    getForumThread(useAuthStore.getState().token, community.id, threadId, { page, post: target })
-      .then((result) => {
-        if (!ignore) setLoaded({ key, attempt, data: result });
-      })
-      .catch((error: Error) => {
-        if (!ignore) setLoaded({ key, attempt, data: null, error: error.message });
-      });
-    return () => {
-      ignore = true;
-    };
-  }, [community.id, threadId, page, target, key, attempt]);
-
-  const ready = loaded?.key === key && loaded.attempt === attempt;
   useEffect(() => {
     if (!ready) return;
     const post = target === undefined ? null : document.getElementById(`post-${target}`);
@@ -569,22 +548,11 @@ export function ForumThreadView() {
   }
   if (!data) {
     return (
-      <Molecule.FeedState
-        eyebrow="Forum"
-        icon={<MessagesSquare size={24} strokeWidth={1.5} />}
+      <ForumLoadError
+        communityId={community.id}
         title="Couldn’t open this thread."
-        description={loaded.error ?? "Please try again."}
-        action={
-          <div className="flex flex-wrap gap-2">
-            <Atom.Button variant="secondary" onClick={() => setAttempt((count) => count + 1)}>
-              Try again
-            </Atom.Button>
-            <Atom.ButtonLink href={forumHref(community.id)} variant="text">
-              Back to the forum
-            </Atom.ButtonLink>
-          </div>
-        }
-        role="alert"
+        error={loaded.error}
+        onRetry={retry}
       />
     );
   }
@@ -634,7 +602,7 @@ export function ForumThreadView() {
       return;
     }
     if (quoting?.author.id === post.author.id) setQuoting(null);
-    setAttempt((count) => count + 1);
+    retry();
   }
 
   function quote(post: ForumPost) {
@@ -644,7 +612,7 @@ export function ForumThreadView() {
 
   async function reply(content: string, linkUrl?: string, spoiler?: string | null) {
     const { id } = await createForumPost(
-      forumToken(),
+      requireToken(),
       community.id,
       thread.id,
       content,
