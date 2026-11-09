@@ -2886,6 +2886,18 @@ export async function updateDiscordChartChannel(
   return (await res.json()).channel;
 }
 
+export async function sendDiscordCharts(
+  token: string,
+  communityId: number,
+  message: string | null,
+): Promise<void> {
+  const res = await send(token, `/communities/${communityId}/discord-charts/send`, "POST", {
+    message,
+  });
+
+  if (!res.ok) throw new Error(await errorMessage(res, "Could not send the charts."));
+}
+
 export async function disconnectDiscordChartChannel(
   token: string,
   communityId: number,
