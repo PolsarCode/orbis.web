@@ -1,0 +1,35 @@
+{
+  "date": "2026-11-09",
+  "versions": ["v0.116.0", "v0.117.0", "v0.118.0", "v0.119.0"],
+  "entries": [
+    {
+      "type": "new",
+      "title": "Weekly charts for anime, manga, and games",
+      "description": "See the most popular titles each week, with arrows for what moved up or down. You can look back at earlier weeks and download any chart as an image to share.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Discuss the weekly charts",
+      "description": "Every weekly chart now has its own discussion under the list, so you can share what you think of that week's picks.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Post weekly charts to your Discord server",
+      "description": "If you run a community, connect a Discord channel in its settings to post the anime, manga, or games chart there every Monday, with your own message and a link to the discussion.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "improved",
+      "title": "The library is now the Catalog",
+      "description": "The Catalog brings everything together in three pages: Discover to find new titles, My library for your own list, and Charts for this week's most popular titles.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "improved",
+      "title": "See which device people are active on",
+      "description": "Presence badges on avatars now show an icon for the device someone used most recently, including when they're on their phone or idle there."
+    }
+  ]
+}
