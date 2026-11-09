@@ -1,13 +1,12 @@
 "use client";
 
-import { Bookmark, Hash, Newspaper, Trophy } from "lucide-react";
+import { Bookmark, Hash, Newspaper } from "lucide-react";
 import * as Atom from "@atom";
 import { useTabScroller } from "@/lib/use-tab-scroller";
 
 export const homeTabs = [
   { value: "feed", label: "Feed", icon: <Newspaper size={16} /> },
   { value: "trending", label: "Trending", icon: <Hash size={16} /> },
-  { value: "charts", label: "Charts", icon: <Trophy size={16} /> },
   { value: "bookmarks", label: "Bookmarks", icon: <Bookmark size={16} /> },
 ] as const;
 

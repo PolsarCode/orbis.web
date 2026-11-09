@@ -2438,6 +2438,7 @@ export async function searchLibrary(
 export type MediaListName = "trending" | "season" | "top" | "upcoming";
 
 export type MediaListItem = MediaResult & {
+  synopsis: string | null;
   bannerImage: string | null;
   releaseStatus: string | null;
   genres: string[];

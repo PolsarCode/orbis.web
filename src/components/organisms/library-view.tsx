@@ -1,13 +1,15 @@
 "use client";
 
-import { App, Dropdown, InputNumber, Select } from "antd";
+import { App, Dropdown, InputNumber, Segmented, Select } from "antd";
 import {
+  BookOpen,
   Bookmark,
   Check,
   ChevronDown,
   ChevronUp,
   CirclePlay,
   CircleX,
+  Gamepad2,
   Library,
   LoaderCircle,
   Lock,
@@ -16,9 +18,13 @@ import {
   Pause,
   Plus,
   Search,
+  Telescope,
+  Trophy,
+  Tv,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type ReactElement, type ReactNode } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
@@ -32,21 +38,31 @@ import {
   type SteamLink,
   updateLibraryEntry,
 } from "@/lib/api";
-import { libraryStatuses, mediaPath, statusLabel } from "@/lib/library";
+import {
+  libraryPath,
+  libraryStatuses,
+  mediaPath,
+  mediaTypeParam,
+  searchable,
+  statusLabel,
+} from "@/lib/library";
 import { useReadOnly } from "@/lib/read-only";
 import { useTabScroller } from "@/lib/use-tab-scroller";
 import { useAuthStore } from "@/stores/auth-store";
 import { useSearchStore } from "@/stores/search-store";
 import {
   useLibraryPreferencesStore,
+  type LibraryPage,
   type LibraryTypeFilter as TypeFilter,
   type LibraryStatusFilter as StatusFilter,
 } from "@/stores/library-preferences-store";
 import { mediaTypes } from "./activity-card";
 import { FriendsSidePanel } from "./friends-panel";
 import { EntryMenu } from "./library-controls";
+import { LibraryDiscover } from "./media-shelf";
 import { PageTour } from "./onboarding";
 import { SearchScope } from "./site-search";
+import { WeeklyCharts } from "./weekly-charts";
 import { pageTitle } from "@/lib/site-title";
 import { useDocumentTitle } from "@/lib/use-document-title";
 
@@ -836,24 +852,51 @@ export function typeLabel(value: TypeFilter, compact = false) {
   );
 }
 
+function LibraryTypeSelect({ size = "small" }: { size?: "small" | "middle" }) {
+  const type = useLibraryPreferencesStore((state) => state.type);
+  const setType = useLibraryPreferencesStore((state) => state.setType);
+
+  return (
+    <Select<TypeFilter>
+      size={size}
+      aria-label="Media type"
+      value={type}
+      onChange={setType}
+      popupMatchSelectWidth={false}
+      className="w-16 sm:w-32"
+      labelRender={({ value }) => typeLabel(value as TypeFilter, true)}
+      options={(["all", "anime", "manga", "game"] as const).map((value) => ({
+        value,
+        label: typeLabel(value),
+      }))}
+    />
+  );
+}
+
+function useStatusTabs(entries: LibraryEntry[] | null) {
+  const type = useLibraryPreferencesStore((state) => state.type);
+  const ofType = (entries ?? []).filter((entry) => type === "all" || entry.mediaType === type);
+  const typeForLabels = type === "all" ? undefined : type;
+
+  return (["all", ...libraryStatuses] as StatusFilter[]).map((value) => ({
+    value,
+    Icon: statusIcons[value],
+    label: value === "all" ? "All" : statusLabel(value, typeForLabels),
+    count:
+      value === "all" ? ofType.length : ofType.filter((entry) => entry.status === value).length,
+  }));
+}
+
 export function LibraryTabs({
   entries,
-  actions,
   bordered = true,
 }: {
   entries: LibraryEntry[] | null;
-  actions?: ReactNode;
   bordered?: boolean;
 }) {
   const status = useLibraryPreferencesStore((state) => state.status);
-  const type = useLibraryPreferencesStore((state) => state.type);
   const setStatus = useLibraryPreferencesStore((state) => state.setStatus);
-  const setType = useLibraryPreferencesStore((state) => state.setType);
-
-  const ofType = (entries ?? []).filter((entry) => type === "all" || entry.mediaType === type);
-  const count = (value: StatusFilter) =>
-    value === "all" ? ofType.length : ofType.filter((entry) => entry.status === value).length;
-  const typeForLabels = type === "all" ? undefined : type;
+  const tabs = useStatusTabs(entries);
   const [tabsRef, tabsFade] = useTabScroller<HTMLDivElement>(status);
 
   return (
@@ -867,8 +910,7 @@ export function LibraryTabs({
         data-tour="library-tabs"
         className="-mb-px flex min-w-0 items-end gap-6 overflow-x-auto overflow-y-hidden [scrollbar-width:none]"
       >
-        {(["all", ...libraryStatuses] as StatusFilter[]).map((value) => {
-          const Icon = statusIcons[value];
+        {tabs.map(({ value, Icon, label, count }) => {
           const active = status === value;
           return (
             <Atom.TabButton
@@ -878,8 +920,8 @@ export function LibraryTabs({
               onClick={() => setStatus(value)}
             >
               <Icon size={16} aria-hidden />
-              {value === "all" ? "All" : statusLabel(value, typeForLabels)}
-              {entries && <span className="text-xs font-normal text-muted">{count(value)}</span>}
+              {label}
+              {entries && <span className="text-xs font-normal text-muted">{count}</span>}
             </Atom.TabButton>
           );
         })}
@@ -888,32 +930,75 @@ export function LibraryTabs({
         data-tour="library-view"
         className="ml-auto flex shrink-0 items-center gap-2 self-center max-sm:order-first max-sm:ml-0 max-sm:w-full max-sm:pt-3"
       >
-        <Select<TypeFilter>
-          size="small"
-          aria-label="Media type"
-          value={type}
-          onChange={setType}
-          popupMatchSelectWidth={false}
-          className="w-16 sm:w-32"
-          labelRender={({ value }) => typeLabel(value as TypeFilter, true)}
-          options={(["all", "anime", "manga", "game"] as const).map((value) => ({
-            value,
-            label: typeLabel(value),
-          }))}
-        />
-        {actions}
+        <LibraryTypeSelect />
       </div>
     </nav>
   );
 }
 
+function LibraryStatusSwitch({ entries }: { entries: LibraryEntry[] | null }) {
+  const status = useLibraryPreferencesStore((state) => state.status);
+  const setStatus = useLibraryPreferencesStore((state) => state.setStatus);
+  const tabs = useStatusTabs(entries);
+  const [tabsRef, tabsFade] = useTabScroller<HTMLDivElement>(status);
+
+  return (
+    <div
+      ref={tabsRef}
+      style={{ ...tabsFade, scrollbarWidth: "none" }}
+      data-tour="library-tabs"
+      className="overflow-x-auto"
+    >
+      <Segmented<StatusFilter>
+        block
+        aria-label="Library sections"
+        className="w-max! min-w-full [&_.ant-segmented-item]:flex-[1_0_auto]"
+        value={status}
+        onChange={setStatus}
+        options={tabs.map(({ value, Icon, label, count }) => ({
+          value,
+          icon: <Icon size={16} aria-hidden />,
+          label: (
+            <span className="inline-flex items-center gap-1.5">
+              {label}
+              {entries && <span className="text-xs text-muted">{count}</span>}
+            </span>
+          ),
+        }))}
+      />
+    </div>
+  );
+}
+
+const typeOptions: { value: MediaType; label: string; icon: ReactNode }[] = [
+  { value: "anime", label: "Anime", icon: <Tv size={16} /> },
+  { value: "manga", label: "Manga", icon: <BookOpen size={16} /> },
+  { value: "game", label: "Games", icon: <Gamepad2 size={16} /> },
+];
+
+function MediaTypeSwitch({ page, type }: { page: "charts" | "discover"; type: MediaType }) {
+  const router = useRouter();
+
+  return (
+    <Segmented<MediaType>
+      block
+      aria-label={page === "charts" ? "Chart types" : "Discover types"}
+      value={type}
+      onChange={(value) => router.push(libraryPath(page, value))}
+      options={typeOptions}
+    />
+  );
+}
+
 function LibraryShelf({
   entries,
+  query,
   onChange,
   onRemove,
   onSuggest,
 }: {
   entries: LibraryEntry[];
+  query: string;
   onChange: (entry: LibraryEntry) => void;
   onRemove: (id: number) => void;
   onSuggest: (query: string) => void;
@@ -922,7 +1007,10 @@ function LibraryShelf({
   const type = useLibraryPreferencesStore((state) => state.type);
   const view = useLibraryPreferencesStore((state) => state.view);
 
-  const shown = filterLibrary(entries, type, status);
+  const search = searchable(query.trim());
+  const shown = filterLibrary(entries, type, status).filter(
+    (entry) => !search || searchable(entry.title).includes(search),
+  );
 
   const boxed = shown.length === 0 || view === "list";
 
@@ -934,7 +1022,9 @@ function LibraryShelf({
           : ""
       }`}
     >
-      {shown.length === 0 ? (
+      {shown.length === 0 && search ? (
+        <p className="text-sm text-muted">No titles in your library match “{query.trim()}”.</p>
+      ) : shown.length === 0 ? (
         <LibraryEmptyState
           entries={entries}
           onSearch={() => searchTitles()}
@@ -955,22 +1045,78 @@ function LibraryShelf({
   );
 }
 
+const libraryPages: { value: LibraryPage; label: string; icon: ReactNode }[] = [
+  { value: "discover", label: "Discover", icon: <Telescope size={16} /> },
+  { value: "mine", label: "My library", icon: <Library size={16} /> },
+  { value: "charts", label: "Charts", icon: <Trophy size={16} /> },
+];
+
+function pageHref(page: LibraryPage, type: MediaType) {
+  return page === "mine" ? "/library?tab=mine" : libraryPath(page, type);
+}
+
+function LibraryPages({ page, type }: { page: LibraryPage | null; type: MediaType }) {
+  return (
+    <nav
+      aria-label="Catalog pages"
+      data-tour="library-pages"
+      className="flex shrink-0 items-end gap-6 overflow-x-auto border-b border-divider px-4 sm:px-8"
+    >
+      {libraryPages.map(({ value, label, icon }) => (
+        <Atom.TabLink
+          key={value}
+          href={pageHref(value, type)}
+          active={page === value}
+          className="-mb-px"
+        >
+          {icon}
+          {label}
+        </Atom.TabLink>
+      ))}
+    </nav>
+  );
+}
+
 export function LibraryView() {
-  useDocumentTitle(pageTitle("Library"));
+  useDocumentTitle(pageTitle("Catalog"));
+  const params = useSearchParams();
+  const router = useRouter();
+  const page = libraryPages.find(({ value }) => value === params.get("tab"))?.value ?? null;
+  const mine = page === "mine";
+  const savedType = useLibraryPreferencesStore((state) => state.mediaType);
+  const type = mine || !page ? savedType : mediaTypeParam(params.get("type"));
+  const [hydrated, setHydrated] = useState(false);
+  const [query, setQuery] = useState("");
   const [entries, setEntries] = useState<LibraryEntry[] | null>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    useLibraryPreferencesStore.persist.rehydrate();
+    let active = true;
+    Promise.resolve(useLibraryPreferencesStore.persist.rehydrate()).then(() => {
+      if (active) setHydrated(true);
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
+    if (!hydrated) return;
+    const { page: saved, mediaType, setPage } = useLibraryPreferencesStore.getState();
+    if (page) setPage(page, type);
+    else router.replace(pageHref(saved, mediaType));
+  }, [hydrated, page, router, type]);
+
+  useEffect(() => {
     const { token } = useAuthStore.getState();
-    if (!token) return;
+    if (!mine || !token) return;
     getLibrary(token)
-      .then(setEntries)
+      .then((found) => {
+        setEntries(found);
+        setFailed(false);
+      })
       .catch(() => setFailed(true));
-  }, []);
+  }, [mine]);
 
   const replace = (entry: LibraryEntry) =>
     setEntries((current) => current?.map((item) => (item.id === entry.id ? entry : item)) ?? null);
@@ -983,27 +1129,51 @@ export function LibraryView() {
         onAdded={(entry) => setEntries((current) => current && [entry, ...current])}
       />
       <Template.PageHeader>
-        <Atom.Heading>Library</Atom.Heading>
+        <Atom.Heading>Catalog</Atom.Heading>
       </Template.PageHeader>
-      <LibraryTabs entries={entries} actions={<ViewToggle />} />
+      <LibraryPages page={page} type={type} />
       <div className="flex min-h-0 flex-1">
         <Template.PageColumn>
-          <div className="flex flex-col gap-6">
-            {failed ? (
-              <Atom.ErrorMessage>Could not load your library.</Atom.ErrorMessage>
-            ) : !entries ? (
-              <Molecule.FeedSkeleton label="Loading your library…" />
-            ) : (
-              <LibraryShelf
-                entries={entries}
-                onSuggest={searchTitles}
-                onChange={replace}
-                onRemove={(id) =>
-                  setEntries((current) => current?.filter((item) => item.id !== id) ?? null)
-                }
-              />
-            )}
-          </div>
+          {!page ? null : page !== "mine" ? (
+            <div className="flex flex-col gap-6">
+              <MediaTypeSwitch page={page} type={type} />
+              {page === "charts" ? <WeeklyCharts /> : <LibraryDiscover />}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              <LibraryStatusSwitch entries={entries} />
+              <div className="flex flex-wrap items-center gap-2">
+                <Atom.Input
+                  allowClear
+                  aria-label="Search your library"
+                  placeholder="Search your library"
+                  prefix={<Search size={14} className="text-muted" />}
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  className="w-full! sm:w-auto! sm:min-w-48 sm:flex-1"
+                />
+                <div data-tour="library-view" className="ml-auto flex shrink-0 items-center gap-2">
+                  <LibraryTypeSelect size="middle" />
+                  <ViewToggle />
+                </div>
+              </div>
+              {failed ? (
+                <Atom.ErrorMessage>Could not load your library.</Atom.ErrorMessage>
+              ) : !entries ? (
+                <Molecule.FeedSkeleton label="Loading your library…" />
+              ) : (
+                <LibraryShelf
+                  entries={entries}
+                  query={query}
+                  onSuggest={searchTitles}
+                  onChange={replace}
+                  onRemove={(id) =>
+                    setEntries((current) => current?.filter((item) => item.id !== id) ?? null)
+                  }
+                />
+              )}
+            </div>
+          )}
         </Template.PageColumn>
         <FriendsSidePanel />
       </div>

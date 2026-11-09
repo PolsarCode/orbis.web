@@ -81,7 +81,7 @@ const sourceLabels: Record<SearchSource, string> = {
 };
 
 const shortcuts = [
-  { href: "/library", label: "Your library", icon: Library },
+  { href: "/library?tab=mine", label: "Your library", icon: Library },
   { href: "/explore", label: "Explore communities", icon: Compass },
   { href: "/notifications", label: "Notifications", icon: Bell },
   { href: "/settings", label: "Settings", icon: Settings },

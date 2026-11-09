@@ -6,14 +6,21 @@ import { libraryStatuses } from "@/lib/library";
 export type LibraryViewMode = "cards" | "list";
 export type LibraryTypeFilter = "all" | MediaType;
 export type LibraryStatusFilter = "all" | LibraryStatus;
+export type LibraryPage = "discover" | "mine" | "charts";
+
+const pages: LibraryPage[] = ["discover", "mine", "charts"];
+const mediaTypes: MediaType[] = ["anime", "manga", "game"];
 
 type LibraryPreferences = {
   type: LibraryTypeFilter;
   status: LibraryStatusFilter;
   view: LibraryViewMode;
+  page: LibraryPage;
+  mediaType: MediaType;
   setType: (type: LibraryTypeFilter) => void;
   setStatus: (status: LibraryStatusFilter) => void;
   setView: (view: LibraryViewMode) => void;
+  setPage: (page: LibraryPage, mediaType: MediaType) => void;
 };
 
 export const useLibraryPreferencesStore = create<LibraryPreferences>()(
@@ -22,13 +29,22 @@ export const useLibraryPreferencesStore = create<LibraryPreferences>()(
       type: "all",
       status: "current",
       view: "list",
+      page: "discover",
+      mediaType: "anime",
       setType: (type) => set({ type }),
       setStatus: (status) => set({ status }),
       setView: (view) => set({ view }),
+      setPage: (page, mediaType) => set({ page, mediaType }),
     }),
     {
       name: "library-preferences",
-      partialize: ({ type, status, view }) => ({ type, status, view }),
+      partialize: ({ type, status, view, page, mediaType }) => ({
+        type,
+        status,
+        view,
+        page,
+        mediaType,
+      }),
       skipHydration: true,
       merge: (saved, current) => {
         if (!saved || typeof saved !== "object") return current;
@@ -41,6 +57,9 @@ export const useLibraryPreferencesStore = create<LibraryPreferences>()(
             ? values.status : current.status,
           view: values.view === "cards" || values.view === "list"
             ? values.view : current.view,
+          page: values.page && pages.includes(values.page) ? values.page : current.page,
+          mediaType: values.mediaType && mediaTypes.includes(values.mediaType)
+            ? values.mediaType : current.mediaType,
         };
       },
     },

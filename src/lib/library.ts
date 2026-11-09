@@ -50,3 +50,19 @@ export function countLabel(item: MediaListItem) {
   if (item.type === "manga" && typeof chapters === "number") return `${chapters} ch`;
   return item.year ? String(item.year) : "TBA";
 }
+
+export const searchable = (text: string) =>
+  text.normalize("NFKD").replace(/\p{M}/gu, "").toLocaleLowerCase();
+
+const mediaTypeValues: MediaType[] = ["anime", "manga", "game"];
+
+export function mediaTypeParam(value: string | null): MediaType {
+  return mediaTypeValues.find((type) => type === value) ?? "anime";
+}
+
+export function libraryPath(tab: "charts" | "discover", type: MediaType, week?: string | null) {
+  const params = new URLSearchParams({ tab });
+  if (type !== "anime") params.set("type", type);
+  if (week) params.set("week", week);
+  return `/library?${params}`;
+}

@@ -7,8 +7,8 @@ import { useEffect, useRef, useState } from "react";
 import * as Atom from "@atom";
 import { getSpotlight, getSpotlights, type AnimeSpotlight as Spotlight } from "@/lib/api";
 
-const SLIDE_MS = 8000;
-const DRIFT_MS = 14000;
+export const SLIDE_MS = 8000;
+export const DRIFT_MS = 14000;
 
 export function useAnimeSpotlight() {
   const [spotlight, setSpotlight] = useState<Spotlight | null>(null);
@@ -98,7 +98,7 @@ function slideImage(spotlight: Spotlight) {
   return spotlight.bannerImage ?? spotlight.coverImage;
 }
 
-const drift: Keyframe[] = [
+export const drift: Keyframe[] = [
   { transform: "scale(1.08) translateX(2.5%)" },
   { transform: "scale(1.16) translateX(-2.5%)" },
 ];

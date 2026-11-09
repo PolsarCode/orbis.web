@@ -438,7 +438,7 @@ export function MediaProfile({ type, sourceId }: { type: string; sourceId: strin
   }, [key, type, sourceId]);
 
   const current = loaded?.key === key ? loaded : null;
-  useDocumentTitle(pageTitle(current?.profile?.title, "Library"));
+  useDocumentTitle(pageTitle(current?.profile?.title, "Catalog"));
 
   if (!current || !current.profile) {
     return (

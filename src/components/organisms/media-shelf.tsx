@@ -12,7 +12,9 @@ import {
   Trophy,
   type LucideIcon,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode, type Ref } from "react";
 import {
   getMediaList,
@@ -22,10 +24,11 @@ import {
   type MediaType,
 } from "@/lib/api";
 import * as Atom from "@atom";
-import { countLabel, mediaPath } from "@/lib/library";
+import { countLabel, mediaPath, mediaTypeParam } from "@/lib/library";
 import { useAuthStore } from "@/stores/auth-store";
 import { useMediaShelfStore } from "@/stores/media-shelf-store";
 import { mediaTypes } from "./activity-card";
+import { drift, DRIFT_MS, SLIDE_MS } from "./anime-spotlight";
 import { AddStatusPill, MediaCover, StatusPill } from "./library-view";
 
 const types: MediaType[] = ["anime", "manga", "game"];
@@ -41,6 +44,8 @@ const ROW_SIZE = 6;
 const SECTION_SIZE = 6;
 const SECTION_SIZE_ON_PHONES = 3;
 const sectionTitles: Record<MediaType, string> = { anime: "Anime", manga: "Manga", game: "Games" };
+const FEATURED = 5;
+const listKey = (type: MediaType, list: MediaListName) => `${type}:${list}`;
 
 function hasList(type: MediaType, list: MediaListName) {
   return !(type === "manga" && list === "upcoming");
@@ -181,53 +186,54 @@ function ShelfItems({
   );
 }
 
-export function MediaShelf({
-  heading,
-  layout = "row",
-  cardClassName = "w-36",
-  className = "",
-}: {
-  heading?: ReactNode;
-  layout?: "row" | "grid";
-  cardClassName?: string;
-  className?: string;
-}) {
+function useMediaLists(keys: string[], ready = true) {
   const token = useAuthStore((state) => state.token);
-  const type = useMediaShelfStore((state) => state.type);
-  const savedList = useMediaShelfStore((state) => state.list);
-  const setType = useMediaShelfStore((state) => state.setType);
-  const setList = useMediaShelfStore((state) => state.setList);
-  const [ready, setReady] = useState(false);
-  const [edges, setEdges] = useState({ back: false, forward: false });
   const [results, setResults] = useState<Record<string, MediaListItem[] | null>>({});
   const requested = useRef(new Set<string>());
-  const row = useRef<HTMLUListElement>(null);
-  const grid = layout === "grid";
-  const list = grid || hasList(type, savedList) ? savedList : "trending";
-  const tabs = grid ? lists : lists.filter((value) => hasList(type, value));
-  const sections = types.filter((value) => hasList(value, list));
-
-  useEffect(() => {
-    let active = true;
-    Promise.resolve(useMediaShelfStore.persist.rehydrate()).then(() => {
-      if (active) setReady(true);
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
+  const wanted = keys.join(",");
 
   useEffect(() => {
     if (!ready) return;
-    for (const value of grid ? types.filter((item) => hasList(item, list)) : [type]) {
-      const key = `${value}:${list}`;
+    for (const key of wanted.split(",")) {
       if (requested.current.has(key)) continue;
       requested.current.add(key);
-      getMediaList(token, value, list)
+      const [type, list] = key.split(":") as [MediaType, MediaListName];
+      getMediaList(token, type, list)
         .then((found) => setResults((current) => ({ ...current, [key]: found })))
         .catch(() => setResults((current) => ({ ...current, [key]: null })));
     }
-  }, [grid, list, ready, token, type]);
+  }, [ready, token, wanted]);
+
+  function setEntry(id: string, entry: SavedEntry) {
+    setResults((current) =>
+      Object.fromEntries(
+        Object.entries(current).map(([key, found]) => [
+          key,
+          found &&
+            found.map((item) =>
+              item.id === id ? { ...item, entry, inLibrary: entry !== null } : item,
+            ),
+        ]),
+      ),
+    );
+  }
+
+  return { results, onEntry: token ? setEntry : undefined };
+}
+
+function ShelfRow({
+  items,
+  list,
+  cardClassName,
+  onEntry,
+}: {
+  items: MediaListItem[] | null | undefined;
+  list: MediaListName;
+  cardClassName: string;
+  onEntry?: (id: string, entry: SavedEntry) => void;
+}) {
+  const [edges, setEdges] = useState({ back: false, forward: false });
+  const row = useRef<HTMLUListElement>(null);
 
   function updateEdges() {
     const element = row.current;
@@ -240,38 +246,94 @@ export function MediaShelf({
   }
 
   useEffect(() => {
-    row.current?.scrollTo({ left: 0 });
-  }, [list, type]);
-
-  const rowItems = results[`${type}:${list}`];
-
-  useEffect(() => {
     const element = row.current;
     if (!element) return;
     const observer = new ResizeObserver(() => updateEdges());
     observer.observe(element);
     return () => observer.disconnect();
-  }, [rowItems]);
-
-  function setEntry(id: string, entry: SavedEntry) {
-    setResults((current) =>
-      Object.fromEntries(
-        Object.entries(current).map(([listKey, found]) => [
-          listKey,
-          found &&
-            found.map((item) =>
-              item.id === id ? { ...item, entry, inLibrary: entry !== null } : item,
-            ),
-        ]),
-      ),
-    );
-  }
+  }, [items]);
 
   function scroll(direction: 1 | -1) {
     const element = row.current;
     if (!element) return;
     element.scrollBy({ left: direction * element.clientWidth * 0.8, behavior: "smooth" });
   }
+
+  return (
+    <div className="relative">
+      <ShelfItems
+        items={items}
+        list={list}
+        grid={false}
+        cardClassName={cardClassName}
+        onEntry={onEntry}
+        rowRef={row}
+        onScroll={updateEdges}
+      />
+      {edges.back && (
+        <span className="absolute top-1/2 left-1 -translate-y-1/2 max-sm:hidden">
+          <Atom.Button
+            variant="secondary"
+            shape="circle"
+            size="small"
+            aria-label="Previous"
+            onClick={() => scroll(-1)}
+            icon={<ChevronLeft size={14} />}
+            className="shadow-md"
+          />
+        </span>
+      )}
+      {edges.forward && (
+        <span className="absolute top-1/2 right-1 -translate-y-1/2 max-sm:hidden">
+          <Atom.Button
+            variant="secondary"
+            shape="circle"
+            size="small"
+            aria-label="Next"
+            onClick={() => scroll(1)}
+            icon={<ChevronRight size={14} />}
+            className="shadow-md"
+          />
+        </span>
+      )}
+    </div>
+  );
+}
+
+export function MediaShelf({
+  heading,
+  layout = "row",
+  cardClassName = "w-36",
+  className = "",
+}: {
+  heading?: ReactNode;
+  layout?: "row" | "grid";
+  cardClassName?: string;
+  className?: string;
+}) {
+  const type = useMediaShelfStore((state) => state.type);
+  const savedList = useMediaShelfStore((state) => state.list);
+  const setType = useMediaShelfStore((state) => state.setType);
+  const setList = useMediaShelfStore((state) => state.setList);
+  const [ready, setReady] = useState(false);
+  const grid = layout === "grid";
+  const list = grid || hasList(type, savedList) ? savedList : "trending";
+  const tabs = grid ? lists : lists.filter((value) => hasList(type, value));
+  const sections = types.filter((value) => hasList(value, list));
+  const { results, onEntry } = useMediaLists(
+    (grid ? sections : [type]).map((value) => listKey(value, list)),
+    ready,
+  );
+
+  useEffect(() => {
+    let active = true;
+    Promise.resolve(useMediaShelfStore.persist.rehydrate()).then(() => {
+      if (active) setReady(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
@@ -281,8 +343,6 @@ export function MediaShelf({
     setList(next);
     document.getElementById(`media-shelf-${next}`)?.focus();
   }
-
-  const onEntry = token ? setEntry : undefined;
 
   return (
     <section aria-label="Discover anime, manga, and games" className={`flex min-w-0 flex-col gap-3 ${className}`}>
@@ -350,7 +410,7 @@ export function MediaShelf({
                 {sectionTitles[value]}
               </h3>
               <ShelfItems
-                items={results[`${value}:${list}`]}
+                items={results[listKey(value, list)]}
                 list={list}
                 grid
                 cardClassName={cardClassName}
@@ -359,45 +419,208 @@ export function MediaShelf({
             </section>
           ))
         ) : (
-          <div className="relative">
-            <ShelfItems
-              items={rowItems}
-              list={list}
-              grid={false}
-              cardClassName={cardClassName}
-              onEntry={onEntry}
-              rowRef={row}
-              onScroll={updateEdges}
-            />
-            {edges.back && (
-              <span className="absolute top-1/2 left-1 -translate-y-1/2 max-sm:hidden">
-                <Atom.Button
-                  variant="secondary"
-                  shape="circle"
-                  size="small"
-                  aria-label="Previous"
-                  onClick={() => scroll(-1)}
-                  icon={<ChevronLeft size={14} />}
-                  className="shadow-md"
-                />
-              </span>
-            )}
-            {edges.forward && (
-              <span className="absolute top-1/2 right-1 -translate-y-1/2 max-sm:hidden">
-                <Atom.Button
-                  variant="secondary"
-                  shape="circle"
-                  size="small"
-                  aria-label="Next"
-                  onClick={() => scroll(1)}
-                  icon={<ChevronRight size={14} />}
-                  className="shadow-md"
-                />
-              </span>
-            )}
-          </div>
+          <ShelfRow
+            key={listKey(type, list)}
+            items={results[listKey(type, list)]}
+            list={list}
+            cardClassName={cardClassName}
+            onEntry={onEntry}
+          />
         )}
       </div>
     </section>
+  );
+}
+
+function FeaturedSlide({
+  item,
+  rank,
+  visible,
+  onEntry,
+}: {
+  item: MediaListItem;
+  rank: number;
+  visible: boolean;
+  onEntry?: (entry: SavedEntry) => void;
+}) {
+  const href = mediaPath(item.type, item.sourceId);
+  const backdrop = item.bannerImage ?? item.coverImage;
+  const entry = item.entry && { ...item.entry, mediaType: item.type, title: item.title };
+  const meta = [countLabel(item), ...item.genres.slice(0, 3)];
+  const frame = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!visible || !frame.current) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    frame.current.animate(drift, { duration: DRIFT_MS, easing: "linear", fill: "forwards" });
+  }, [visible]);
+
+  return (
+    <div
+      inert={!visible}
+      className={`absolute inset-0 transition-opacity ease-in-out motion-reduce:transition-none ${
+        visible ? "opacity-100 delay-200 duration-700" : "pointer-events-none opacity-0 duration-300"
+      }`}
+    >
+      {backdrop && (
+        <div
+          ref={frame}
+          style={{ transform: String(drift[0].transform) }}
+          className="absolute inset-0"
+        >
+          <Image
+            src={backdrop}
+            alt=""
+            fill
+            unoptimized
+            sizes="(min-width: 1024px) 50vw, 100vw"
+            className={`object-cover ${item.bannerImage ? "" : "scale-110 blur-2xl"}`}
+          />
+        </div>
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/10 sm:bg-gradient-to-r sm:from-black/90 sm:via-black/65 sm:to-black/10" />
+      <div className="relative flex h-full items-end gap-5 p-5 sm:p-6">
+        <Link href={href} tabIndex={-1} aria-hidden className="shrink-0 max-sm:hidden">
+          <MediaCover src={item.coverImage} className="w-28 shadow-lg" />
+        </Link>
+        <div className="flex min-w-0 flex-1 flex-col items-start gap-2 text-white">
+          <span className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-white/80 uppercase">
+            <Flame size={14} aria-hidden className="text-accent" />#{rank} trending
+          </span>
+          <Link
+            href={href}
+            className="focus-ring line-clamp-2 rounded-sm font-display text-2xl leading-tight font-bold hover:underline sm:text-3xl"
+          >
+            {item.title}
+          </Link>
+          <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-white/80">
+            {item.score !== null && (
+              <span className="flex items-center gap-1 font-semibold text-white">
+                <Star size={12} aria-hidden className="fill-current text-warning" />
+                {item.score.toFixed(1)}
+              </span>
+            )}
+            {meta.join(" · ")}
+          </span>
+          {item.synopsis && (
+            <p className="line-clamp-2 max-w-xl text-sm leading-relaxed text-white/85 max-sm:hidden">
+              {item.synopsis}
+            </p>
+          )}
+          {onEntry && (
+            <div className="pt-1">
+              {entry ? (
+                <StatusPill entry={entry} onChange={(changed) => onEntry(saved(changed))} />
+              ) : (
+                <AddStatusPill media={item} onAdded={(added) => onEntry(saved(added))} />
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Featured({
+  items,
+  onEntry,
+}: {
+  items: MediaListItem[] | null | undefined;
+  onEntry?: (id: string, entry: SavedEntry) => void;
+}) {
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const slides = (items ?? []).slice(0, FEATURED);
+  const count = slides.length;
+
+  useEffect(() => {
+    if (count < 2 || paused) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = setTimeout(() => setIndex((value) => (value + 1) % count), SLIDE_MS);
+    return () => clearTimeout(timer);
+  }, [count, index, paused]);
+
+  if (items === null || (items && count === 0)) return null;
+  if (!items) {
+    return (
+      <div
+        aria-hidden
+        className="h-72 animate-pulse rounded-lg border border-divider bg-rail-item motion-reduce:animate-none sm:h-80"
+      />
+    );
+  }
+
+  return (
+    <section
+      aria-roledescription="carousel"
+      aria-label="Featured"
+      onFocus={(event) => {
+        if (event.target.matches(":focus-visible")) setPaused(true);
+      }}
+      onBlur={() => setPaused(false)}
+      className="relative isolate h-72 overflow-hidden rounded-lg border border-divider bg-rail sm:h-80"
+    >
+      {slides.map((item, position) => (
+        <FeaturedSlide
+          key={item.id}
+          item={item}
+          rank={position + 1}
+          visible={position === index}
+          onEntry={onEntry && ((entry) => onEntry(item.id, entry))}
+        />
+      ))}
+      <div className="absolute right-5 bottom-5 flex items-center gap-1.5 sm:right-6 sm:bottom-6">
+        {slides.map((item, position) => (
+          <button
+            key={item.id}
+            type="button"
+            aria-label={`Show ${item.title}`}
+            aria-current={position === index}
+            onClick={() => setIndex(position)}
+            className={`focus-ring h-1.5 cursor-pointer rounded-full transition-all motion-reduce:transition-none ${
+              position === index ? "w-6 bg-white" : "w-1.5 bg-white/50 hover:bg-white/80"
+            }`}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export function LibraryDiscover() {
+  const type = mediaTypeParam(useSearchParams().get("type"));
+  const shown = lists.filter((list) => hasList(type, list));
+  const { results, onEntry } = useMediaLists(shown.map((list) => listKey(type, list)));
+
+  return (
+    <div className="flex flex-col gap-8">
+      <Featured key={type} items={results[listKey(type, "trending")]} onEntry={onEntry} />
+      {shown.map((list) => {
+        const Icon = listIcons[list];
+        return (
+          <section
+            key={list}
+            aria-labelledby={`media-list-${list}`}
+            className="flex min-w-0 flex-col gap-3"
+          >
+            <h2
+              id={`media-list-${list}`}
+              className="flex items-center gap-2 font-display text-xl font-bold"
+            >
+              <Icon size={18} aria-hidden className="text-accent" />
+              {listLabel(list, type)}
+            </h2>
+            <ShelfRow
+              key={listKey(type, list)}
+              items={results[listKey(type, list)]}
+              list={list}
+              cardClassName="w-32 sm:w-36"
+              onEntry={onEntry}
+            />
+          </section>
+        );
+      })}
+    </div>
   );
 }

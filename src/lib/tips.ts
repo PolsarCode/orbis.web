@@ -142,4 +142,10 @@ export const tips: Tip[] = [
     body: "Add keyword filters in Privacy settings to collapse posts and comments that mention them. To mute or block someone, open the … menu on their profile.",
     action: { label: "Open Privacy", href: "/settings?tab=privacy" },
   },
+  {
+    id: "weekly-charts",
+    title: "See this week’s top titles",
+    body: "Charts in the Catalog ranks the most popular anime, manga, and games every week, with arrows for what moved up or down. Use the download button to save a chart as an image to share.",
+    action: { label: "Open charts", href: "/library?tab=charts" },
+  },
 ];

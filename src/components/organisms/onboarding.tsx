@@ -26,9 +26,9 @@ export const tourStops: TourStop[] = [
   {
     target: "library",
     placement: "right",
-    title: "Your library",
+    title: "Catalog",
     description:
-      "Track the anime, manga, and games you’re watching, reading, and playing. Open any title to read more, and public updates show up in your communities’ feeds.",
+      "Discover what’s trending, see the weekly charts, and track what you’re watching, reading, and playing in My library. Public updates show up in your communities’ feeds.",
   },
   {
     target: "communities",
@@ -179,7 +179,7 @@ export const checklistItems: ChecklistItem[] = [
     title: "Add something to your library",
     hint: (
       <>
-        Search your favourites in the <ChecklistLink href="/library">Library</ChecklistLink>.
+        Search your favourites in the <ChecklistLink href="/library">Catalog</ChecklistLink>.
       </>
     ),
   },
@@ -372,6 +372,13 @@ export const pageTours = {
       description: "Search for a title and add it to your library. On this page, titles show up first.",
     },
     {
+      target: "library-pages",
+      placement: "bottom",
+      title: "Discover, your library, and charts",
+      description:
+        "Discover has what’s trending, new, top-rated, and coming soon. My library has everything you’ve added, and Charts ranks the top titles of each week.",
+    },
+    {
       target: "library-tabs",
       placement: "bottom",
       title: "Your shelves",
@@ -381,7 +388,7 @@ export const pageTours = {
       target: "library-view",
       placement: "bottomRight",
       title: "Type and view",
-      description: "Show only anime, manga, or games, and switch between cards and a list.",
+      description: "Search your library, show only anime, manga, or games, and switch between cards and a list.",
     },
   ],
   media: [

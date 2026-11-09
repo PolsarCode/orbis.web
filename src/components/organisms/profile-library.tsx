@@ -6,7 +6,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import { getLibrary, type LibraryStatus, type MediaType, type SteamLink } from "@/lib/api";
-import { libraryStatuses, statusLabel } from "@/lib/library";
+import { libraryStatuses, searchable, statusLabel } from "@/lib/library";
 import { useTabScroller } from "@/lib/use-tab-scroller";
 import { useAuthStore } from "@/stores/auth-store";
 import { ReadOnlyLibraryCard, typeLabel } from "./library-view";
@@ -37,9 +37,6 @@ const mediaTypeOrder: MediaType[] = ["anime", "manga", "game"];
 
 const mediaKey = (entry: { mediaType: MediaType; sourceId: string }) =>
   `${entry.mediaType}:${entry.sourceId}`;
-
-const searchable = (text: string) =>
-  text.normalize("NFKD").replace(/\p{M}/gu, "").toLocaleLowerCase();
 
 const byTitle = (a: ShelfEntry, b: ShelfEntry) =>
   a.title.localeCompare(b.title, undefined, { sensitivity: "base", numeric: true });
