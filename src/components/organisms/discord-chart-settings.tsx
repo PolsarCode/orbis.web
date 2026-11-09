@@ -59,10 +59,17 @@ function currentWeek(now = new Date()) {
   };
 }
 
+const listFormat = new Intl.ListFormat("en-GB");
+
+function turnedOnLabels(channel: DiscordChartChannel) {
+  return typeLabels.filter(({ key }) => channel[key]).map(({ label }) => label);
+}
+
 function messageValues(channel: DiscordChartChannel): Record<string, string> {
   const { week, year, startsAt, endsAt } = currentWeek();
+  const labels = turnedOnLabels(channel);
   return {
-    type: typeLabels.find(({ key }) => channel[key])?.label ?? "Anime",
+    type: listFormat.format(labels.length ? labels : ["Anime"]),
     date: new Date(startsAt).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
@@ -77,7 +84,6 @@ function messageValues(channel: DiscordChartChannel): Record<string, string> {
 
 const variables = ["type", "date", "dates", "week", "year"];
 
-const listFormat = new Intl.ListFormat("en-US");
 const MENTION = /@(everyone|here)\b/;
 
 function fillMessage(message: string, values: Record<string, string>) {
@@ -106,7 +112,7 @@ export function DiscordChartSettings({ community }: { community: Community }) {
   const values = channel ? messageValues(channel) : {};
   const message = draft ?? channel?.message ?? "";
   const changed = message.trim() !== (channel?.message ?? "");
-  const turnedOn = channel ? typeLabels.filter(({ key }) => channel[key]) : [];
+  const turnedOn = channel ? turnedOnLabels(channel) : [];
   const canSend = turnedOn.length > 0 && !readOnly && !lost;
 
   function editMessage(next: string) {
@@ -151,7 +157,7 @@ export function DiscordChartSettings({ community }: { community: Community }) {
   return (
     <DiscordPart
       title="Weekly charts"
-      description="Every Monday, post the week’s anime, manga, or games chart as an image to a channel in your Discord server, with your message and a link to its discussion on Orbis."
+      description="Every Monday, post the week’s charts you turn on to a channel in your Discord server, together in one post with your message and links to their discussions on Orbis."
     >
       <DiscordWebhookConnection
         title="Charts channel"
@@ -218,7 +224,9 @@ export function DiscordChartSettings({ community }: { community: Community }) {
                   <p className="whitespace-pre-wrap">{fillMessage(message.trim(), values)}</p>
                 )}
                 <p className="text-muted">
-                  Join the discussion at {window.location.origin}/library?tab=charts…
+                  {turnedOn.length > 1
+                    ? `Join the discussion: ${turnedOn.join(" · ")}`
+                    : `Join the discussion at ${window.location.origin}/library?tab=charts…`}
                 </p>
               </div>
             </div>
@@ -237,8 +245,8 @@ export function DiscordChartSettings({ community }: { community: Community }) {
                 title="Send this week’s charts to Discord now?"
                 description={
                   <span className="block max-w-64">
-                    Posts the {listFormat.format(turnedOn.map(({ label }) => label))}{" "}
-                    {turnedOn.length === 1 ? "chart" : "charts"}
+                    Posts the {listFormat.format(turnedOn)}{" "}
+                    {turnedOn.length === 1 ? "chart" : "charts in one post"}
                     {message.trim() ? " with the message above" : ""}
                     {MENTION.test(message) ? ", which notifies everyone" : ""}. Monday’s post still
                     goes out{changed ? " with your saved message" : ""}.

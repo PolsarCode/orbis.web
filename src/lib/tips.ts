@@ -157,6 +157,6 @@ export const tips: Tip[] = [
   {
     id: "community-discord-charts",
     title: "Post the weekly charts to Discord",
-    body: "If you run a community, connect a Discord channel for weekly charts under Connections in the community’s settings. Every Monday, the anime, manga, or games chart is posted there with your message.",
+    body: "If you run a community, connect a Discord channel for weekly charts under Connections in the community’s settings. Every Monday, the anime, manga, and games charts you pick are posted there together, with your message.",
   },
 ];
