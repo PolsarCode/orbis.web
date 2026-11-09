@@ -35,6 +35,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useCommunityStore } from "@/stores/community-store";
 import { linkPlatforms, normalizeLink } from "./community-links";
 import { DiscordChannelSettings } from "./discord-channel-settings";
+import { DiscordChartSettings } from "./discord-chart-settings";
 import { DISCORD_CHECK_MS, DiscordWidgetSteps } from "./discord-setup";
 import { CommunityBanSettings } from "./community-ban-settings";
 import { ForumCategorySettings } from "./forum-category-settings";
@@ -894,6 +895,7 @@ export function CommunitySettings({
               <TwitchSettings community={community} />
               <DiscordSettings community={community} />
               <DiscordChannelSettings community={community} />
+              <DiscordChartSettings community={community} />
               <LinksSettings community={community} />
             </>
           ),

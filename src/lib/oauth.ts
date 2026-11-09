@@ -1,4 +1,10 @@
-import { getOAuthUrl, getSteamConnectUrl, type DiscordServer, type OAuthProvider } from "./api";
+import {
+  getOAuthUrl,
+  getSteamConnectUrl,
+  type DiscordServer,
+  type OAuthProvider,
+  type OAuthTarget,
+} from "./api";
 
 const NONCE_KEY = "oauth-nonce";
 const SIGNUP_KEY = "oauth-signup";
@@ -62,7 +68,7 @@ export async function startOAuth(
   provider: OAuthProvider,
   token?: string,
   communityId?: number,
-  target?: "channel",
+  target?: OAuthTarget,
   client: "web" | "mobile" = "web",
 ) {
   const nonce = crypto.randomUUID().replaceAll("-", "");

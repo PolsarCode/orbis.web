@@ -148,4 +148,15 @@ export const tips: Tip[] = [
     body: "Charts in the Catalog ranks the most popular anime, manga, and games every week, with arrows for what moved up or down. Use the download button to save a chart as an image to share.",
     action: { label: "Open charts", href: "/library?tab=charts" },
   },
+  {
+    id: "chart-discussions",
+    title: "Talk about the weekly charts",
+    body: "Every weekly chart has its own discussion under the list. Share what you think of this week’s picks, or look back at earlier weeks.",
+    action: { label: "Join the discussion", href: "/library?tab=charts#discussion" },
+  },
+  {
+    id: "community-discord-charts",
+    title: "Post the weekly charts to Discord",
+    body: "If you run a community, connect a Discord channel for weekly charts under Connections in the community’s settings. Every Monday, the anime, manga, or games chart is posted there with your message.",
+  },
 ];

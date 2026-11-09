@@ -83,7 +83,8 @@ function DockShelf({
 export function LibraryDock() {
   const profile = useAuthStore((state) => state.profile);
   const pathname = usePathname();
-  const locked = pathname === "/library";
+  const libraryPage = useLibraryPreferencesStore((state) => state.page);
+  const locked = pathname === "/library" && libraryPage === "mine";
   const storedOpen = useLayoutStore((state) => state.dockOpen);
   const open = storedOpen && !locked;
   const [settled, setSettled] = useState(false);

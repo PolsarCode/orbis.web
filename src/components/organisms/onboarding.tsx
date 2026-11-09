@@ -376,7 +376,7 @@ export const pageTours = {
       placement: "bottom",
       title: "Discover, your library, and charts",
       description:
-        "Discover has what’s trending, new, top-rated, and coming soon. My library has everything you’ve added, and Charts ranks the top titles of each week.",
+        "Discover has what’s trending, new, top-rated, and coming soon. My library has everything you’ve added, and Charts ranks the top titles of each week, with a discussion under each chart.",
     },
     {
       target: "library-tabs",

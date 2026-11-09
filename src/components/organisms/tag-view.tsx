@@ -19,10 +19,12 @@ import {
   type EditTarget,
   type FeedEntry,
   type Post,
+  type TagCommentTarget,
   type TagItem,
   type TagPage,
 } from "@/lib/api";
 import { displayName } from "@/lib/display-name";
+import { libraryPath } from "@/lib/library";
 import { currentPath, loginUrl } from "@/lib/login";
 import { pageTitle } from "@/lib/site-title";
 import { tagPeople } from "@/lib/tags";
@@ -39,6 +41,7 @@ import { SearchScope } from "./site-search";
 
 type TagComment = Extract<TagItem, { kind: "comment" }>;
 type TagForumPost = Extract<TagItem, { kind: "forum_post" }>;
+type FeedTarget = Extract<TagCommentTarget, { chart: null }>;
 
 function tagItemKey(item: TagItem) {
   if (item.kind === "post") return `post-${item.post.id}`;
@@ -53,7 +56,7 @@ function loadTarget({
   community,
   media,
   wallUser,
-}: TagComment["target"]): Promise<FeedEntry> {
+}: FeedTarget): Promise<FeedEntry> {
   const { token } = useAuthStore.getState();
   if (type === "activity") return getProfileActivity(token, author.username, id);
   if (community) return getCommunityPost(token, community.id, id);
@@ -61,7 +64,12 @@ function loadTarget({
   return getProfilePost(token, (wallUser ?? author).username, id);
 }
 
-function commentContext({ type, author, community }: TagComment["target"]) {
+function commentContext(target: TagCommentTarget) {
+  if (target.type === "chart") {
+    const { type } = target.chart;
+    return `Comment on the weekly ${type === "game" ? "games" : type} chart`;
+  }
+  const { type, author, community } = target;
   const owner = `${displayName(author)}’s ${type === "activity" ? "library update" : "post"}`;
   return community ? `Comment on ${owner} in ${community.name}` : `Comment on ${owner}`;
 }
@@ -154,13 +162,13 @@ function CommentItem({
   opening: boolean;
   onOpen: () => void;
 }) {
-  const { comment } = item;
+  const { comment, target } = item;
 
   return (
     <article className="flex flex-col gap-4 rounded-lg border border-divider bg-surface p-5">
       <p className="-mb-2 flex min-w-0 items-center gap-1.5 text-xs text-muted">
         <MessageCircle size={13} aria-hidden className="shrink-0" />
-        <span className="truncate">{commentContext(item.target)}</span>
+        <span className="truncate">{commentContext(target)}</span>
       </p>
       <ItemHeader
         author={comment.author}
@@ -173,16 +181,28 @@ function CommentItem({
         linkUrl={comment.linkUrl}
         spoiler={comment.spoiler}
       />
-      <Atom.Button
-        size="small"
-        variant="secondary"
-        icon={<MessagesSquare size={14} />}
-        loading={opening}
-        onClick={onOpen}
-        className="self-start"
-      >
-        View the discussion
-      </Atom.Button>
+      {target.type === "chart" ? (
+        <Atom.ButtonLink
+          href={`${libraryPath("charts", target.chart.type, target.chart.week)}#discussion`}
+          size="small"
+          variant="secondary"
+          icon={<MessagesSquare size={14} />}
+          className="self-start"
+        >
+          View the discussion
+        </Atom.ButtonLink>
+      ) : (
+        <Atom.Button
+          size="small"
+          variant="secondary"
+          icon={<MessagesSquare size={14} />}
+          loading={opening}
+          onClick={onOpen}
+          className="self-start"
+        >
+          View the discussion
+        </Atom.Button>
+      )}
     </article>
   );
 }
@@ -317,6 +337,7 @@ export function TagView({ name }: { name: string }) {
   }
 
   async function openDiscussion(item: TagComment) {
+    if (item.target.type === "chart") return;
     setOpening(tagItemKey(item));
     try {
       setOpen(await loadTarget(item.target));

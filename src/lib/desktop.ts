@@ -1,4 +1,5 @@
 import type { Device } from "./api";
+import { HANDHELD } from "./install-prompt";
 
 export const desktopScript = `try{if("__TAURI_INTERNALS__"in window&&/Mac/.test(navigator.platform))document.documentElement.dataset.desktop="mac"}catch(e){}`;
 
@@ -7,7 +8,8 @@ export function inDesktopApp() {
 }
 
 export function currentDevice(): Device {
-  return inDesktopApp() ? "desktop" : "web";
+  if (inDesktopApp()) return "desktop";
+  return typeof window !== "undefined" && matchMedia(HANDHELD).matches ? "mobile" : "web";
 }
 
 export async function requestDesktopAttention() {

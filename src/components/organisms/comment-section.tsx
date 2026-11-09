@@ -77,7 +77,7 @@ function CommentItem({
   }
 
   return (
-    <li className="flex flex-col gap-3">
+    <li id={`comment-${node.id}`} className="flex scroll-mt-20 flex-col gap-3 rounded-md">
       {node.deleted ? (
         <p className="text-sm text-muted italic">Comment deleted</p>
       ) : (

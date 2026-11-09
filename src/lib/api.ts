@@ -546,7 +546,7 @@ export type Comment = {
   author: Author;
 };
 
-export type Commentable = { type: FeedEntry["type"]; id: number };
+export type Commentable = { type: FeedEntry["type"] | "chart"; id: number };
 
 export type Likeable = { type: "post" | "activity" | "comment" | "forum_post"; id: number };
 
@@ -1717,21 +1717,29 @@ export type Tag = TagSummary & { following: boolean; people: number; window: Tag
 
 export type TagSearchResult = TagSummary & { uses: number };
 
+export type TagCommentTarget =
+  | {
+      type: FeedEntry["type"];
+      id: number;
+      author: Author;
+      community: CommunitySummary | null;
+      media: { type: MediaType; sourceId: string } | null;
+      wallUser: Author | null;
+      chart: null;
+    }
+  | {
+      type: "chart";
+      id: number;
+      author: null;
+      community: null;
+      media: null;
+      wallUser: null;
+      chart: { type: MediaType; week: string };
+    };
+
 export type TagItem =
   | { kind: "post"; createdAt: string; post: Post }
-  | {
-      kind: "comment";
-      createdAt: string;
-      comment: Comment;
-      target: {
-        type: Commentable["type"];
-        id: number;
-        author: Author;
-        community: CommunitySummary | null;
-        media: { type: MediaType; sourceId: string } | null;
-        wallUser: Author | null;
-      };
-    }
+  | { kind: "comment"; createdAt: string; comment: Comment; target: TagCommentTarget }
   | {
       kind: "forum_post";
       createdAt: string;
@@ -2493,6 +2501,22 @@ export async function getChart(
   return res.json();
 }
 
+export type ChartDiscussion = { id: number; commentCount: number };
+
+export async function getChartDiscussion(
+  token: string | null,
+  type: MediaType,
+  week: string,
+): Promise<ChartDiscussion | null> {
+  const res = await api(withQuery(`/library/charts/${type}/discussion`, { week }), {
+    headers: authHeaders(token),
+  });
+
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(await errorMessage(res, "This discussion isn’t available right now."));
+  return res.json();
+}
+
 export async function getLibrary(token: string): Promise<LibraryEntry[]> {
   const res = await send(token, "/library");
 
@@ -2609,6 +2633,8 @@ export async function getPublicCommunities(): Promise<PublicCommunity[]> {
 
 export type OAuthProvider = "discord" | "twitch";
 
+export type OAuthTarget = "channel" | "charts";
+
 export type OAuthConnection = {
   provider: OAuthProvider;
   username: string;
@@ -2648,7 +2674,7 @@ export async function getOAuthUrl(
   token?: string,
   communityId?: number,
   client: "web" | "mobile" = "web",
-  target?: "channel",
+  target?: OAuthTarget,
 ): Promise<string> {
   const params = new URLSearchParams({ nonce });
   if (client !== "web") params.set("client", client);
@@ -2818,6 +2844,53 @@ export async function updateDiscordChannel(
 
 export async function disconnectDiscordChannel(token: string, communityId: number): Promise<void> {
   const res = await send(token, `/communities/${communityId}/discord-channel`, "DELETE");
+
+  if (!res.ok) throw new Error(await errorMessage(res, "Could not disconnect the channel."));
+}
+
+export type DiscordChartChannel = {
+  guildId: string;
+  guildName: string | null;
+  channelId: string;
+  isForum: boolean;
+  sendAnime: boolean;
+  sendManga: boolean;
+  sendGames: boolean;
+  message: string | null;
+  lostAt: string | null;
+  createdAt: string;
+};
+
+export type DiscordChartChannelSettings = Partial<
+  Pick<DiscordChartChannel, "sendAnime" | "sendManga" | "sendGames" | "message">
+>;
+
+export async function getDiscordChartChannel(
+  token: string,
+  communityId: number,
+): Promise<DiscordChartChannel | null> {
+  const res = await send(token, `/communities/${communityId}/discord-charts`);
+
+  if (!res.ok) throw new Error(await errorMessage(res, "Could not load the Discord channel."));
+  return (await res.json()).channel;
+}
+
+export async function updateDiscordChartChannel(
+  token: string,
+  communityId: number,
+  settings: DiscordChartChannelSettings,
+): Promise<DiscordChartChannel | null> {
+  const res = await send(token, `/communities/${communityId}/discord-charts`, "PATCH", settings);
+
+  if (!res.ok) throw new Error(await errorMessage(res, "Could not save that."));
+  return (await res.json()).channel;
+}
+
+export async function disconnectDiscordChartChannel(
+  token: string,
+  communityId: number,
+): Promise<void> {
+  const res = await send(token, `/communities/${communityId}/discord-charts`, "DELETE");
 
   if (!res.ok) throw new Error(await errorMessage(res, "Could not disconnect the channel."));
 }

@@ -18,6 +18,7 @@ export * from "./community-settings";
 export * from "./create-community-modal";
 export * from "./feedback-dock";
 export * from "./discussion-modal";
+export * from "./discord-chart-settings";
 export * from "./directory-view";
 export * from "./friends-panel";
 export * from "./group-chat-modals";

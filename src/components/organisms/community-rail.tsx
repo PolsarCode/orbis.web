@@ -22,10 +22,10 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
-  Clapperboard,
   Compass,
   Folder,
   House,
+  Orbit,
   Plus,
 } from "lucide-react";
 import { Dropdown, Tooltip } from "antd";
@@ -648,7 +648,7 @@ export function CommunityRail() {
             data-tour="library"
             className={itemClass(inLibrary)}
           >
-            <Clapperboard size={20} />
+            <Orbit size={20} />
           </Link>
         </RailSlot>
         <li aria-hidden className="h-px w-full shrink-0 bg-divider" />

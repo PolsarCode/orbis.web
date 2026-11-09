@@ -2,13 +2,16 @@
 
 import { App, Dropdown, InputNumber, Segmented, Select } from "antd";
 import {
+  ArrowDownAZ,
   BookOpen,
   Bookmark,
+  CalendarDays,
   Check,
   ChevronDown,
   ChevronUp,
   CirclePlay,
   CircleX,
+  Clock,
   Gamepad2,
   Library,
   LoaderCircle,
@@ -53,6 +56,8 @@ import { useSearchStore } from "@/stores/search-store";
 import {
   useLibraryPreferencesStore,
   type LibraryPage,
+  type LibrarySort,
+  type LibraryViewMode,
   type LibraryTypeFilter as TypeFilter,
   type LibraryStatusFilter as StatusFilter,
 } from "@/stores/library-preferences-store";
@@ -194,34 +199,7 @@ function ListView({
   return (
     <ul className="flex flex-col divide-y divide-divider">
       {entries.map((entry) => (
-        <li key={entry.id} className="flex flex-wrap items-center gap-3 px-5 py-3 first:pt-0 last:pb-0">
-          <Link
-            href={mediaPath(entry.mediaType, entry.sourceId)}
-            className="focus-ring rounded-md"
-          >
-            <MediaCover src={entry.coverImage} className="w-10" square />
-          </Link>
-          <div className="flex min-w-0 flex-1 basis-40 flex-col gap-1">
-            <Link
-              href={mediaPath(entry.mediaType, entry.sourceId)}
-              className="focus-ring truncate rounded-sm text-sm font-semibold hover:underline"
-            >
-              {entry.title}
-            </Link>
-            <span className="flex items-center gap-2 text-xs text-muted">
-              <span className="flex items-center gap-1">
-                {mediaTypes[entry.mediaType].icon}
-                {mediaTypes[entry.mediaType].label}
-              </span>
-              {!entry.isPublic && (
-                <span className="flex items-center gap-1">
-                  <Lock size={12} />
-                  Private
-                </span>
-              )}
-              {entry.steam && <Molecule.SteamBadge steam={entry.steam} title={entry.title} />}
-            </span>
-          </div>
+        <EntryRow key={entry.id} entry={entry}>
           <ProgressStepper entry={entry} onChange={onChange} className="w-32 bg-rail-item" />
           <StatusSelect entry={entry} onChange={onChange} />
           <EntryMenu
@@ -238,7 +216,7 @@ function ListView({
               </button>
             }
           />
-        </li>
+        </EntryRow>
       ))}
     </ul>
   );
@@ -607,6 +585,40 @@ function CardLayout({
   );
 }
 
+function EntryRow({ entry, children }: { entry: CardEntry; children: ReactNode }) {
+  const href = mediaPath(entry.mediaType, entry.sourceId);
+
+  return (
+    <li className="flex flex-wrap items-center gap-3 px-5 py-3 first:pt-0 last:pb-0">
+      <Link href={href} className="focus-ring rounded-md">
+        <MediaCover src={entry.coverImage} className="w-10" square />
+      </Link>
+      <div className="flex min-w-0 flex-1 basis-40 flex-col gap-1">
+        <Link
+          href={href}
+          className="focus-ring truncate rounded-sm text-sm font-semibold hover:underline"
+        >
+          {entry.title}
+        </Link>
+        <span className="flex items-center gap-2 text-xs text-muted">
+          <span className="flex items-center gap-1">
+            {mediaTypes[entry.mediaType].icon}
+            {mediaTypes[entry.mediaType].label}
+          </span>
+          {entry.isPublic === false && (
+            <span className="flex items-center gap-1">
+              <Lock size={12} />
+              Private
+            </span>
+          )}
+          {entry.steam && <Molecule.SteamBadge steam={entry.steam} title={entry.title} />}
+        </span>
+      </div>
+      {children}
+    </li>
+  );
+}
+
 function steamHours(entry: CardEntry) {
   if (!entry.steam) return null;
   return (
@@ -648,6 +660,33 @@ export function LibraryCard({
   );
 }
 
+function readOnlyProgress(entry: CardEntry) {
+  if (entry.mediaType === "game") return steamHours(entry);
+  const unit = entry.mediaType === "manga" ? "chapters" : "episodes";
+
+  return (
+    <span
+      aria-label={`${entry.progress} of ${entry.total ?? "unknown"} ${unit}`}
+      className="flex h-7 items-center justify-center rounded-full bg-surface/90 px-2 text-[11px] font-semibold whitespace-nowrap text-foreground shadow-sm pointer-coarse:h-9"
+    >
+      {entry.progress} / {entry.total ?? "?"}
+    </span>
+  );
+}
+
+function ReadOnlyStatus({ entry, className = "" }: { entry: CardEntry; className?: string }) {
+  const Icon = statusIcons[entry.status];
+
+  return (
+    <Atom.Pill tone={statusTones[entry.status]} className={`h-7 px-3 pointer-coarse:h-9 ${className}`}>
+      <span className="flex min-w-0 items-center gap-1.5">
+        <Icon size={13} aria-hidden className="shrink-0" />
+        <span className="truncate">{statusLabel(entry.status, entry.mediaType)}</span>
+      </span>
+    </Atom.Pill>
+  );
+}
+
 export function ReadOnlyLibraryCard({
   entry,
   className = "",
@@ -655,34 +694,46 @@ export function ReadOnlyLibraryCard({
   entry: CardEntry;
   className?: string;
 }) {
-  const Icon = statusIcons[entry.status];
-  const unit = entry.mediaType === "manga" ? "chapters" : "episodes";
-
   return (
     <CardLayout
       entry={entry}
       className={className}
-      progress={
-        entry.mediaType === "game" ? (
-          steamHours(entry)
-        ) : (
-          <span
-            aria-label={`${entry.progress} of ${entry.total ?? "unknown"} ${unit}`}
-            className="flex h-7 items-center justify-center rounded-full bg-surface/90 px-2 text-[11px] font-semibold whitespace-nowrap text-foreground shadow-sm pointer-coarse:h-9"
-          >
-            {entry.progress} / {entry.total ?? "?"}
-          </span>
-        )
-      }
-      status={
-        <Atom.Pill tone={statusTones[entry.status]} className="h-7 w-full! px-3 pointer-coarse:h-9">
-          <span className="flex min-w-0 items-center gap-1.5">
-            <Icon size={13} aria-hidden className="shrink-0" />
-            <span className="truncate">{statusLabel(entry.status, entry.mediaType)}</span>
-          </span>
-        </Atom.Pill>
-      }
+      progress={readOnlyProgress(entry)}
+      status={<ReadOnlyStatus entry={entry} className="w-full!" />}
     />
+  );
+}
+
+const cardGrid =
+  "grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-3 sm:grid-cols-3 md:grid-cols-4";
+const listBox = "rounded-lg border border-divider bg-surface py-5";
+
+export function ReadOnlyLibraryEntries({
+  entries,
+  view,
+}: {
+  entries: (CardEntry & { id: number })[];
+  view: LibraryViewMode;
+}) {
+  return view === "list" ? (
+    <section className={listBox}>
+      <ul className="flex flex-col divide-y divide-divider">
+        {entries.map((entry) => (
+          <EntryRow key={entry.id} entry={entry}>
+            {readOnlyProgress(entry)}
+            <ReadOnlyStatus entry={entry} />
+          </EntryRow>
+        ))}
+      </ul>
+    </section>
+  ) : (
+    <ul className={cardGrid}>
+      {entries.map((entry) => (
+        <li key={entry.id}>
+          <ReadOnlyLibraryCard entry={entry} />
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -785,11 +836,11 @@ export function LibraryEmptyState({
   );
 }
 
-export function filterLibrary(
-  entries: LibraryEntry[],
+export function filterLibrary<T extends { mediaType: MediaType; status: LibraryStatus }>(
+  entries: T[],
   type: TypeFilter,
   status: StatusFilter,
-) {
+): T[] {
   return entries.filter(
     (entry) =>
       (type === "all" || entry.mediaType === type) &&
@@ -841,40 +892,83 @@ function ViewToggle() {
   );
 }
 
-export function typeLabel(value: TypeFilter, compact = false) {
+function iconLabel(icon: ReactNode, label: string, compact: boolean) {
   return (
     <span className="flex items-center gap-1.5">
-      {value === "all" ? <Library size={12} /> : mediaTypes[value].icon}
-      <span className={compact ? "hidden sm:inline" : undefined}>
-        {value === "all" ? "All types" : value === "game" ? "Games" : mediaTypes[value].label}
-      </span>
+      {icon}
+      <span className={compact ? "hidden sm:inline" : undefined}>{label}</span>
     </span>
   );
 }
 
-function LibraryTypeSelect({ size = "small" }: { size?: "small" | "middle" }) {
-  const type = useLibraryPreferencesStore((state) => state.type);
-  const setType = useLibraryPreferencesStore((state) => state.setType);
+export function typeLabel(value: TypeFilter, compact = false) {
+  return iconLabel(
+    value === "all" ? <Library size={12} /> : mediaTypes[value].icon,
+    value === "all" ? "All types" : value === "game" ? "Games" : mediaTypes[value].label,
+    compact,
+  );
+}
 
+const mediaTypeValues: MediaType[] = ["anime", "manga", "game"];
+
+function TypeSelect({
+  value,
+  onChange,
+  types = mediaTypeValues,
+  size = "small",
+}: {
+  value: TypeFilter;
+  onChange: (type: TypeFilter) => void;
+  types?: MediaType[];
+  size?: "small" | "middle";
+}) {
   return (
     <Select<TypeFilter>
       size={size}
       aria-label="Media type"
-      value={type}
-      onChange={setType}
+      value={value}
+      onChange={onChange}
       popupMatchSelectWidth={false}
       className="w-16 sm:w-32"
       labelRender={({ value }) => typeLabel(value as TypeFilter, true)}
-      options={(["all", "anime", "manga", "game"] as const).map((value) => ({
-        value,
-        label: typeLabel(value),
+      options={(["all", ...types] as TypeFilter[]).map((type) => ({
+        value: type,
+        label: typeLabel(type),
       }))}
     />
   );
 }
 
-function useStatusTabs(entries: LibraryEntry[] | null) {
-  const type = useLibraryPreferencesStore((state) => state.type);
+const librarySorts: { value: LibrarySort; label: string; icon: ReactNode }[] = [
+  { value: "updated", label: "Recently updated", icon: <Clock size={12} /> },
+  { value: "title", label: "Title A–Z", icon: <ArrowDownAZ size={12} /> },
+  { value: "year", label: "Newest release", icon: <CalendarDays size={12} /> },
+];
+
+function sortLabel(value: LibrarySort, compact = false) {
+  const sort = librarySorts.find((option) => option.value === value) ?? librarySorts[0];
+  return iconLabel(sort.icon, sort.label, compact);
+}
+
+export function sortEntries<T extends { title: string; year?: number | null }>(
+  entries: T[],
+  sort: LibrarySort,
+): T[] {
+  if (sort === "updated") return entries;
+  return [...entries].sort((a, b) => {
+    if (sort === "year" && (a.year ?? null) !== (b.year ?? null)) {
+      if (a.year == null) return 1;
+      if (b.year == null) return -1;
+      return b.year - a.year;
+    }
+    return a.title.localeCompare(b.title, undefined, { sensitivity: "base", numeric: true });
+  });
+}
+
+function statusTabs(
+  entries: { mediaType: MediaType; status: LibraryStatus }[] | null,
+  type: TypeFilter,
+) {
   const ofType = (entries ?? []).filter((entry) => type === "all" || entry.mediaType === type);
   const typeForLabels = type === "all" ? undefined : type;
 
@@ -895,8 +989,10 @@ export function LibraryTabs({
   bordered?: boolean;
 }) {
   const status = useLibraryPreferencesStore((state) => state.status);
+  const type = useLibraryPreferencesStore((state) => state.type);
   const setStatus = useLibraryPreferencesStore((state) => state.setStatus);
-  const tabs = useStatusTabs(entries);
+  const setType = useLibraryPreferencesStore((state) => state.setType);
+  const tabs = statusTabs(entries, type);
   const [tabsRef, tabsFade] = useTabScroller<HTMLDivElement>(status);
 
   return (
@@ -930,16 +1026,24 @@ export function LibraryTabs({
         data-tour="library-view"
         className="ml-auto flex shrink-0 items-center gap-2 self-center max-sm:order-first max-sm:ml-0 max-sm:w-full max-sm:pt-3"
       >
-        <LibraryTypeSelect />
+        <TypeSelect value={type} onChange={setType} />
       </div>
     </nav>
   );
 }
 
-function LibraryStatusSwitch({ entries }: { entries: LibraryEntry[] | null }) {
-  const status = useLibraryPreferencesStore((state) => state.status);
-  const setStatus = useLibraryPreferencesStore((state) => state.setStatus);
-  const tabs = useStatusTabs(entries);
+export function LibraryStatusSwitch({
+  entries,
+  type,
+  status,
+  onChange,
+}: {
+  entries: { mediaType: MediaType; status: LibraryStatus }[] | null;
+  type: TypeFilter;
+  status: StatusFilter;
+  onChange: (status: StatusFilter) => void;
+}) {
+  const tabs = statusTabs(entries, type);
   const [tabsRef, tabsFade] = useTabScroller<HTMLDivElement>(status);
 
   return (
@@ -954,7 +1058,7 @@ function LibraryStatusSwitch({ entries }: { entries: LibraryEntry[] | null }) {
         aria-label="Library sections"
         className="w-max! min-w-full [&_.ant-segmented-item]:flex-[1_0_auto]"
         value={status}
-        onChange={setStatus}
+        onChange={onChange}
         options={tabs.map(({ value, Icon, label, count }) => ({
           value,
           icon: <Icon size={16} aria-hidden />,
@@ -966,6 +1070,57 @@ function LibraryStatusSwitch({ entries }: { entries: LibraryEntry[] | null }) {
           ),
         }))}
       />
+    </div>
+  );
+}
+
+export function LibraryToolbar({
+  query,
+  onQuery,
+  type,
+  onType,
+  types,
+  sort,
+  onSort,
+  children,
+}: {
+  query: string;
+  onQuery: (query: string) => void;
+  type: TypeFilter;
+  onType: (type: TypeFilter) => void;
+  types?: MediaType[];
+  sort: LibrarySort;
+  onSort: (sort: LibrarySort) => void;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Atom.Input
+        allowClear
+        aria-label="Search titles"
+        placeholder="Search titles"
+        prefix={<Search size={14} className="text-muted" />}
+        value={query}
+        onChange={(event) => onQuery(event.target.value)}
+        className="w-full! sm:w-auto! sm:min-w-48 sm:flex-1"
+      />
+      <div
+        data-tour="library-view"
+        className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-2"
+      >
+        <TypeSelect value={type} onChange={onType} types={types} size="middle" />
+        <Select<LibrarySort>
+          aria-label="Sort by"
+          value={sort}
+          onChange={onSort}
+          popupMatchSelectWidth={false}
+          className="w-16 sm:w-44"
+          labelRender={({ value }) => sortLabel(value as LibrarySort, true)}
+          options={librarySorts.map(({ value }) => ({ value, label: sortLabel(value) }))}
+        />
+        {children}
+        <ViewToggle />
+      </div>
     </div>
   );
 }
@@ -992,38 +1147,31 @@ function MediaTypeSwitch({ page, type }: { page: "charts" | "discover"; type: Me
 
 function LibraryShelf({
   entries,
+  shown,
   query,
   onChange,
   onRemove,
   onSuggest,
 }: {
   entries: LibraryEntry[];
+  shown: LibraryEntry[];
   query: string;
   onChange: (entry: LibraryEntry) => void;
   onRemove: (id: number) => void;
   onSuggest: (query: string) => void;
 }) {
-  const status = useLibraryPreferencesStore((state) => state.status);
-  const type = useLibraryPreferencesStore((state) => state.type);
   const view = useLibraryPreferencesStore((state) => state.view);
-
-  const search = searchable(query.trim());
-  const shown = filterLibrary(entries, type, status).filter(
-    (entry) => !search || searchable(entry.title).includes(search),
-  );
-
+  const search = query.trim();
   const boxed = shown.length === 0 || view === "list";
 
   return (
     <section
       className={`flex flex-col gap-4 ${
-        boxed
-          ? `rounded-lg border border-divider bg-surface ${shown.length > 0 ? "py-5" : "p-5"}`
-          : ""
+        boxed ? `rounded-lg border border-divider bg-surface ${shown.length > 0 ? "py-5" : "p-5"}` : ""
       }`}
     >
       {shown.length === 0 && search ? (
-        <p className="text-sm text-muted">No titles in your library match “{query.trim()}”.</p>
+        <p className="text-sm text-muted">No titles in your library match “{search}”.</p>
       ) : shown.length === 0 ? (
         <LibraryEmptyState
           entries={entries}
@@ -1033,7 +1181,7 @@ function LibraryShelf({
       ) : view === "list" ? (
         <ListView entries={shown} onChange={onChange} onRemove={onRemove} />
       ) : (
-        <ul className="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-3 sm:grid-cols-3 md:grid-cols-4">
+        <ul className={cardGrid}>
           {shown.map((entry) => (
             <li key={entry.id}>
               <LibraryCard entry={entry} onChange={onChange} onRemove={onRemove} />
@@ -1060,7 +1208,7 @@ function LibraryPages({ page, type }: { page: LibraryPage | null; type: MediaTyp
     <nav
       aria-label="Catalog pages"
       data-tour="library-pages"
-      className="flex shrink-0 items-end gap-6 overflow-x-auto border-b border-divider px-4 sm:px-8"
+      className="hidden shrink-0 items-end gap-6 overflow-x-auto border-b border-divider px-4 authenticated:flex sm:px-8"
     >
       {libraryPages.map(({ value, label, icon }) => (
         <Atom.TabLink
@@ -1089,6 +1237,17 @@ export function LibraryView() {
   const [query, setQuery] = useState("");
   const [entries, setEntries] = useState<LibraryEntry[] | null>(null);
   const [failed, setFailed] = useState(false);
+  const signedIn = useAuthStore((state) => Boolean(state.token));
+  const status = useLibraryPreferencesStore((state) => state.status);
+  const filterType = useLibraryPreferencesStore((state) => state.type);
+  const sort = useLibraryPreferencesStore((state) => state.sort);
+  const setStatus = useLibraryPreferencesStore((state) => state.setStatus);
+  const setFilterType = useLibraryPreferencesStore((state) => state.setType);
+  const setSort = useLibraryPreferencesStore((state) => state.setSort);
+  const search = searchable(query.trim());
+  const searched =
+    entries && entries.filter((entry) => !search || searchable(entry.title).includes(search));
+  const shown = searched && sortEntries(filterLibrary(searched, filterType, status), sort);
 
   useEffect(() => {
     let active = true;
@@ -1103,9 +1262,10 @@ export function LibraryView() {
   useEffect(() => {
     if (!hydrated) return;
     const { page: saved, mediaType, setPage } = useLibraryPreferencesStore.getState();
-    if (page) setPage(page, type);
-    else router.replace(pageHref(saved, mediaType));
-  }, [hydrated, page, router, type]);
+    if (page === "mine" && !signedIn) router.replace(pageHref("discover", mediaType));
+    else if (page) setPage(page, type);
+    else router.replace(pageHref(saved === "mine" && !signedIn ? "discover" : saved, mediaType));
+  }, [hydrated, page, router, type, signedIn]);
 
   useEffect(() => {
     const { token } = useAuthStore.getState();
@@ -1128,9 +1288,6 @@ export function LibraryView() {
         lead="titles"
         onAdded={(entry) => setEntries((current) => current && [entry, ...current])}
       />
-      <Template.PageHeader>
-        <Atom.Heading>Catalog</Atom.Heading>
-      </Template.PageHeader>
       <LibraryPages page={page} type={type} />
       <div className="flex min-h-0 flex-1">
         <Template.PageColumn>
@@ -1139,31 +1296,30 @@ export function LibraryView() {
               <MediaTypeSwitch page={page} type={type} />
               {page === "charts" ? <WeeklyCharts /> : <LibraryDiscover />}
             </div>
-          ) : (
+          ) : !signedIn ? null : (
             <div className="flex flex-col gap-4">
-              <LibraryStatusSwitch entries={entries} />
-              <div className="flex flex-wrap items-center gap-2">
-                <Atom.Input
-                  allowClear
-                  aria-label="Search your library"
-                  placeholder="Search your library"
-                  prefix={<Search size={14} className="text-muted" />}
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  className="w-full! sm:w-auto! sm:min-w-48 sm:flex-1"
-                />
-                <div data-tour="library-view" className="ml-auto flex shrink-0 items-center gap-2">
-                  <LibraryTypeSelect size="middle" />
-                  <ViewToggle />
-                </div>
-              </div>
+              <LibraryStatusSwitch
+                entries={searched}
+                type={filterType}
+                status={status}
+                onChange={setStatus}
+              />
+              <LibraryToolbar
+                query={query}
+                onQuery={setQuery}
+                type={filterType}
+                onType={setFilterType}
+                sort={sort}
+                onSort={setSort}
+              />
               {failed ? (
                 <Atom.ErrorMessage>Could not load your library.</Atom.ErrorMessage>
-              ) : !entries ? (
+              ) : !entries || !shown ? (
                 <Molecule.FeedSkeleton label="Loading your library…" />
               ) : (
                 <LibraryShelf
                   entries={entries}
+                  shown={shown}
                   query={query}
                   onSuggest={searchTitles}
                   onChange={replace}
@@ -1175,7 +1331,7 @@ export function LibraryView() {
             </div>
           )}
         </Template.PageColumn>
-        <FriendsSidePanel />
+        {signedIn && <FriendsSidePanel />}
       </div>
     </>
   );
