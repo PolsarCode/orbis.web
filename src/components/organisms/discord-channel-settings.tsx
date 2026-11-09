@@ -2,7 +2,7 @@
 
 import { Switch } from "antd";
 import { ExternalLink } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import {
@@ -33,6 +33,26 @@ type WebhookRequests<T, S> = {
 };
 
 export type SendOption<K extends string> = { key: K; label: string; description?: string };
+
+export function DiscordPart({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-5 py-6 first:pt-0 last:pb-0">
+      <div className="flex flex-col gap-1">
+        <h4 className="text-sm font-semibold">{title}</h4>
+        <p className="text-xs text-muted">{description}</p>
+      </div>
+      {children}
+    </div>
+  );
+}
 
 export function useDiscordWebhook<T extends WebhookChannel, S>(
   communityId: number,
@@ -253,12 +273,12 @@ export function DiscordChannelSettings({ community }: { community: Community }) 
       : webhookStatus(channel);
 
   return (
-    <Molecule.SettingsSection
-      title="Discord channel"
+    <DiscordPart
+      title="Feed"
       description="Send what’s new in this community to a channel in your Discord server. Each message shows the author’s name and picture, with a link to the post on Orbis."
     >
       <DiscordWebhookConnection
-        title="Discord channel"
+        title="Feed channel"
         status={status}
         channel={channel}
         enabled={enabled}
@@ -285,6 +305,6 @@ export function DiscordChannelSettings({ community }: { community: Community }) 
         </p>
       )}
       {error && <Atom.ErrorMessage>{error}</Atom.ErrorMessage>}
-    </Molecule.SettingsSection>
+    </DiscordPart>
   );
 }

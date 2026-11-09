@@ -18,6 +18,7 @@ import { useReadOnly } from "@/lib/read-only";
 import { weekRange } from "@/lib/time";
 import { useAuthStore } from "@/stores/auth-store";
 import {
+  DiscordPart,
   DiscordSendSwitches,
   DiscordWebhookConnection,
   useDiscordWebhook,
@@ -148,8 +149,8 @@ export function DiscordChartSettings({ community }: { community: Community }) {
   }
 
   return (
-    <Molecule.SettingsSection
-      title="Weekly charts on Discord"
+    <DiscordPart
+      title="Weekly charts"
       description="Every Monday, post the week’s anime, manga, or games chart as an image to a channel in your Discord server, with your message and a link to its discussion on Orbis."
     >
       <DiscordWebhookConnection
@@ -269,6 +270,6 @@ export function DiscordChartSettings({ community }: { community: Community }) {
         </>
       )}
       {(error ?? sendError) && <Atom.ErrorMessage>{error ?? sendError}</Atom.ErrorMessage>}
-    </Molecule.SettingsSection>
+    </DiscordPart>
   );
 }

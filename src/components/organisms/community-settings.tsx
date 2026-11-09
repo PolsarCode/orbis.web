@@ -34,7 +34,7 @@ import {
 import { useAuthStore } from "@/stores/auth-store";
 import { useCommunityStore } from "@/stores/community-store";
 import { linkPlatforms, normalizeLink } from "./community-links";
-import { DiscordChannelSettings } from "./discord-channel-settings";
+import { DiscordChannelSettings, DiscordPart } from "./discord-channel-settings";
 import { DiscordChartSettings } from "./discord-chart-settings";
 import { DISCORD_CHECK_MS, DiscordWidgetSteps } from "./discord-setup";
 import { CommunityBanSettings } from "./community-ban-settings";
@@ -702,70 +702,83 @@ function DiscordSettings({ community }: { community: Community }) {
   return (
     <Molecule.SettingsSection
       title="Discord"
-      description="Connect the community’s Discord server to show how many people are online there, with a button to join it. Only the online count and invite link are read, and nothing is added to your server."
+      description="Connect the community’s Discord server, and choose what Orbis posts to its channels."
     >
-      <OAuthConnectionRow
-        provider="discord"
-        title="Discord"
-        status={
-          server
-            ? `Connected to ${server.name}${
-                server.online === null ? "" : ` · ${server.online.toLocaleString()} online`
-              }`
-            : "Not connected"
-        }
-      >
-        {server ? (
-          <Atom.Button size="small" variant="secondary" loading={pending} onClick={disconnect}>
-            Disconnect
-          </Atom.Button>
-        ) : (
-          <Atom.Button size="small" loading={pending} disabled={enabled !== true} onClick={connect}>
-            Connect
-          </Atom.Button>
-        )}
-      </OAuthConnectionRow>
-      {server && server.online === null && (
-        <div className="flex flex-col items-start gap-2">
-          <p className="text-xs text-muted">
-            The connection isn’t finished. To show the online count, turn on the server widget:
-          </p>
-          <DiscordWidgetSteps server={server.name} />
-          <p className="text-xs text-muted">
-            Orbis checks every 5 minutes. After you turn it on, it can take a couple of minutes to
-            show up here.
-          </p>
-          <Atom.Button size="small" variant="secondary" loading={checking} onClick={checkNow}>
-            Check now
-          </Atom.Button>
-          {stillOff && !setup && (
-            <p className="text-xs text-muted">The widget is still off.</p>
+      <div className="flex flex-col divide-y divide-divider">
+        <DiscordPart
+          title="Online count and invite"
+          description="Show how many people are online in the server, with a button to join it. Only the online count and invite link are read, and nothing is added to your server."
+        >
+          <OAuthConnectionRow
+            provider="discord"
+            title="Server"
+            status={
+              server
+                ? `Connected to ${server.name}${
+                    server.online === null ? "" : ` · ${server.online.toLocaleString()} online`
+                  }`
+                : "Not connected"
+            }
+          >
+            {server ? (
+              <Atom.Button size="small" variant="secondary" loading={pending} onClick={disconnect}>
+                Disconnect
+              </Atom.Button>
+            ) : (
+              <Atom.Button
+                size="small"
+                loading={pending}
+                disabled={enabled !== true}
+                onClick={connect}
+              >
+                Connect
+              </Atom.Button>
+            )}
+          </OAuthConnectionRow>
+          {server && server.online === null && (
+            <div className="flex flex-col items-start gap-2">
+              <p className="text-xs text-muted">
+                The connection isn’t finished. To show the online count, turn on the server
+                widget:
+              </p>
+              <DiscordWidgetSteps server={server.name} />
+              <p className="text-xs text-muted">
+                Orbis checks every 5 minutes. After you turn it on, it can take a couple of minutes
+                to show up here.
+              </p>
+              <Atom.Button size="small" variant="secondary" loading={checking} onClick={checkNow}>
+                Check now
+              </Atom.Button>
+              {stillOff && !setup && <p className="text-xs text-muted">The widget is still off.</p>}
+            </div>
           )}
-        </div>
-      )}
-      {server && (
-        <div className="flex flex-col gap-4">
-          <ConnectionSwitch
-            community={community}
-            setting="showDiscordOnline"
-            label="Online count"
-            description="Show how many people are online in the server."
-          />
-          <ConnectionSwitch
-            community={community}
-            setting="showDiscordInvite"
-            label="Join button"
-            description="Link the Discord pill on the cover photo to the server’s invite, so people can join."
-          />
-        </div>
-      )}
-      {server && server.online !== null && !server.inviteUrl && (
-        <p className="text-xs text-muted">
-          To add a Join Discord button, pick an Invite Channel in your Discord server’s settings,
-          under Engagement, then Server Widget.
-        </p>
-      )}
-      {error && !choice && <Atom.ErrorMessage>{error}</Atom.ErrorMessage>}
+          {server && (
+            <div className="flex flex-col gap-4">
+              <ConnectionSwitch
+                community={community}
+                setting="showDiscordOnline"
+                label="Online count"
+                description="Show how many people are online in the server."
+              />
+              <ConnectionSwitch
+                community={community}
+                setting="showDiscordInvite"
+                label="Join button"
+                description="Link the Discord pill on the cover photo to the server’s invite, so people can join."
+              />
+            </div>
+          )}
+          {server && server.online !== null && !server.inviteUrl && (
+            <p className="text-xs text-muted">
+              To add a Join Discord button, pick an Invite Channel in your Discord server’s
+              settings, under Engagement, then Server Widget.
+            </p>
+          )}
+          {error && !choice && <Atom.ErrorMessage>{error}</Atom.ErrorMessage>}
+        </DiscordPart>
+        <DiscordChannelSettings community={community} />
+        <DiscordChartSettings community={community} />
+      </div>
       <Molecule.Dialog
         open={choice !== null || setup}
         onCancel={picking ? undefined : closeModal}
@@ -894,8 +907,6 @@ export function CommunitySettings({
             <>
               <TwitchSettings community={community} />
               <DiscordSettings community={community} />
-              <DiscordChannelSettings community={community} />
-              <DiscordChartSettings community={community} />
               <LinksSettings community={community} />
             </>
           ),
