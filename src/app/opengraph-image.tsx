@@ -1,6 +1,5 @@
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 import { ImageResponse } from "next/og";
+import { ogFonts } from "@/lib/og-fonts";
 import { palette } from "@/lib/palette";
 
 export const alt = "Orbis — Your fandom. Your people.";
@@ -8,12 +7,6 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 export default async function OpengraphImage() {
-  const [regular, semiBold, bold, extraBold] = await Promise.all([
-    readFile(join(process.cwd(), "src/app/fonts/Inter-Regular.ttf")),
-    readFile(join(process.cwd(), "src/app/fonts/Inter-SemiBold.ttf")),
-    readFile(join(process.cwd(), "src/app/fonts/BarlowCondensed-Bold.ttf")),
-    readFile(join(process.cwd(), "src/app/fonts/BarlowCondensed-ExtraBold.ttf")),
-  ]);
   const { background, foreground, muted, accent } = palette.light;
 
   return new ImageResponse(
@@ -81,14 +74,6 @@ export default async function OpengraphImage() {
         </div>
       </div>
     ),
-    {
-      ...size,
-      fonts: [
-        { name: "Inter", data: regular, weight: 400, style: "normal" },
-        { name: "Inter", data: semiBold, weight: 600, style: "normal" },
-        { name: "Barlow Condensed", data: bold, weight: 700, style: "normal" },
-        { name: "Barlow Condensed", data: extraBold, weight: 800, style: "normal" },
-      ],
-    },
+    { ...size, fonts: await ogFonts() },
   );
 }

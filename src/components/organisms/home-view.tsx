@@ -13,6 +13,7 @@ import { HomeTabs, homeTabs, type HomeTab } from "./home-tabs";
 import { PostList } from "./post-list";
 import { SearchScope } from "./site-search";
 import { TrendingTags } from "./trending-tags";
+import { WeeklyCharts } from "./weekly-charts";
 import { pageTitle } from "@/lib/site-title";
 import { useDocumentTitle } from "@/lib/use-document-title";
 
@@ -48,6 +49,8 @@ export function HomeView({ latestChangelog }: { latestChangelog: ChangelogDay | 
             <Bookmarks />
           ) : tab === "trending" ? (
             <TrendingTags />
+          ) : tab === "charts" ? (
+            <WeeklyCharts />
           ) : (
             <HomeFeed latestChangelog={latestChangelog} />
           )}

@@ -1,4 +1,4 @@
-import type { LibraryStatus, MediaType } from "./api";
+import type { LibraryStatus, MediaListItem, MediaType } from "./api";
 
 export const libraryStatuses: LibraryStatus[] = [
   "current",
@@ -43,3 +43,10 @@ export function activityText(status: LibraryStatus, type: MediaType) {
 
 export const mediaPath = (type: MediaType, sourceId: string) =>
   `/library/${type}/${sourceId}`;
+
+export function countLabel(item: MediaListItem) {
+  const { episodes, chapters } = item.details;
+  if (item.type === "anime" && typeof episodes === "number") return `${episodes} eps`;
+  if (item.type === "manga" && typeof chapters === "number") return `${chapters} ch`;
+  return item.year ? String(item.year) : "TBA";
+}

@@ -2456,6 +2456,42 @@ export async function getMediaList(
   return res.json();
 }
 
+export type ChartMovement = "up" | "down" | "same" | "new";
+
+export type ChartEntry = {
+  rank: number;
+  previousRank: number | null;
+  movement: ChartMovement;
+  weeksOnChart: number;
+  peak: number;
+  media: MediaListItem;
+};
+
+export type Chart = {
+  type: Uppercase<MediaType>;
+  week: string;
+  startsAt: string;
+  endsAt: string;
+  previousWeek: string | null;
+  nextWeek: string | null;
+  entries: ChartEntry[];
+  updatedAt: string;
+};
+
+export async function getChart(
+  token: string | null,
+  type: MediaType,
+  week?: string,
+): Promise<Chart | null> {
+  const res = await api(withQuery(`/library/charts/${type}`, { week }), {
+    headers: authHeaders(token),
+  });
+
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(await errorMessage(res, "This chart isn’t available right now."));
+  return res.json();
+}
+
 export async function getLibrary(token: string): Promise<LibraryEntry[]> {
   const res = await send(token, "/library");
 

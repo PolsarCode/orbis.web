@@ -22,7 +22,7 @@ import {
   type MediaType,
 } from "@/lib/api";
 import * as Atom from "@atom";
-import { mediaPath } from "@/lib/library";
+import { countLabel, mediaPath } from "@/lib/library";
 import { useAuthStore } from "@/stores/auth-store";
 import { useMediaShelfStore } from "@/stores/media-shelf-store";
 import { mediaTypes } from "./activity-card";
@@ -51,13 +51,6 @@ function listLabel(list: MediaListName, type: MediaType | null) {
     return type ? { anime: "This season", manga: "New series", game: "New releases" }[type] : "New";
   }
   return { trending: "Trending", top: "Top rated", upcoming: "Coming soon" }[list];
-}
-
-function countLabel(item: MediaListItem) {
-  const { episodes, chapters } = item.details;
-  if (item.type === "anime" && typeof episodes === "number") return `${episodes} eps`;
-  if (item.type === "manga" && typeof chapters === "number") return `${chapters} ch`;
-  return item.year ? String(item.year) : "TBA";
 }
 
 type SavedEntry = MediaListItem["entry"];

@@ -14,6 +14,15 @@ export function longDate(date: string) {
   });
 }
 
+export function weekRange(startsAt: string, endsAt: string) {
+  const start = new Date(startsAt);
+  const end = new Date(new Date(endsAt).getTime() - 1);
+  const day = { month: "short", day: "numeric", timeZone: "UTC" } as const;
+  const withYear = { ...day, year: "numeric" } as const;
+  const sameYear = start.getUTCFullYear() === end.getUTCFullYear();
+  return `${start.toLocaleDateString(undefined, sameYear ? day : withYear)} – ${end.toLocaleDateString(undefined, withYear)}`;
+}
+
 export function minutesAndSeconds(seconds: number) {
   const total = Math.round(seconds);
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;

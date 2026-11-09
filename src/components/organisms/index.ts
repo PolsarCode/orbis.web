@@ -87,3 +87,4 @@ export * from "./leave-community-button";
 export * from "./destination-picker";
 export * from "./quote-embed";
 export * from "./repost-actions";
+export * from "./weekly-charts";
