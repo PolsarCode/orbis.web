@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import * as Atom from "@atom";
 import { IdentityCard } from "./identity-card";
-import type { PresenceStatus } from "@/lib/api";
+import type { Device, PresenceStatus } from "@/lib/api";
 
 export function PersonCard({
   userId,
@@ -12,6 +12,7 @@ export function PersonCard({
   isVerified = false,
   badge,
   presence,
+  device,
   action,
   children,
 }: {
@@ -23,13 +24,22 @@ export function PersonCard({
   isVerified?: boolean;
   badge?: ReactNode;
   presence?: PresenceStatus;
+  device?: Device | null;
   action?: ReactNode;
   children?: ReactNode;
 }) {
   return (
     <IdentityCard
       coverUrl={coverUrl}
-      avatar={<Atom.Avatar label={label} src={avatarUrl} seed={userId} presence={presence} />}
+      avatar={
+        <Atom.Avatar
+          label={label}
+          src={avatarUrl}
+          seed={userId}
+          presence={presence}
+          device={device}
+        />
+      }
       title={
         <span className="flex min-w-0 items-center gap-1 text-[13px] font-semibold">
           <span className="truncate">{label}</span>

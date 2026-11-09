@@ -12,12 +12,13 @@ import { displayName } from "@/lib/display-name";
 import { useAuthStore } from "@/stores/auth-store";
 import { useFriendsStore } from "@/stores/friends-store";
 import { MessageButton } from "./chat-dock";
-import type { PresenceStatus } from "@/lib/api";
+import type { Device, PresenceStatus } from "@/lib/api";
 
 export function PersonRow({
   person,
   label = displayName(person),
   presence,
+  device,
   badge,
   subtitle = `@${person.username}`,
   trailing,
@@ -28,6 +29,7 @@ export function PersonRow({
   person: ChatPerson;
   label?: string;
   presence?: PresenceStatus;
+  device?: Device | null;
   badge?: ReactNode;
   subtitle?: ReactNode;
   trailing?: ReactNode;
@@ -38,6 +40,7 @@ export function PersonRow({
   const me = useAuthStore((state) => state.profile?.userId);
   const liveGame = useFriendsStore((state) => state.games[person.userId]);
   const liveTwitch = useFriendsStore((state) => state.twitchLogins[person.userId]);
+  const liveDevice = useFriendsStore((state) => state.devices[person.userId]);
   const self = person.userId === me;
   const game =
     presence === undefined || presence === "offline"
@@ -68,6 +71,7 @@ export function PersonRow({
               src={person.avatarUrl}
               seed={person.userId}
               presence={presence}
+              device={liveDevice ?? device}
             />
           </Link>
           <div className="flex min-w-0 flex-1 flex-col">

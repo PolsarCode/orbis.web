@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import * as Atom from "@atom";
 import { getMembers, type Member, type PresenceStatus } from "@/lib/api";
+import { currentDevice } from "@/lib/desktop";
 import { displayName } from "@/lib/display-name";
 import { useAuthStore } from "@/stores/auth-store";
 import { COMMUNITY_MEMBERS_CHANGED_EVENT } from "@/stores/community-store";
@@ -37,6 +38,7 @@ function PresenceGroup({
               person={member}
               label={member.nickname ?? displayName(member)}
               presence={online ? member.status : "offline"}
+              device={member.device}
               playing={member.playing}
               twitchLogin={member.twitchLogin}
               badge={
@@ -89,7 +91,11 @@ export function MemberPresence({
     if (profile.appearOffline) return "offline";
     return status === "streaming" ? "streaming" : profile.status;
   };
-  const withStatus = members.map((member) => ({ ...member, status: statusOf(member) }));
+  const withStatus = members.map((member) => ({
+    ...member,
+    status: statusOf(member),
+    device: member.userId === profile?.userId ? currentDevice() : member.device,
+  }));
   const streaming = withStatus.filter((member) => member.status === "streaming");
   const online = withStatus.filter((member) => member.status !== "streaming" && isOnline(member));
   const offline = withStatus.filter((member) => member.status !== "streaming" && !isOnline(member));

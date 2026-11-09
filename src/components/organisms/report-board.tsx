@@ -1175,6 +1175,7 @@ export function AdminsPanel({ admins }: { admins: ReportAdmin[] | null }) {
                     avatarUrl: admin.avatarUrl,
                   }}
                   presence={groupPresence(admin)}
+                  device={admin.device}
                   twitchLogin={admin.twitchLogin}
                   badge={<Atom.RoleBadge role={admin.isHeadAdmin ? "head-admin" : "site-admin"} />}
                   subtitle={`@${admin.username}${admin.id === myId ? " · you" : ""}`}

@@ -156,8 +156,8 @@ export function ConversationRow({
   const me = useAuthStore((state) => state.profile?.userId);
   const other = conversation.isGroup ? undefined : conversation.members[0];
   const direct = other?.deleted ? undefined : other;
-  const status = useFriendsStore(
-    (state) => state.friends.find(({ userId }) => userId === direct?.userId)?.status,
+  const friend = useFriendsStore((state) =>
+    state.friends.find(({ userId }) => userId === direct?.userId),
   );
   const unread = conversation.unread > 0;
 
@@ -173,7 +173,8 @@ export function ConversationRow({
       >
         <Molecule.ConversationAvatar
           conversation={conversation}
-          presence={status}
+          presence={friend?.status}
+          device={friend?.device}
         />
         <span className="flex min-w-0 flex-1 flex-col">
           <span className="flex min-w-0 items-center gap-1">

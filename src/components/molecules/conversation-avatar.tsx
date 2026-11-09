@@ -2,7 +2,7 @@ import * as Atom from "@atom";
 import type { Conversation } from "@/lib/api";
 import { chatTitle } from "@/lib/chat";
 import { displayName } from "@/lib/display-name";
-import type { PresenceStatus } from "@/lib/api";
+import type { Device, PresenceStatus } from "@/lib/api";
 
 const boxes = { sm: "h-8 w-8", md: "h-9 w-9" };
 
@@ -10,10 +10,12 @@ export function ConversationAvatar({
   conversation,
   size = "md",
   presence,
+  device,
 }: {
   conversation: Conversation;
   size?: keyof typeof boxes;
   presence?: PresenceStatus;
+  device?: Device | null;
 }) {
   const [first, second] = conversation.members;
 
@@ -25,6 +27,7 @@ export function ConversationAvatar({
         seed={first?.userId ?? conversation.id}
         size={size}
         presence={presence}
+        device={device}
       />
     );
   }

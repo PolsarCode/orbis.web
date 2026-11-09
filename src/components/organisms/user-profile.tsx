@@ -66,8 +66,9 @@ import { ProfileLinkedDiscussion } from "./linked-discussion";
 import { PersonRow } from "./person-row";
 import { SuspensionCountdown } from "./profile-admin";
 import { ProfileMenu } from "./profile-menu";
-import type { PresenceStatus } from "@/lib/api";
-import { presenceDot, presenceLabel } from "@/lib/presence";
+import type { Device, PresenceStatus } from "@/lib/api";
+import { currentDevice } from "@/lib/desktop";
+import { presenceText } from "@/lib/presence";
 import { pageTitle } from "@/lib/site-title";
 import { useDocumentTitle } from "@/lib/use-document-title";
 
@@ -133,9 +134,15 @@ function ProfileAvatar({
   );
 }
 
+const headerBadges = {
+  collapsed: { box: "h-4 w-4 sm:h-5 sm:w-5", icon: "size-[9px] sm:size-[11px]" },
+  expanded: { box: "h-6 w-6 sm:h-7 sm:w-7", icon: "size-3.5 sm:size-4" },
+};
+
 function ProfileHeader({
   profile,
   status,
+  device,
   live = false,
   collapsed,
   actions,
@@ -145,6 +152,7 @@ function ProfileHeader({
 }: {
   profile: Profile;
   status: PresenceStatus;
+  device?: Device | null;
   live?: boolean;
   collapsed: boolean;
   actions: React.ReactNode;
@@ -155,6 +163,7 @@ function ProfileHeader({
   const name = profile.name || profile.username;
   const backdrop = profile.coverUrl ?? profile.avatarUrl;
   const header = useRef<HTMLElement>(null);
+  const statusText = presenceText(status, device);
 
   return (
     <header
@@ -187,13 +196,15 @@ function ProfileHeader({
           }`}
         >
           <ProfileAvatar profile={profile} name={name} editor={images?.avatar} />
-          <Tooltip title={presenceLabel[status]}>
-            <span
+          <Tooltip title={statusText}>
+            <Atom.PresenceDot
               role="img"
-              aria-label={presenceLabel[status]}
-              className={`absolute right-[14.6%] bottom-[14.6%] translate-x-1/2 translate-y-1/2 rounded-full border-2 border-white ${
-                presenceDot[status]
-              } ${collapsed ? "h-2.5 w-2.5" : "h-4 w-4"}`}
+              aria-label={statusText}
+              status={status}
+              device={device}
+              size={collapsed ? "h-2.5 w-2.5" : "h-4 w-4"}
+              badge={collapsed ? headerBadges.collapsed : headerBadges.expanded}
+              className="absolute right-[14.6%] bottom-[14.6%] translate-x-1/2 translate-y-1/2 border-2 border-white"
             />
           </Tooltip>
         </span>
@@ -450,6 +461,7 @@ function EmptyTab({ icon, title, description }: { icon: ReactNode; title: string
 function FriendsTab({ profile, myId }: { profile: Profile; myId?: number }) {
   const livePresence = useFriendsStore((state) => state.presence);
   const liveStatuses = useFriendsStore((state) => state.statuses);
+  const liveDevices = useFriendsStore((state) => state.devices);
 
   if (profile.friends.length === 0) {
     return (
@@ -478,6 +490,7 @@ function FriendsTab({ profile, myId }: { profile: Profile; myId?: number }) {
                   ? (liveStatuses[friend.userId] ?? friend.status)
                   : "offline"
               }
+              device={liveDevices[friend.userId] ?? friend.device}
               action={
                 myId !== undefined && (
                   <FriendAction userId={friend.userId} self={friend.userId === myId} />
@@ -589,6 +602,7 @@ function ProfileSidePanel({ profile }: { profile: Profile }) {
                 key={friend.userId}
                 person={friend}
                 presence={friend.online ? friend.status : "offline"}
+                device={friend.device}
                 playing={friend.playing}
                 twitchLogin={friend.twitchLogin}
               />
@@ -655,6 +669,7 @@ export function UserProfile({ username }: { username: string }) {
   const me = useAuthStore((state) => state.profile);
   const livePresence = useFriendsStore((state) => state.presence);
   const liveStatuses = useFriendsStore((state) => state.statuses);
+  const liveDevices = useFriendsStore((state) => state.devices);
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [collapsed, handleScroll] = useCollapsingHeader();
   const isSelf = me?.username === username.toLowerCase();
@@ -762,6 +777,7 @@ export function UserProfile({ username }: { username: string }) {
       ? (me?.status ?? "online")
       : (liveStatuses[profile.userId] ?? profile.status);
   const live = (liveStatuses[profile.userId] ?? profile.status) === "streaming";
+  const device = isSelf ? currentDevice() : (liveDevices[profile.userId] ?? profile.device);
   const social = !isSelf && me && (
     <>
       <MessageButton person={profile} />
@@ -885,6 +901,7 @@ export function UserProfile({ username }: { username: string }) {
       <ProfileHeader
         profile={profile}
         status={status}
+        device={device}
         live={live}
         collapsed={collapsed}
         images={images}

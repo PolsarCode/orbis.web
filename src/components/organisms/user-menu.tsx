@@ -15,7 +15,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
-import { inDesktopApp } from "@/lib/desktop";
+import type { Device } from "@/lib/api";
+import { currentDevice } from "@/lib/desktop";
 import { useAuthStore } from "@/stores/auth-store";
 import { useLayoutStore } from "@/stores/layout-store";
 import { HeaderPanel } from "./header-popover";
@@ -31,7 +32,7 @@ export function UserMenu() {
   const logout = useAuthStore((state) => state.logout);
   const setFeedbackOpen = useLayoutStore((state) => state.setFeedbackOpen);
   const [open, setOpen] = useState(false);
-  const desktop = useSyncExternalStore(noSubscription, inDesktopApp, () => false);
+  const device = useSyncExternalStore<Device>(noSubscription, currentDevice, () => "web");
 
   useEffect(() => {
     if (!useAuthStore.getState().profile) fetchProfile().catch(() => null);
@@ -85,7 +86,7 @@ export function UserMenu() {
         <Settings size={18} />
         Settings
       </Link>
-      {desktop && (
+      {device === "desktop" && (
         <Link href="/settings/application" onClick={() => setOpen(false)} className={menuRow}>
           <AppWindow size={18} />
           Application settings
@@ -146,6 +147,7 @@ export function UserMenu() {
           src={profile?.avatarUrl}
           seed={profile?.userId ?? 0}
           presence={profile?.appearOffline ? "offline" : (profile?.status ?? "online")}
+          device={device}
         />
       </button>
     </HeaderPanel>

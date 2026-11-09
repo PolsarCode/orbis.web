@@ -15,6 +15,8 @@ export type Credentials = LoginCredentials | SignupDetails;
 
 export type PresenceStatus = "online" | "idle" | "busy" | "streaming" | "offline";
 
+export type Device = "web" | "desktop" | "mobile";
+
 export type UserStatus = Exclude<PresenceStatus, "offline" | "streaming">;
 
 export type Profile = {
@@ -559,6 +561,7 @@ export type Member = {
   isVerified: boolean;
   online: boolean;
   status: PresenceStatus;
+  device?: Device | null;
   playing?: string | null;
   twitchLogin?: string | null;
   nickname: string | null;
@@ -1182,6 +1185,7 @@ export type FriendSuggestion = FriendUser & {
 export type Friend = FriendUser & {
   online: boolean;
   status: PresenceStatus;
+  device?: Device | null;
   playing?: string | null;
   twitchLogin?: string | null;
 };
@@ -1831,6 +1835,7 @@ export type ReportAdmin = Author & {
   isHeadAdmin: boolean;
   online: boolean;
   status?: PresenceStatus;
+  device?: Device | null;
   twitchLogin?: string | null;
 };
 
@@ -2170,6 +2175,7 @@ export type PublicProfile = {
   createdAt: string;
   online: boolean;
   status: PresenceStatus;
+  device?: Device | null;
   friendCount: number;
   postCount: number;
   communityCount: number;
@@ -2191,6 +2197,7 @@ export type PublicProfile = {
     isVerified: boolean;
     online: boolean;
     status: PresenceStatus;
+    device?: Device | null;
     playing?: string | null;
     twitchLogin?: string | null;
   }[];
@@ -2529,6 +2536,7 @@ export type PublicUser = {
   isVerified: boolean;
   online: boolean;
   status: PresenceStatus;
+  device?: Device | null;
   activity: number;
 };
 

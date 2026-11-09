@@ -170,6 +170,7 @@ export function LandingPeople() {
                 coverUrl={person.coverUrl}
                 isVerified={person.isVerified}
                 presence={person.online ? person.status : "offline"}
+                device={person.device}
               />
             </li>
           ))}

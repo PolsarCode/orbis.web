@@ -260,6 +260,7 @@ export function FriendsPanel() {
             key={friend.userId}
             person={friend}
             presence={friend.status}
+            device={friend.device}
             playing={friend.playing}
           />
         ))}

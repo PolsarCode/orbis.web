@@ -2,6 +2,7 @@ import { io, type Socket } from "socket.io-client";
 import { create } from "zustand";
 import * as api from "@/lib/api";
 import type {
+  Device,
   Friend,
   FriendSuggestion,
   FriendTarget,
@@ -9,6 +10,7 @@ import type {
   Notification,
   PresenceStatus,
 } from "@/lib/api";
+import { currentDevice } from "@/lib/desktop";
 import { showDesktopNotifications } from "@/lib/desktop-notifications";
 import { requireToken, useAuthStore } from "./auth-store";
 import { useCommunityStore } from "./community-store";
@@ -21,6 +23,7 @@ type FriendsState = {
   outgoing: FriendUser[];
   presence: Record<number, boolean>;
   statuses: Record<number, PresenceStatus>;
+  devices: Record<number, Device | null>;
   games: Record<number, string | null>;
   twitchLogins: Record<number, string | null>;
   loaded: boolean;
@@ -41,6 +44,7 @@ const empty = {
   outgoing: [],
   presence: {},
   statuses: {},
+  devices: {},
   games: {},
   twitchLogins: {},
   loaded: false,
@@ -52,15 +56,16 @@ const empty = {
 let socket: Socket | null = null;
 let suggestionsRequest: Promise<void> | null = null;
 let stopIdleTracking: (() => void) | null = null;
+let idle = false;
 
 const IDLE_AFTER_MS = 5 * 60 * 1000;
 const ACTIVITY_THROTTLE_MS = 15_000;
 const ACTIVITY_EVENTS = ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"];
 
 function trackIdle(client: Socket) {
-  let idle = false;
   let lastActive = 0;
   let timer: ReturnType<typeof setTimeout> | undefined;
+  idle = false;
 
   function setIdle(next: boolean) {
     if (idle === next) return;
@@ -72,7 +77,10 @@ function trackIdle(client: Socket) {
     const now = Date.now();
     if (!idle && now - lastActive < ACTIVITY_THROTTLE_MS) return;
     lastActive = now;
-    setIdle(false);
+    if (document.visibilityState === "visible" && (idle || document.hasFocus())) {
+      idle = false;
+      client.emit("idle", false);
+    }
     clearTimeout(timer);
     timer = setTimeout(() => setIdle(true), IDLE_AFTER_MS);
   }
@@ -105,7 +113,9 @@ export const useFriendsStore = create<FriendsState>()((set, get) => ({
     const { token } = useAuthStore.getState();
     if (!token || socket) return;
 
-    socket = io(api.API_URL, { auth: { token } });
+    socket = io(api.API_URL, {
+      auth: (callback) => callback({ token, platform: currentDevice(), idle }),
+    });
     stopIdleTracking = trackIdle(socket);
     socket.on("connect", () => {
       get().fetchFriends();
@@ -147,23 +157,26 @@ export const useFriendsStore = create<FriendsState>()((set, get) => ({
         userId,
         online,
         status,
+        device = null,
         playing = null,
         twitchLogin = null,
       }: {
         userId: number;
         online: boolean;
         status: PresenceStatus;
+        device?: Device | null;
         playing?: string | null;
         twitchLogin?: string | null;
       }) =>
         set((state) => ({
           friends: state.friends.map((friend) =>
             friend.userId === userId
-              ? { ...friend, online, status, playing, twitchLogin }
+              ? { ...friend, online, status, device, playing, twitchLogin }
               : friend,
           ),
           presence: { ...state.presence, [userId]: online },
           statuses: { ...state.statuses, [userId]: status },
+          devices: { ...state.devices, [userId]: device },
           games: { ...state.games, [userId]: playing },
           twitchLogins: { ...state.twitchLogins, [userId]: twitchLogin },
         })),

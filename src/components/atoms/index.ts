@@ -10,6 +10,7 @@ export * from "./input";
 export * from "./loader";
 export * from "./logo-mark";
 export * from "./pill";
+export * from "./presence-dot";
 export * from "./role-badge";
 export * from "./text-link";
 export * from "./live-tag";

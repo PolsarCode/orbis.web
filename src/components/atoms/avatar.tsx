@@ -1,7 +1,8 @@
 import Image from "next/image";
-import type { PresenceStatus } from "@/lib/api";
+import type { Device, PresenceStatus } from "@/lib/api";
 import { avatarTone } from "@/lib/avatar-tone";
-import { presenceDot } from "@/lib/presence";
+import { presenceText, showsDevice } from "@/lib/presence";
+import { PresenceDot } from "./presence-dot";
 
 const tones = ["bg-accent-soft", "bg-rail-item"];
 
@@ -14,19 +15,30 @@ const sizes = {
   lg: "h-[88px] w-[88px] text-[44px]",
 };
 
+const badges: Partial<Record<keyof typeof sizes, { box: string; icon: string }>> = {
+  sm: { box: "h-4 w-4", icon: "size-[9px]" },
+  md: { box: "h-[18px] w-[18px]", icon: "size-2.5" },
+  rail: { box: "h-4 w-4 sm:h-5 sm:w-5", icon: "size-[9px] sm:size-[11px]" },
+  lg: { box: "h-7 w-7", icon: "size-4" },
+};
+
 export function Avatar({
   label,
   src,
   seed = label,
   size = "md",
   presence,
+  device,
 }: {
   label: string;
   src?: string | null;
   seed?: string | number;
   size?: keyof typeof sizes;
   presence?: PresenceStatus;
+  device?: Device | null;
 }) {
+  const badge = showsDevice(presence) && device ? badges[size] : undefined;
+
   return (
     <span
       aria-hidden
@@ -44,10 +56,13 @@ export function Avatar({
         Array.from(label)[0]?.toUpperCase()
       )}
       {presence && (
-        <span
-          className={`absolute -right-px -bottom-px h-3 w-3 rounded-full border-2 border-surface ${
-            presenceDot[presence]
-          }`}
+        <PresenceDot
+          status={presence}
+          device={device}
+          size="h-3 w-3"
+          badge={badge}
+          title={badge && presenceText(presence, device)}
+          className="absolute -right-px -bottom-px border-2 border-surface"
         />
       )}
     </span>
