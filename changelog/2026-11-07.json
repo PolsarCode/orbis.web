@@ -1,0 +1,71 @@
+{
+  "date": "2026-11-07",
+  "versions": ["v0.110.2", "v0.111.0", "v0.112.0", "v0.112.1", "v0.113.0", "v0.114.0", "v0.115.0", "v0.115.1"],
+  "entries": [
+    {
+      "type": "new",
+      "title": "Repost and quote posts",
+      "description": "Share a post as it is or add your own words with a quote post. Reposts show up in feeds and profiles, and you get a notification when someone shares yours.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Download your data or delete your account",
+      "description": "From settings, you can now download a copy of your personal data or delete your Orbis account.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "See the edit history of posts and comments",
+      "description": "Posts, comments, and forum posts that were edited now let you open a history of their earlier versions.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Direct messages on mobile",
+      "description": "Your inbox is now in the mobile app, with direct conversations, message requests, and messages that arrive as they're sent.",
+      "platforms": ["mobile"]
+    },
+    {
+      "type": "new",
+      "title": "Friends and live status on mobile",
+      "description": "Search for people, manage friend requests, set your status, and see who's online from the mobile app.",
+      "platforms": ["mobile"]
+    },
+    {
+      "type": "new",
+      "title": "Create and manage communities on mobile",
+      "description": "You can now start a community and change its settings from your phone if you're an admin.",
+      "platforms": ["mobile"]
+    },
+    {
+      "type": "new",
+      "title": "Community invites on mobile",
+      "description": "Create and manage invites for your communities, and join one by opening an invite link or QR code.",
+      "platforms": ["mobile"]
+    },
+    {
+      "type": "new",
+      "title": "Community switcher and member lists on mobile",
+      "description": "Move between your communities with a switcher that keeps your folders and order in sync. You can also browse members and set your nickname and library sharing for each community.",
+      "platforms": ["mobile"]
+    },
+    {
+      "type": "new",
+      "title": "Rich posts and title discussions on mobile",
+      "description": "Posts and comments now show rich content and link previews on mobile, and you can join the discussions on a title's page.",
+      "platforms": ["mobile"]
+    },
+    {
+      "type": "improved",
+      "title": "A fuller home feed on mobile",
+      "description": "The mobile home feed now works much more like the one on the web, and it remembers your feed preferences.",
+      "platforms": ["mobile"]
+    },
+    {
+      "type": "improved",
+      "title": "Steam library stays up to date",
+      "description": "Your Steam library now syncs when you come online and after you finish playing a game, so your games and hours stay current."
+    }
+  ]
+}
