@@ -3,7 +3,7 @@
 import { Input, Popconfirm, Tooltip } from "antd";
 import type { TextAreaRef } from "antd/es/input/TextArea";
 import { Send } from "lucide-react";
-import { useRef, useState, type FormEvent } from "react";
+import { Fragment, useRef, useState, type FormEvent } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import {
@@ -224,9 +224,19 @@ export function DiscordChartSettings({ community }: { community: Community }) {
                   <p className="whitespace-pre-wrap">{fillMessage(message.trim(), values)}</p>
                 )}
                 <p className="text-muted">
-                  {turnedOn.length > 1
-                    ? `Join the discussion: ${turnedOn.join(" · ")}`
-                    : `Join the discussion at ${window.location.origin}/library?tab=charts…`}
+                  {turnedOn.length > 1 ? (
+                    <>
+                      Join the discussion:{" "}
+                      {turnedOn.map((label, index) => (
+                        <Fragment key={label}>
+                          {index > 0 && " · "}
+                          <span className="text-accent">{label}</span>
+                        </Fragment>
+                      ))}
+                    </>
+                  ) : (
+                    <span className="text-accent">Join the discussion</span>
+                  )}
                 </p>
               </div>
             </div>
