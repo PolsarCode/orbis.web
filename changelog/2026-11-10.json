@@ -1,0 +1,40 @@
+{
+  "date": "2026-11-10",
+  "versions": ["v0.120.0", "v0.120.1", "v0.121.0", "v0.121.1", "v0.122.0", "v0.123.0", "v0.124.0", "v0.124.1", "v0.124.2", "v0.124.3", "v0.124.4", "v0.125.0"],
+  "entries": [
+    {
+      "type": "new",
+      "title": "Follow Orbis on Facebook",
+      "description": "Orbis now has a Facebook page that posts the weekly anime, manga, and games charts and news about each new update. Find it on the new Find us page, linked in the footer.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Send weekly charts to Discord right away",
+      "description": "Community owners can now post the weekly charts to their Discord channel whenever they like with the new Send now button, instead of waiting for Monday.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "improved",
+      "title": "All your weekly charts in one Discord post",
+      "description": "When you turn on more than one chart, they now arrive together in a single Discord post with an image for each, and the preview shows exactly how it will look.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "improved",
+      "title": "Tidier Discord settings for communities",
+      "description": "Your community's Discord feed and chart posts now sit together in one Discord section, so everything about your channel is in one place.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "improved",
+      "title": "Shorter links to the weekly charts",
+      "description": "Chart posts on Discord and Facebook now use short, tidy links that take you straight to that week's chart."
+    },
+    {
+      "type": "fixed",
+      "title": "Online status stays connected during outages",
+      "description": "Brief server hiccups no longer drop your connection, so friends' online status keeps working instead of cutting out."
+    }
+  ]
+}
