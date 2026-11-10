@@ -1,5 +1,6 @@
 "use client";
 
+import { ConfigProvider } from "antd";
 import {
   CalendarClock,
   Check,
@@ -490,14 +491,20 @@ function FeaturedSlide({
 function Featured({
   items,
   onEntry,
+  menu,
+  pager = false,
 }: {
   items: MediaListItem[] | null | undefined;
   onEntry?: (id: string, entry: SavedEntry) => void;
+  menu?: ReactNode;
+  pager?: boolean;
 }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const slides = (items ?? []).slice(0, FEATURED);
   const count = slides.length;
+  const unavailable = items === null || (items !== undefined && count === 0);
+  const step = (by: number) => (index + by + count) % count;
 
   useEffect(() => {
     if (count < 2 || paused) return;
@@ -506,52 +513,91 @@ function Featured({
     return () => clearTimeout(timer);
   }, [count, index, paused]);
 
-  if (items === null || (items && count === 0)) return null;
-  if (!items) {
-    return (
-      <div
-        aria-hidden
-        className="h-72 animate-pulse rounded-lg border border-divider bg-rail-item motion-reduce:animate-none sm:h-80"
-      />
-    );
-  }
+  if (unavailable && !menu) return null;
 
   return (
     <section
       aria-roledescription="carousel"
       aria-label="Featured"
+      aria-busy={items === undefined}
       onFocus={(event) => {
         if (event.target.matches(":focus-visible")) setPaused(true);
       }}
       onBlur={() => setPaused(false)}
-      className="relative isolate h-72 overflow-hidden rounded-lg border border-divider bg-rail sm:h-80"
+      className="flex min-w-0 flex-col gap-2"
     >
-      {slides.map((item, position) => (
-        <FeaturedSlide
-          key={item.id}
-          item={item}
-          rank={position + 1}
-          visible={position === index}
-          onEntry={onEntry && ((entry) => onEntry(item.id, entry))}
-        />
-      ))}
-      <div className="absolute right-5 bottom-5 flex items-center gap-1.5 sm:right-6 sm:bottom-6">
+      <div className="relative isolate h-72 overflow-hidden rounded-lg border border-divider bg-rail sm:h-80">
+        {items === undefined && (
+          <div aria-hidden className="absolute inset-0 animate-pulse bg-rail-item motion-reduce:animate-none" />
+        )}
+        {unavailable && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <ListUnavailable />
+          </div>
+        )}
         {slides.map((item, position) => (
-          <button
+          <FeaturedSlide
             key={item.id}
-            type="button"
-            aria-label={`Show ${item.title}`}
-            aria-current={position === index}
-            onClick={() => setIndex(position)}
-            className={`focus-ring h-1.5 cursor-pointer rounded-full transition-all motion-reduce:transition-none ${
-              position === index ? "w-6 bg-white" : "w-1.5 bg-white/50 hover:bg-white/80"
-            }`}
+            item={item}
+            rank={position + 1}
+            visible={position === index}
+            onEntry={onEntry && ((entry) => onEntry(item.id, entry))}
           />
         ))}
+        {menu && <div className="absolute top-4 left-4 z-10 sm:top-5 sm:left-6">{menu}</div>}
+        <div className="absolute right-5 bottom-5 flex items-center gap-1.5 sm:right-6 sm:bottom-6">
+          {slides.map((item, position) => (
+            <button
+              key={item.id}
+              type="button"
+              aria-label={`Show ${item.title}`}
+              aria-current={position === index}
+              onClick={() => setIndex(position)}
+              className={`focus-ring h-1.5 cursor-pointer rounded-full transition-all motion-reduce:transition-none ${
+                position === index ? "w-6 bg-white" : "w-1.5 bg-white/50 hover:bg-white/80"
+              }`}
+            />
+          ))}
+        </div>
       </div>
+      {pager && count > 1 && (
+        <div className="grid grid-cols-2 gap-2">
+          {[-1, 1].map((by) => {
+            const Chevron = by < 0 ? ChevronLeft : ChevronRight;
+            return (
+              <button
+                key={by}
+                type="button"
+                onClick={() => setIndex(step(by))}
+                className={`focus-ring flex min-w-0 cursor-pointer items-center gap-3 rounded-lg border border-divider bg-surface px-3 py-2.5 transition-colors hover:bg-rail-item motion-reduce:transition-none ${
+                  by > 0 ? "flex-row-reverse text-right" : "text-left"
+                }`}
+              >
+                <Chevron size={18} aria-hidden className="shrink-0 text-muted" />
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="text-xs text-muted">{by < 0 ? "Previous" : "Next"}</span>
+                  <span className="truncate text-sm font-semibold">{slides[step(by)].title}</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }
+
+const overlayMenuTheme = {
+  components: {
+    Segmented: {
+      trackBg: "rgba(0, 0, 0, 0.5)",
+      itemColor: "rgba(255, 255, 255, 0.85)",
+      itemHoverColor: "#ffffff",
+      itemSelectedBg: "rgba(255, 255, 255, 0.95)",
+      itemSelectedColor: "#1c1d1b",
+    },
+  },
+};
 
 export function HomeDiscover() {
   const type = useMediaShelfStore((state) => state.type);
@@ -559,17 +605,26 @@ export function HomeDiscover() {
   const ready = useShelfReady();
   const key = listKey(type, "trending");
   const { results, onEntry } = useMediaLists([key], ready);
-  const items = results[key];
 
   return (
-    <section aria-label="Trending anime, manga, and games" className="flex min-w-0 flex-col gap-3">
-      <MediaTypeSwitch label="Trending types" value={type} onChange={setType} />
-      {items === null || items?.length === 0 ? (
-        <ListUnavailable />
-      ) : (
-        <Featured key={type} items={items} onEntry={onEntry} />
-      )}
-    </section>
+    <Featured
+      key={type}
+      items={results[key]}
+      onEntry={onEntry}
+      pager
+      menu={
+        <ConfigProvider theme={overlayMenuTheme}>
+          <div className="rounded-xl backdrop-blur-md">
+            <MediaTypeSwitch
+              label="Trending types"
+              value={type}
+              onChange={setType}
+              block={false}
+            />
+          </div>
+        </ConfigProvider>
+      }
+    />
   );
 }
 

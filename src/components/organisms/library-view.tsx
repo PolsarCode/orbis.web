@@ -1135,14 +1135,16 @@ export function MediaTypeSwitch({
   label,
   value,
   onChange,
+  block = true,
 }: {
   label: string;
   value: MediaType;
   onChange: (value: MediaType) => void;
+  block?: boolean;
 }) {
   return (
     <Segmented<MediaType>
-      block
+      block={block}
       aria-label={label}
       value={value}
       onChange={onChange}
