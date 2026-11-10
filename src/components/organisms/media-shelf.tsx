@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode, type Ref } from "react";
 import {
   getMediaList,
@@ -24,7 +24,7 @@ import {
   type MediaType,
 } from "@/lib/api";
 import * as Atom from "@atom";
-import { countLabel, mediaPath, mediaTypeParam } from "@/lib/library";
+import { countLabel, libraryPath, mediaPath, mediaTypeParam } from "@/lib/library";
 import { useAuthStore } from "@/stores/auth-store";
 import { useMediaShelfStore } from "@/stores/media-shelf-store";
 import { mediaTypes } from "./activity-card";
@@ -596,6 +596,24 @@ const overlayMenuTheme = {
   },
 };
 
+function BannerTypeSwitch({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: MediaType;
+  onChange: (value: MediaType) => void;
+}) {
+  return (
+    <ConfigProvider theme={overlayMenuTheme}>
+      <div className="rounded-xl backdrop-blur-md max-sm:[&_.ant-segmented-item-icon]:hidden">
+        <MediaTypeSwitch label={label} value={value} onChange={onChange} block={false} />
+      </div>
+    </ConfigProvider>
+  );
+}
+
 export function HomeDiscover() {
   const type = useMediaShelfStore((state) => state.type);
   const setType = useMediaShelfStore((state) => state.setType);
@@ -609,30 +627,32 @@ export function HomeDiscover() {
       items={results[key]}
       onEntry={onEntry}
       arrows
-      menu={
-        <ConfigProvider theme={overlayMenuTheme}>
-          <div className="rounded-xl backdrop-blur-md max-sm:[&_.ant-segmented-item-icon]:hidden">
-            <MediaTypeSwitch
-              label="Trending types"
-              value={type}
-              onChange={setType}
-              block={false}
-            />
-          </div>
-        </ConfigProvider>
-      }
+      menu={<BannerTypeSwitch label="Trending types" value={type} onChange={setType} />}
     />
   );
 }
 
 export function LibraryDiscover() {
+  const router = useRouter();
   const type = mediaTypeParam(useSearchParams().get("type"));
   const shown = lists.filter((list) => hasList(type, list));
   const { results, onEntry } = useMediaLists(shown.map((list) => listKey(type, list)));
 
   return (
     <div className="flex flex-col gap-8">
-      <Featured key={type} items={results[listKey(type, "trending")]} onEntry={onEntry} />
+      <Featured
+        key={type}
+        items={results[listKey(type, "trending")]}
+        onEntry={onEntry}
+        arrows
+        menu={
+          <BannerTypeSwitch
+            label="Discover types"
+            value={type}
+            onChange={(value) => router.push(libraryPath("discover", value))}
+          />
+        }
+      />
       {shown.map((list) => {
         const Icon = listIcons[list];
         return (

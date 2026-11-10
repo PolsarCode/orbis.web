@@ -1299,15 +1299,17 @@ export function LibraryView() {
       <LibraryPages page={page} type={type} />
       <div className="flex min-h-0 flex-1">
         <Template.PageColumn>
-          {!page ? null : page !== "mine" ? (
+          {!page ? null : page === "charts" ? (
             <div className="flex flex-col gap-6">
               <MediaTypeSwitch
-                label={page === "charts" ? "Chart types" : "Discover types"}
+                label="Chart types"
                 value={type}
-                onChange={(value) => router.push(libraryPath(page, value))}
+                onChange={(value) => router.push(libraryPath("charts", value))}
               />
-              {page === "charts" ? <WeeklyCharts /> : <LibraryDiscover />}
+              <WeeklyCharts />
             </div>
+          ) : page === "discover" ? (
+            <LibraryDiscover />
           ) : !signedIn ? null : (
             <div className="flex flex-col gap-4">
               <LibraryStatusSwitch
