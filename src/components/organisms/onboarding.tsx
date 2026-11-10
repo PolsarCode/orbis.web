@@ -372,16 +372,16 @@ export const pageTours = {
         "Discover has what’s trending, new, top-rated, and coming soon. My library has everything you’ve added, and Charts ranks the top titles of each week, with a discussion under each chart.",
     },
     {
-      target: "library-tabs",
-      placement: "bottom",
-      title: "Your shelves",
-      description: "Filter by what you’re watching, finished, paused, dropped, or planning.",
-    },
-    {
       target: "library-view",
       placement: "bottomRight",
       title: "Type and view",
       description: "Search your library, show only anime, manga, or games, and switch between cards and a list.",
+    },
+    {
+      target: "library-tabs",
+      placement: "bottom",
+      title: "Your shelves",
+      description: "Filter by what you’re watching, finished, paused, dropped, or planning.",
     },
   ],
   media: [

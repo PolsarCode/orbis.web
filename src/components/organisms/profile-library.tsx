@@ -107,7 +107,6 @@ export function ProfileLibrary({
         <p className="text-sm text-muted">Nothing in the library yet.</p>
       ) : (
         <div className="flex flex-col gap-4">
-          <LibraryStatusSwitch entries={searched} type={type} status={status} onChange={setStatus} />
           <LibraryToolbar
             query={query}
             onQuery={setQuery}
@@ -124,6 +123,7 @@ export function ProfileLibrary({
               </label>
             )}
           </LibraryToolbar>
+          <LibraryStatusSwitch entries={searched} type={type} status={status} onChange={setStatus} />
           {shown.length === 0 ? (
             <div className="flex flex-col items-start gap-3 py-6">
               <p className="text-sm text-muted">No titles match these filters.</p>

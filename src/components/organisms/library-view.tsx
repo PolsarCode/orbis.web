@@ -1300,12 +1300,6 @@ export function LibraryView() {
             </div>
           ) : !signedIn ? null : (
             <div className="flex flex-col gap-4">
-              <LibraryStatusSwitch
-                entries={searched}
-                type={filterType}
-                status={status}
-                onChange={setStatus}
-              />
               <LibraryToolbar
                 query={query}
                 onQuery={setQuery}
@@ -1313,6 +1307,12 @@ export function LibraryView() {
                 onType={setFilterType}
                 sort={sort}
                 onSort={setSort}
+              />
+              <LibraryStatusSwitch
+                entries={searched}
+                type={filterType}
+                status={status}
+                onChange={setStatus}
               />
               {failed ? (
                 <Atom.ErrorMessage>Could not load your library.</Atom.ErrorMessage>
