@@ -117,6 +117,10 @@ function ShelfCard({
   );
 }
 
+function ListUnavailable() {
+  return <p className="py-6 text-sm text-muted">This list isn’t available right now.</p>;
+}
+
 function ShelfItems({
   items,
   list,
@@ -129,14 +133,12 @@ function ShelfItems({
   items: MediaListItem[] | null | undefined;
   list: MediaListName;
   grid: boolean;
-  cardClassName: string;
+  cardClassName?: string;
   onEntry?: (id: string, entry: SavedEntry) => void;
   rowRef?: Ref<HTMLUListElement>;
   onScroll?: () => void;
 }) {
-  if (items === null) {
-    return <p className="py-6 text-sm text-muted">This list isn’t available right now.</p>;
-  }
+  if (items === null) return <ListUnavailable />;
 
   const size = grid ? SECTION_SIZE : ROW_SIZE;
   const shown = items && (grid ? items.slice(0, SECTION_SIZE) : items);
@@ -300,30 +302,8 @@ function ShelfRow({
   );
 }
 
-export function MediaShelf({
-  heading,
-  layout = "row",
-  cardClassName = "w-36",
-  className = "",
-}: {
-  heading?: ReactNode;
-  layout?: "row" | "grid";
-  cardClassName?: string;
-  className?: string;
-}) {
-  const type = useMediaShelfStore((state) => state.type);
-  const savedList = useMediaShelfStore((state) => state.list);
-  const setType = useMediaShelfStore((state) => state.setType);
-  const setList = useMediaShelfStore((state) => state.setList);
+function useShelfReady() {
   const [ready, setReady] = useState(false);
-  const grid = layout === "grid";
-  const list = grid || hasList(type, savedList) ? savedList : "trending";
-  const tabs = grid ? lists : lists.filter((value) => hasList(type, value));
-  const sections = types.filter((value) => hasList(value, list));
-  const { results, onEntry } = useMediaLists(
-    (grid ? sections : [type]).map((value) => listKey(value, list)),
-    ready,
-  );
 
   useEffect(() => {
     let active = true;
@@ -335,11 +315,24 @@ export function MediaShelf({
     };
   }, []);
 
+  return ready;
+}
+
+export function MediaShelf({ heading, className = "" }: { heading?: ReactNode; className?: string }) {
+  const list = useMediaShelfStore((state) => state.list);
+  const setList = useMediaShelfStore((state) => state.setList);
+  const ready = useShelfReady();
+  const sections = types.filter((value) => hasList(value, list));
+  const { results, onEntry } = useMediaLists(
+    sections.map((value) => listKey(value, list)),
+    ready,
+  );
+
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
     event.preventDefault();
-    const index = tabs.indexOf(list);
-    const next = tabs[(index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length];
+    const index = lists.indexOf(list);
+    const next = lists[(index + (event.key === "ArrowRight" ? 1 : -1) + lists.length) % lists.length];
     setList(next);
     document.getElementById(`media-shelf-${next}`)?.focus();
   }
@@ -347,86 +340,59 @@ export function MediaShelf({
   return (
     <section aria-label="Discover anime, manga, and games" className={`flex min-w-0 flex-col gap-3 ${className}`}>
       {heading}
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <div
-          role="tablist"
-          aria-label="Lists"
-          onKeyDown={handleKeyDown}
-          className="flex min-w-0 gap-4 overflow-x-auto [scrollbar-width:none]"
-        >
-          {tabs.map((value) => {
-            const selected = value === list;
-            const Icon = listIcons[value];
-            return (
-              <button
-                key={value}
-                id={`media-shelf-${value}`}
-                type="button"
-                role="tab"
-                aria-selected={selected}
-                aria-controls="media-shelf-panel"
-                tabIndex={selected ? 0 : -1}
-                onClick={() => setList(value)}
-                className={`focus-ring flex shrink-0 cursor-pointer items-center gap-1.5 border-b-2 py-1 text-sm whitespace-nowrap transition-colors motion-reduce:transition-none ${
-                  selected
-                    ? "border-accent font-semibold text-accent"
-                    : "border-transparent text-muted hover:text-foreground"
-                }`}
-              >
-                <Icon size={14} aria-hidden />
-                {listLabel(value, grid ? null : type)}
-              </button>
-            );
-          })}
-        </div>
-        {!grid && (
-          <div className="flex items-center gap-2">
-            <Segmented<MediaType>
-              size="small"
-              value={type}
-              onChange={setType}
-              options={types.map((value) => ({
-                value,
-                icon: mediaTypes[value].icon,
-                label: sectionTitles[value],
-              }))}
-            />
-          </div>
-        )}
+      <div
+        role="tablist"
+        aria-label="Lists"
+        onKeyDown={handleKeyDown}
+        className="flex min-w-0 gap-4 overflow-x-auto [scrollbar-width:none]"
+      >
+        {lists.map((value) => {
+          const selected = value === list;
+          const Icon = listIcons[value];
+          return (
+            <button
+              key={value}
+              id={`media-shelf-${value}`}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              aria-controls="media-shelf-panel"
+              tabIndex={selected ? 0 : -1}
+              onClick={() => setList(value)}
+              className={`focus-ring flex shrink-0 cursor-pointer items-center gap-1.5 border-b-2 py-1 text-sm whitespace-nowrap transition-colors motion-reduce:transition-none ${
+                selected
+                  ? "border-accent font-semibold text-accent"
+                  : "border-transparent text-muted hover:text-foreground"
+              }`}
+            >
+              <Icon size={14} aria-hidden />
+              {listLabel(value, null)}
+            </button>
+          );
+        })}
       </div>
       <div
         id="media-shelf-panel"
         role="tabpanel"
         aria-labelledby={`media-shelf-${list}`}
-        className={grid ? "mt-3 flex flex-col gap-10" : ""}
+        className="mt-3 flex flex-col gap-10"
       >
-        {grid ? (
-          sections.map((value) => (
-            <section key={value} aria-label={sectionTitles[value]} className="flex flex-col gap-4">
-              <h3 className="flex items-center gap-2 font-display text-2xl font-bold">
-                <span aria-hidden className="text-accent [&>svg]:size-5">
-                  {mediaTypes[value].icon}
-                </span>
-                {sectionTitles[value]}
-              </h3>
-              <ShelfItems
-                items={results[listKey(value, list)]}
-                list={list}
-                grid
-                cardClassName={cardClassName}
-                onEntry={onEntry}
-              />
-            </section>
-          ))
-        ) : (
-          <ShelfRow
-            key={listKey(type, list)}
-            items={results[listKey(type, list)]}
-            list={list}
-            cardClassName={cardClassName}
-            onEntry={onEntry}
-          />
-        )}
+        {sections.map((value) => (
+          <section key={value} aria-label={sectionTitles[value]} className="flex flex-col gap-4">
+            <h3 className="flex items-center gap-2 font-display text-2xl font-bold">
+              <span aria-hidden className="text-accent [&>svg]:size-5">
+                {mediaTypes[value].icon}
+              </span>
+              {sectionTitles[value]}
+            </h3>
+            <ShelfItems
+              items={results[listKey(value, list)]}
+              list={list}
+              grid
+              onEntry={onEntry}
+            />
+          </section>
+        ))}
       </div>
     </section>
   );
@@ -584,6 +550,41 @@ function Featured({
           />
         ))}
       </div>
+    </section>
+  );
+}
+
+export function HomeDiscover({ className = "" }: { className?: string }) {
+  const type = useMediaShelfStore((state) => state.type);
+  const setType = useMediaShelfStore((state) => state.setType);
+  const ready = useShelfReady();
+  const key = listKey(type, "trending");
+  const { results, onEntry } = useMediaLists([key], ready);
+  const items = results[key];
+
+  return (
+    <section aria-labelledby="home-discover" className={`flex min-w-0 flex-col gap-3 ${className}`}>
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <h2 id="home-discover" className="flex items-center gap-2 font-display text-xl font-bold">
+          <Flame size={18} aria-hidden className="text-accent" />
+          Trending
+        </h2>
+        <Segmented<MediaType>
+          size="small"
+          value={type}
+          onChange={setType}
+          options={types.map((value) => ({
+            value,
+            icon: mediaTypes[value].icon,
+            label: sectionTitles[value],
+          }))}
+        />
+      </div>
+      {items === null || items?.length === 0 ? (
+        <ListUnavailable />
+      ) : (
+        <Featured key={type} items={items} onEntry={onEntry} />
+      )}
     </section>
   );
 }

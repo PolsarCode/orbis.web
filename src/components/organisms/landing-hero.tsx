@@ -47,7 +47,6 @@ export function LandingHero() {
       <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-20 overflow-x-clip px-5 pt-10 pb-20 sm:gap-28 sm:px-8 sm:pt-16 sm:pb-28 lg:gap-32 lg:pb-32">
         <LandingReveal>
           <MediaShelf
-            layout="grid"
             heading={
               <div className="mb-3 flex flex-col gap-3">
                 <p className="text-xs font-bold tracking-wide text-accent uppercase">

@@ -197,6 +197,7 @@ function PodiumCard({ entry, images }: { entry: ChartEntry; images: Images }) {
   const featured = entry.rank === 1;
   const size = featured ? FEATURED : RUNNER_UP;
   const medal = medals[entry.rank - 1];
+  const titleSize = featured ? 44 : 30;
 
   return (
     <div
@@ -271,9 +272,11 @@ function PodiumCard({ entry, images }: { entry: ChartEntry; images: Images }) {
             style={{
               ...clamp(2),
               fontFamily: "Barlow Condensed",
-              fontSize: featured ? 44 : 30,
+              fontSize: titleSize,
               fontWeight: 700,
               lineHeight: 1.05,
+              paddingBottom: titleSize * 0.2,
+              marginBottom: titleSize * -0.2,
             }}
           >
             {entry.media.title}

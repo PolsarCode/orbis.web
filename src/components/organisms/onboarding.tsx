@@ -62,7 +62,7 @@ export const tourStops: TourStop[] = [
     placement: "bottom",
     title: "See what’s popular",
     description:
-      "Trending, new, top-rated, and upcoming anime, manga, and games, updated every day. Open any title to add it to your library.",
+      "The top trending anime, manga, and games, updated every day. Switch between them with the menu, and open any title to add it to your library.",
   },
   {
     target: "composer",
