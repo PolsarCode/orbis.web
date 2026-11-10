@@ -1,6 +1,5 @@
 "use client";
 
-import { Segmented } from "antd";
 import {
   CalendarClock,
   Check,
@@ -29,7 +28,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useMediaShelfStore } from "@/stores/media-shelf-store";
 import { mediaTypes } from "./activity-card";
 import { drift, DRIFT_MS, SLIDE_MS } from "./anime-spotlight";
-import { AddStatusPill, MediaCover, StatusPill } from "./library-view";
+import { AddStatusPill, MediaCover, MediaTypeSwitch, StatusPill } from "./library-view";
 
 const types: MediaType[] = ["anime", "manga", "game"];
 const lists: MediaListName[] = ["trending", "season", "top", "upcoming"];
@@ -554,7 +553,7 @@ function Featured({
   );
 }
 
-export function HomeDiscover({ className = "" }: { className?: string }) {
+export function HomeDiscover() {
   const type = useMediaShelfStore((state) => state.type);
   const setType = useMediaShelfStore((state) => state.setType);
   const ready = useShelfReady();
@@ -563,23 +562,8 @@ export function HomeDiscover({ className = "" }: { className?: string }) {
   const items = results[key];
 
   return (
-    <section aria-labelledby="home-discover" className={`flex min-w-0 flex-col gap-3 ${className}`}>
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <h2 id="home-discover" className="flex items-center gap-2 font-display text-xl font-bold">
-          <Flame size={18} aria-hidden className="text-accent" />
-          Trending
-        </h2>
-        <Segmented<MediaType>
-          size="small"
-          value={type}
-          onChange={setType}
-          options={types.map((value) => ({
-            value,
-            icon: mediaTypes[value].icon,
-            label: sectionTitles[value],
-          }))}
-        />
-      </div>
+    <section aria-label="Trending anime, manga, and games" className="flex min-w-0 flex-col gap-3">
+      <MediaTypeSwitch label="Trending types" value={type} onChange={setType} />
       {items === null || items?.length === 0 ? (
         <ListUnavailable />
       ) : (

@@ -58,7 +58,7 @@ export function HomeFeed({ latestChangelog }: { latestChangelog: ChangelogDay | 
           <TipOfTheWeek />
         ))}
       <div data-tour="discover">
-        <HomeDiscover className="rounded-lg border border-divider bg-surface p-4" />
+        <HomeDiscover />
       </div>
       {profile && (
         <div data-tour="composer">

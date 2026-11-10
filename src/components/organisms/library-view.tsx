@@ -1131,15 +1131,21 @@ const typeOptions: { value: MediaType; label: string; icon: ReactNode }[] = [
   { value: "game", label: "Games", icon: <Gamepad2 size={16} /> },
 ];
 
-function MediaTypeSwitch({ page, type }: { page: "charts" | "discover"; type: MediaType }) {
-  const router = useRouter();
-
+export function MediaTypeSwitch({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: MediaType;
+  onChange: (value: MediaType) => void;
+}) {
   return (
     <Segmented<MediaType>
       block
-      aria-label={page === "charts" ? "Chart types" : "Discover types"}
-      value={type}
-      onChange={(value) => router.push(libraryPath(page, value))}
+      aria-label={label}
+      value={value}
+      onChange={onChange}
       options={typeOptions}
     />
   );
@@ -1293,7 +1299,11 @@ export function LibraryView() {
         <Template.PageColumn>
           {!page ? null : page !== "mine" ? (
             <div className="flex flex-col gap-6">
-              <MediaTypeSwitch page={page} type={type} />
+              <MediaTypeSwitch
+                label={page === "charts" ? "Chart types" : "Discover types"}
+                value={type}
+                onChange={(value) => router.push(libraryPath(page, value))}
+              />
               {page === "charts" ? <WeeklyCharts /> : <LibraryDiscover />}
             </div>
           ) : !signedIn ? null : (
