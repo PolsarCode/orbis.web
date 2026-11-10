@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 const links = [
+  { href: "/find-us", label: "Find us" },
   { href: "/guidelines", label: "Community guidelines" },
   { href: "/privacy", label: "Privacy" },
   { href: "/terms", label: "Terms" },
@@ -39,7 +40,7 @@ export function SiteFooter({
           </a>
         </p>
         <nav
-          aria-label="Legal"
+          aria-label="Footer"
           className={`flex flex-wrap gap-y-1 max-sm:justify-center ${compact ? "gap-x-3 sm:gap-x-4" : "gap-x-4"}`}
         >
           {links.map((link) => (

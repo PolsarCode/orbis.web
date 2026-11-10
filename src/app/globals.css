@@ -228,7 +228,7 @@ body {
     gap: 0.5rem;
   }
 
-  .legal a {
+  .legal a:not(.ant-btn) {
     color: var(--accent);
     text-decoration: underline;
   }
