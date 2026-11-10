@@ -492,12 +492,12 @@ function Featured({
   items,
   onEntry,
   menu,
-  pager = false,
+  arrows = false,
 }: {
   items: MediaListItem[] | null | undefined;
   onEntry?: (id: string, entry: SavedEntry) => void;
   menu?: ReactNode;
-  pager?: boolean;
+  arrows?: boolean;
 }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -524,65 +524,62 @@ function Featured({
         if (event.target.matches(":focus-visible")) setPaused(true);
       }}
       onBlur={() => setPaused(false)}
-      className="flex min-w-0 flex-col gap-2"
+      className="relative isolate h-72 overflow-hidden rounded-lg border border-divider bg-rail sm:h-80"
     >
-      <div className="relative isolate h-72 overflow-hidden rounded-lg border border-divider bg-rail sm:h-80">
-        {items === undefined && (
-          <div aria-hidden className="absolute inset-0 animate-pulse bg-rail-item motion-reduce:animate-none" />
-        )}
-        {unavailable && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <ListUnavailable />
-          </div>
-        )}
-        {slides.map((item, position) => (
-          <FeaturedSlide
-            key={item.id}
-            item={item}
-            rank={position + 1}
-            visible={position === index}
-            onEntry={onEntry && ((entry) => onEntry(item.id, entry))}
-          />
-        ))}
-        {menu && <div className="absolute top-4 left-4 z-10 sm:top-5 sm:left-6">{menu}</div>}
-        <div className="absolute right-5 bottom-5 flex items-center gap-1.5 sm:right-6 sm:bottom-6">
-          {slides.map((item, position) => (
-            <button
-              key={item.id}
-              type="button"
-              aria-label={`Show ${item.title}`}
-              aria-current={position === index}
-              onClick={() => setIndex(position)}
-              className={`focus-ring h-1.5 cursor-pointer rounded-full transition-all motion-reduce:transition-none ${
-                position === index ? "w-6 bg-white" : "w-1.5 bg-white/50 hover:bg-white/80"
-              }`}
-            />
-          ))}
-        </div>
-      </div>
-      {pager && count > 1 && (
-        <div className="grid grid-cols-2 gap-2">
-          {[-1, 1].map((by) => {
-            const Chevron = by < 0 ? ChevronLeft : ChevronRight;
-            return (
-              <button
-                key={by}
-                type="button"
-                onClick={() => setIndex(step(by))}
-                className={`focus-ring flex min-w-0 cursor-pointer items-center gap-3 rounded-lg border border-divider bg-surface px-3 py-2.5 transition-colors hover:bg-rail-item motion-reduce:transition-none ${
-                  by > 0 ? "flex-row-reverse text-right" : "text-left"
-                }`}
-              >
-                <Chevron size={18} aria-hidden className="shrink-0 text-muted" />
-                <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="text-xs text-muted">{by < 0 ? "Previous" : "Next"}</span>
-                  <span className="truncate text-sm font-semibold">{slides[step(by)].title}</span>
-                </span>
-              </button>
-            );
-          })}
+      {items === undefined && (
+        <div aria-hidden className="absolute inset-0 animate-pulse bg-rail-item motion-reduce:animate-none" />
+      )}
+      {unavailable && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <ListUnavailable />
         </div>
       )}
+      {slides.map((item, position) => (
+        <FeaturedSlide
+          key={item.id}
+          item={item}
+          rank={position + 1}
+          visible={position === index}
+          onEntry={onEntry && ((entry) => onEntry(item.id, entry))}
+        />
+      ))}
+      {(menu || (arrows && count > 1)) && (
+        <div className="absolute inset-x-4 top-4 z-10 flex items-start justify-between gap-2 sm:inset-x-6 sm:top-5">
+          {menu}
+          {arrows && count > 1 && (
+            <div className="ml-auto flex gap-1 rounded-lg bg-black/50 p-1 backdrop-blur-md">
+              {[-1, 1].map((by) => {
+                const Chevron = by < 0 ? ChevronLeft : ChevronRight;
+                return (
+                  <button
+                    key={by}
+                    type="button"
+                    aria-label={`${by < 0 ? "Previous" : "Next"}: ${slides[step(by)].title}`}
+                    onClick={() => setIndex(step(by))}
+                    className="focus-ring flex size-7 cursor-pointer items-center justify-center rounded-md text-white/85 transition-colors hover:bg-white/15 hover:text-white motion-reduce:transition-none"
+                  >
+                    <Chevron size={18} aria-hidden />
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+      <div className="absolute right-5 bottom-5 flex items-center gap-1.5 sm:right-6 sm:bottom-6">
+        {slides.map((item, position) => (
+          <button
+            key={item.id}
+            type="button"
+            aria-label={`Show ${item.title}`}
+            aria-current={position === index}
+            onClick={() => setIndex(position)}
+            className={`focus-ring h-1.5 cursor-pointer rounded-full transition-all motion-reduce:transition-none ${
+              position === index ? "w-6 bg-white" : "w-1.5 bg-white/50 hover:bg-white/80"
+            }`}
+          />
+        ))}
+      </div>
     </section>
   );
 }
@@ -611,10 +608,10 @@ export function HomeDiscover() {
       key={type}
       items={results[key]}
       onEntry={onEntry}
-      pager
+      arrows
       menu={
         <ConfigProvider theme={overlayMenuTheme}>
-          <div className="rounded-xl backdrop-blur-md">
+          <div className="rounded-xl backdrop-blur-md max-sm:[&_.ant-segmented-item-icon]:hidden">
             <MediaTypeSwitch
               label="Trending types"
               value={type}
