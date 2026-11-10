@@ -1,6 +1,5 @@
 "use client";
 
-import { ConfigProvider } from "antd";
 import {
   CalendarClock,
   Check,
@@ -14,7 +13,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode, type Ref } from "react";
 import {
   getMediaList,
@@ -24,12 +23,12 @@ import {
   type MediaType,
 } from "@/lib/api";
 import * as Atom from "@atom";
-import { countLabel, libraryPath, mediaPath, mediaTypeParam } from "@/lib/library";
+import { countLabel, mediaPath, mediaTypeParam } from "@/lib/library";
 import { useAuthStore } from "@/stores/auth-store";
 import { useMediaShelfStore } from "@/stores/media-shelf-store";
 import { mediaTypes } from "./activity-card";
 import { drift, DRIFT_MS, SLIDE_MS } from "./anime-spotlight";
-import { AddStatusPill, MediaCover, MediaTypeSwitch, StatusPill } from "./library-view";
+import { AddStatusPill, MediaCover, StatusPill } from "./library-view";
 
 const types: MediaType[] = ["anime", "manga", "game"];
 const lists: MediaListName[] = ["trending", "season", "top", "upcoming"];
@@ -117,10 +116,6 @@ function ShelfCard({
   );
 }
 
-function ListUnavailable() {
-  return <p className="py-6 text-sm text-muted">This list isn’t available right now.</p>;
-}
-
 function ShelfItems({
   items,
   list,
@@ -138,7 +133,9 @@ function ShelfItems({
   rowRef?: Ref<HTMLUListElement>;
   onScroll?: () => void;
 }) {
-  if (items === null) return <ListUnavailable />;
+  if (items === null) {
+    return <p className="py-6 text-sm text-muted">This list isn’t available right now.</p>;
+  }
 
   const size = grid ? SECTION_SIZE : ROW_SIZE;
   const shown = items && (grid ? items.slice(0, SECTION_SIZE) : items);
@@ -302,8 +299,15 @@ function ShelfRow({
   );
 }
 
-function useShelfReady() {
+export function MediaShelf({ heading, className = "" }: { heading?: ReactNode; className?: string }) {
+  const list = useMediaShelfStore((state) => state.list);
+  const setList = useMediaShelfStore((state) => state.setList);
   const [ready, setReady] = useState(false);
+  const sections = types.filter((value) => hasList(value, list));
+  const { results, onEntry } = useMediaLists(
+    sections.map((value) => listKey(value, list)),
+    ready,
+  );
 
   useEffect(() => {
     let active = true;
@@ -314,19 +318,6 @@ function useShelfReady() {
       active = false;
     };
   }, []);
-
-  return ready;
-}
-
-export function MediaShelf({ heading, className = "" }: { heading?: ReactNode; className?: string }) {
-  const list = useMediaShelfStore((state) => state.list);
-  const setList = useMediaShelfStore((state) => state.setList);
-  const ready = useShelfReady();
-  const sections = types.filter((value) => hasList(value, list));
-  const { results, onEntry } = useMediaLists(
-    sections.map((value) => listKey(value, list)),
-    ready,
-  );
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
@@ -491,20 +482,14 @@ function FeaturedSlide({
 function Featured({
   items,
   onEntry,
-  menu,
-  arrows = false,
 }: {
   items: MediaListItem[] | null | undefined;
   onEntry?: (id: string, entry: SavedEntry) => void;
-  menu?: ReactNode;
-  arrows?: boolean;
 }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const slides = (items ?? []).slice(0, FEATURED);
   const count = slides.length;
-  const unavailable = items === null || (items !== undefined && count === 0);
-  const step = (by: number) => (index + by + count) % count;
 
   useEffect(() => {
     if (count < 2 || paused) return;
@@ -513,27 +498,26 @@ function Featured({
     return () => clearTimeout(timer);
   }, [count, index, paused]);
 
-  if (unavailable && !menu) return null;
+  if (items === null || (items && count === 0)) return null;
+  if (!items) {
+    return (
+      <div
+        aria-hidden
+        className="h-72 animate-pulse rounded-lg border border-divider bg-rail-item motion-reduce:animate-none sm:h-80"
+      />
+    );
+  }
 
   return (
     <section
       aria-roledescription="carousel"
       aria-label="Featured"
-      aria-busy={items === undefined}
       onFocus={(event) => {
         if (event.target.matches(":focus-visible")) setPaused(true);
       }}
       onBlur={() => setPaused(false)}
       className="relative isolate h-72 overflow-hidden rounded-lg border border-divider bg-rail sm:h-80"
     >
-      {items === undefined && (
-        <div aria-hidden className="absolute inset-0 animate-pulse bg-rail-item motion-reduce:animate-none" />
-      )}
-      {unavailable && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <ListUnavailable />
-        </div>
-      )}
       {slides.map((item, position) => (
         <FeaturedSlide
           key={item.id}
@@ -543,29 +527,6 @@ function Featured({
           onEntry={onEntry && ((entry) => onEntry(item.id, entry))}
         />
       ))}
-      {(menu || (arrows && count > 1)) && (
-        <div className="absolute inset-x-4 top-4 z-10 flex items-start justify-between gap-2 sm:inset-x-6 sm:top-5">
-          {menu}
-          {arrows && count > 1 && (
-            <div className="ml-auto flex gap-1 rounded-lg bg-black/50 p-1 backdrop-blur-md">
-              {[-1, 1].map((by) => {
-                const Chevron = by < 0 ? ChevronLeft : ChevronRight;
-                return (
-                  <button
-                    key={by}
-                    type="button"
-                    aria-label={`${by < 0 ? "Previous" : "Next"}: ${slides[step(by)].title}`}
-                    onClick={() => setIndex(step(by))}
-                    className="focus-ring flex size-7 cursor-pointer items-center justify-center rounded-md text-white/85 transition-colors hover:bg-white/15 hover:text-white motion-reduce:transition-none"
-                  >
-                    <Chevron size={18} aria-hidden />
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
       <div className="absolute right-5 bottom-5 flex items-center gap-1.5 sm:right-6 sm:bottom-6">
         {slides.map((item, position) => (
           <button
@@ -584,75 +545,14 @@ function Featured({
   );
 }
 
-const overlayMenuTheme = {
-  components: {
-    Segmented: {
-      trackBg: "rgba(0, 0, 0, 0.5)",
-      itemColor: "rgba(255, 255, 255, 0.85)",
-      itemHoverColor: "#ffffff",
-      itemSelectedBg: "rgba(255, 255, 255, 0.95)",
-      itemSelectedColor: "#1c1d1b",
-    },
-  },
-};
-
-function BannerTypeSwitch({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: MediaType;
-  onChange: (value: MediaType) => void;
-}) {
-  return (
-    <ConfigProvider theme={overlayMenuTheme}>
-      <div className="rounded-xl backdrop-blur-md max-sm:[&_.ant-segmented-item-icon]:hidden">
-        <MediaTypeSwitch label={label} value={value} onChange={onChange} block={false} />
-      </div>
-    </ConfigProvider>
-  );
-}
-
-export function HomeDiscover() {
-  const type = useMediaShelfStore((state) => state.type);
-  const setType = useMediaShelfStore((state) => state.setType);
-  const ready = useShelfReady();
-  const key = listKey(type, "trending");
-  const { results, onEntry } = useMediaLists([key], ready);
-
-  return (
-    <Featured
-      key={type}
-      items={results[key]}
-      onEntry={onEntry}
-      arrows
-      menu={<BannerTypeSwitch label="Trending types" value={type} onChange={setType} />}
-    />
-  );
-}
-
 export function LibraryDiscover() {
-  const router = useRouter();
   const type = mediaTypeParam(useSearchParams().get("type"));
   const shown = lists.filter((list) => hasList(type, list));
   const { results, onEntry } = useMediaLists(shown.map((list) => listKey(type, list)));
 
   return (
     <div className="flex flex-col gap-8">
-      <Featured
-        key={type}
-        items={results[listKey(type, "trending")]}
-        onEntry={onEntry}
-        arrows
-        menu={
-          <BannerTypeSwitch
-            label="Discover types"
-            value={type}
-            onChange={(value) => router.push(libraryPath("discover", value))}
-          />
-        }
-      />
+      <Featured key={type} items={results[listKey(type, "trending")]} onEntry={onEntry} />
       {shown.map((list) => {
         const Icon = listIcons[list];
         return (

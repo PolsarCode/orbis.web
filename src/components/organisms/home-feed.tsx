@@ -13,7 +13,6 @@ import { useCommunityStore } from "@/stores/community-store";
 import { ChangelogBanner, useChangelogShown } from "./changelog-banner";
 import { DestinationPicker, type Destination } from "./destination-picker";
 import { DiscordSetupReminder, useUnfinishedDiscord } from "./discord-setup";
-import { HomeDiscover } from "./media-shelf";
 import { PostComposer } from "./post-composer";
 import { PostList } from "./post-list";
 import { OnboardingChecklist, OnboardingTour } from "./onboarding";
@@ -57,9 +56,6 @@ export function HomeFeed({ latestChangelog }: { latestChangelog: ChangelogDay | 
         ) : (
           <TipOfTheWeek />
         ))}
-      <div data-tour="discover">
-        <HomeDiscover />
-      </div>
       {profile && (
         <div data-tour="composer">
         <PostComposer

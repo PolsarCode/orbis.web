@@ -58,13 +58,6 @@ export const tourStops: TourStop[] = [
       "Switch between your feed, the hashtags people are using most, and the posts you’ve saved. Save a post from its … menu, and search what you’ve saved from the Bookmarks tab.",
   },
   {
-    target: "discover",
-    placement: "bottom",
-    title: "See what’s popular",
-    description:
-      "The top trending anime, manga, and games, updated every day. Switch between them with the menu, and open any title to add it to your library.",
-  },
-  {
     target: "composer",
     placement: "bottom",
     title: "Share something",
