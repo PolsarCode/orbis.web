@@ -494,8 +494,11 @@ export type DirectoryUser = {
   isHeadAdmin: boolean;
   isVerified: boolean;
   communityCount: number;
+  connections: DirectoryConnection[];
   createdAt: string;
 };
+
+export type DirectoryConnection = "discord" | "twitch" | "steam";
 
 export type DirectoryCommunity = {
   id: number;
@@ -2884,6 +2887,40 @@ export async function updateDiscordChartChannel(
 
   if (!res.ok) throw new Error(await errorMessage(res, "Could not save that."));
   return (await res.json()).channel;
+}
+
+export type FacebookChartsStatus = {
+  configured: boolean;
+  page: { id: string; name: string | null } | null;
+  pageError: string | null;
+  enabled: boolean;
+  lastPost: { week: string; postId: string | null; postedAt: string } | null;
+};
+
+export async function getFacebookCharts(token: string): Promise<FacebookChartsStatus> {
+  const res = await send(token, "/admin/facebook-charts");
+
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t load the Facebook settings."));
+  return res.json();
+}
+
+export async function updateFacebookCharts(
+  token: string,
+  enabled: boolean,
+): Promise<FacebookChartsStatus> {
+  const res = await send(token, "/admin/facebook-charts", "PATCH", { enabled });
+
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t save that."));
+  return res.json();
+}
+
+export async function postChartsToFacebook(
+  token: string,
+): Promise<{ postIds: string[] }> {
+  const res = await send(token, "/admin/facebook-charts/send", "POST");
+
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t post to Facebook."));
+  return res.json();
 }
 
 export async function sendDiscordCharts(

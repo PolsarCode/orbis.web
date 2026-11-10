@@ -13,19 +13,25 @@ import {
   setCommunityVerified,
   setProfileVerified,
   type DirectoryCommunity,
+  type DirectoryConnection,
   type DirectoryUser,
   type NumberedPage,
 } from "@/lib/api";
 import { displayName } from "@/lib/display-name";
+import { oauthColors, oauthLabels } from "@/lib/oauth";
 import { useSignOutRedirect } from "@/lib/use-sign-out-redirect";
+import { useTabScroller } from "@/lib/use-tab-scroller";
 import { requireToken, useAuthStore } from "@/stores/auth-store";
 import { useDirectoryPreferencesStore } from "@/stores/directory-preferences-store";
 import { AdminToggle } from "./admin-toggle";
+import { OAuthIcon } from "./oauth-buttons";
 import { VerifyToggle } from "./verify-toggle";
+import { WebsiteSettings } from "./website-settings";
 
 const tabs = [
   { value: "users", label: "Users", icon: <Users size={16} /> },
   { value: "communities", label: "Communities", icon: <Boxes size={16} /> },
+  { value: "website", label: "Website", icon: <Globe size={16} /> },
 ] as const;
 
 type Tab = (typeof tabs)[number]["value"];
@@ -212,6 +218,46 @@ function EmailStatus({ confirmedAt }: { confirmedAt: string | null }) {
   );
 }
 
+const connectionBadges: Record<
+  DirectoryConnection,
+  { label: string; color: string; icon: ReactNode }
+> = {
+  discord: {
+    label: oauthLabels.discord,
+    color: oauthColors.discord,
+    icon: <OAuthIcon provider="discord" size={10} />,
+  },
+  twitch: {
+    label: oauthLabels.twitch,
+    color: oauthColors.twitch,
+    icon: <OAuthIcon provider="twitch" size={10} />,
+  },
+  steam: { label: "Steam", color: "bg-[#171a21]", icon: <Molecule.SteamIcon size={10} /> },
+};
+
+function ConnectedAccounts({ connections }: { connections: DirectoryConnection[] }) {
+  if (connections.length === 0) return null;
+
+  return (
+    <span className="flex shrink-0 items-center gap-1">
+      {connections.map((connection) => {
+        const { label, color, icon } = connectionBadges[connection];
+        return (
+          <Tooltip key={connection} title={label} classNames={{ root: "touch-visible" }}>
+            <span
+              role="img"
+              aria-label={label}
+              className={`flex h-[18px] w-[18px] items-center justify-center rounded-full text-white ${color}`}
+            >
+              {icon}
+            </span>
+          </Tooltip>
+        );
+      })}
+    </span>
+  );
+}
+
 function UserCard({
   user,
   onChange,
@@ -235,7 +281,12 @@ function UserCard({
             user.isAdmin && <Atom.RoleBadge role="site-admin" />
           )
         }
-        action={<span className="text-xs text-muted">Joined {joined(user.createdAt)}</span>}
+        action={
+          <span className="flex flex-col items-end gap-1">
+            <ConnectedAccounts connections={user.connections} />
+            <span className="text-xs text-muted">Joined {joined(user.createdAt)}</span>
+          </span>
+        }
       >
         {onChange && <UserControls user={user} onChange={onChange} />}
       </Molecule.PersonCard>
@@ -310,6 +361,7 @@ function UserRow({
           ) : (
             user.isAdmin && <Atom.RoleBadge role="site-admin" />
           )}
+          <ConnectedAccounts connections={user.connections} />
         </span>
         <span className="flex min-w-0 items-center gap-1 text-xs text-muted">
           <span className="truncate">
@@ -388,7 +440,7 @@ function ViewToggle() {
 
   return (
     <Molecule.ViewToggle
-      label="Directory view"
+      label="Admin view"
       options={Molecule.cardListViews}
       view={view}
       onChange={setView}
@@ -403,7 +455,9 @@ export function DirectoryView() {
   useSignOutRedirect();
   const [authFailed, setAuthFailed] = useState(false);
   const requested = useSearchParams().get("tab");
-  const tab: Tab = tabs.find(({ value }) => value === requested)?.value ?? "users";
+  const shownTabs = tabs.filter(({ value }) => value !== "website" || profile?.isHeadAdmin);
+  const tab: Tab = shownTabs.find(({ value }) => value === requested)?.value ?? "users";
+  const [tabsRef, tabsFade] = useTabScroller<HTMLDivElement>(tab);
 
   useEffect(() => {
     useDirectoryPreferencesStore.persist.rehydrate();
@@ -435,7 +489,7 @@ export function DirectoryView() {
         <Molecule.FeedState
           icon={<Lock size={32} strokeWidth={1.5} />}
           title="You don’t have access."
-          description="Only site admins can see the directory."
+          description="Only site admins can see this page."
         />
       </div>
     );
@@ -444,23 +498,31 @@ export function DirectoryView() {
   return (
     <>
       <nav
-        aria-label="Directory sections"
+        aria-label="Admin sections"
         className="flex shrink-0 items-end gap-6 border-b border-divider px-4 sm:px-8"
       >
-        {tabs.map(({ value, label, icon }) => (
-          <Atom.TabLink
-            key={value}
-            href={value === "users" ? "/directory" : `/directory?tab=${value}`}
-            active={tab === value}
-            className="-mb-px"
-          >
-            {icon}
-            {label}
-          </Atom.TabLink>
-        ))}
-        <div className="ml-auto self-center">
-          <ViewToggle />
+        <div
+          ref={tabsRef}
+          style={tabsFade}
+          className="-mb-px flex min-w-0 items-end gap-6 overflow-x-auto overflow-y-hidden [scrollbar-width:none]"
+        >
+          {shownTabs.map(({ value, label, icon }) => (
+            <Atom.TabLink
+              key={value}
+              href={value === "users" ? "/admin" : `/admin?tab=${value}`}
+              active={tab === value}
+              className="whitespace-nowrap"
+            >
+              {icon}
+              {label}
+            </Atom.TabLink>
+          ))}
         </div>
+        {tab !== "website" && (
+          <div className="ml-auto shrink-0 self-center">
+            <ViewToggle />
+          </div>
+        )}
       </nav>
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-6 pb-24 sm:px-8 sm:pt-8">
         <div className="mx-auto w-full max-w-[880px]">
@@ -484,7 +546,7 @@ export function DirectoryView() {
                 />
               )}
             />
-          ) : (
+          ) : tab === "communities" ? (
             <DirectoryList
               key={`communities-${profile.userId}`}
               load={getDirectoryCommunities}
@@ -504,6 +566,8 @@ export function DirectoryView() {
                 />
               )}
             />
+          ) : (
+            <WebsiteSettings />
           )}
         </div>
       </div>

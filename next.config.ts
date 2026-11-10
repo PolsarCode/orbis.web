@@ -4,16 +4,6 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   devIndicators: false,
-  async redirects() {
-    return [
-      {
-        source: "/",
-        has: [{ type: "query", key: "tab", value: "charts" }],
-        destination: "/library",
-        permanent: false,
-      },
-    ];
-  },
   turbopack: {
     root: path.join(__dirname, ".."),
     rules: {

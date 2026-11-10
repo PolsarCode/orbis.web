@@ -1,18 +1,27 @@
 "use client";
 
-import { DiscordFilled, TwitchFilled } from "@ant-design/icons";
+import { DiscordFilled, FacebookFilled, TwitchFilled } from "@ant-design/icons";
 import { useEffect, useState, type ReactNode } from "react";
 import * as Atom from "@atom";
 import { getOAuthProviders, type OAuthProvider } from "@/lib/api";
 import { oauthColors, oauthLabels, startOAuth } from "@/lib/oauth";
 
-const icons: Record<OAuthProvider, ReactNode> = {
+type ConnectionBrand = OAuthProvider | "facebook";
+
+const icons: Record<ConnectionBrand, ReactNode> = {
   discord: <DiscordFilled />,
   twitch: <TwitchFilled />,
+  facebook: <FacebookFilled />,
 };
 
-export function OAuthIcon({ provider }: { provider: OAuthProvider }) {
-  return <span className="flex text-lg leading-none">{icons[provider]}</span>;
+const colors: Record<ConnectionBrand, string> = { ...oauthColors, facebook: "bg-[#0866FF]" };
+
+export function OAuthIcon({ provider, size }: { provider: ConnectionBrand; size?: number }) {
+  return (
+    <span className="flex text-lg leading-none" style={{ fontSize: size }}>
+      {icons[provider]}
+    </span>
+  );
 }
 
 export function OAuthConnectionRow({
@@ -22,11 +31,11 @@ export function OAuthConnectionRow({
   dimmed = false,
   children,
 }: {
-  provider: OAuthProvider;
+  provider: ConnectionBrand;
   title: string;
   status: ReactNode;
   dimmed?: boolean;
-  children: ReactNode;
+  children?: ReactNode;
 }) {
   const muted = dimmed ? "opacity-50" : "";
 
@@ -34,7 +43,7 @@ export function OAuthConnectionRow({
     <div className="flex items-center gap-3">
       <span
         aria-hidden
-        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white ${oauthColors[provider]} ${muted}`}
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white ${colors[provider]} ${muted}`}
       >
         <OAuthIcon provider={provider} />
       </span>

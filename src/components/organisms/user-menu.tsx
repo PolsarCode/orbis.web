@@ -2,7 +2,7 @@
 
 import {
   AppWindow,
-  BookUser,
+  Cog,
   Inbox,
   LogOut,
   MessageSquareWarning,
@@ -115,9 +115,9 @@ export function UserMenu() {
           {profile?.isAdmin ? "View reports" : "My reports"}
         </Link>
         {profile?.isAdmin && (
-          <Link href="/directory" onClick={() => setOpen(false)} className={menuRow}>
-            <BookUser size={18} />
-            Directory
+          <Link href="/admin" onClick={() => setOpen(false)} className={menuRow}>
+            <Cog size={18} />
+            Admin
           </Link>
         )}
       </div>

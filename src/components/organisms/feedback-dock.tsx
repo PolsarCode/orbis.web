@@ -1,7 +1,7 @@
 "use client";
 
 import { Input, Segmented, Tooltip } from "antd";
-import { BookUser, CircleCheck, Inbox, MessageSquareWarning } from "lucide-react";
+import { CircleCheck, Cog, Inbox, MessageSquareWarning } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -176,13 +176,13 @@ export function FeedbackDock() {
         className="fixed right-4 bottom-[calc(1rem+var(--library-dock-height,0px))] z-40 hidden flex-col items-center gap-3 sm:right-6 sm:flex sm:bottom-[calc(1.5rem+var(--library-dock-height,0px))]"
       >
         {profile.isAdmin && (
-          <Tooltip title="Directory" placement="left">
+          <Tooltip title="Admin" placement="left">
             <Link
-              href="/directory"
-              aria-label="Directory"
+              href="/admin"
+              aria-label="Admin"
               className={`${dockButton} border-divider bg-surface text-foreground hover:bg-rail-item`}
             >
-              <BookUser size={20} />
+              <Cog size={20} />
             </Link>
           </Tooltip>
         )}
