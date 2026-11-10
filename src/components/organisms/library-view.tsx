@@ -28,7 +28,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, type ReactElement, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useState, type ReactElement, type ReactNode } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import * as Template from "@template";
@@ -1231,8 +1231,7 @@ export function LibraryView() {
   const router = useRouter();
   const page = libraryPages.find(({ value }) => value === params.get("tab"))?.value ?? null;
   const mine = page === "mine";
-  const savedType = useLibraryPreferencesStore((state) => state.mediaType);
-  const type = mine || !page ? savedType : mediaTypeParam(params.get("type"));
+  const type = mediaTypeParam(params.get("type"));
   const [hydrated, setHydrated] = useState(false);
   const [query, setQuery] = useState("");
   const [entries, setEntries] = useState<LibraryEntry[] | null>(null);
@@ -1259,12 +1258,15 @@ export function LibraryView() {
     };
   }, []);
 
+  useLayoutEffect(() => {
+    const { persist, getState } = useLibraryPreferencesStore;
+    if (!persist.hasHydrated()) void persist.rehydrate();
+    getState().setPage(page ?? "discover");
+  }, [page]);
+
   useEffect(() => {
     if (!hydrated) return;
-    const { page: saved, mediaType, setPage } = useLibraryPreferencesStore.getState();
-    if (page === "mine" && !signedIn) router.replace(pageHref("discover", mediaType));
-    else if (page) setPage(page, type);
-    else router.replace(pageHref(saved === "mine" && !signedIn ? "discover" : saved, mediaType));
+    if (!page || (page === "mine" && !signedIn)) router.replace(pageHref("discover", type));
   }, [hydrated, page, router, type, signedIn]);
 
   useEffect(() => {

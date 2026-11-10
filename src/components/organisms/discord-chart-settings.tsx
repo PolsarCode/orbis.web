@@ -18,7 +18,6 @@ import { useReadOnly } from "@/lib/read-only";
 import { weekRange } from "@/lib/time";
 import { useAuthStore } from "@/stores/auth-store";
 import {
-  DiscordPart,
   DiscordSendSwitches,
   DiscordWebhookConnection,
   useDiscordWebhook,
@@ -155,7 +154,7 @@ export function DiscordChartSettings({ community }: { community: Community }) {
   }
 
   return (
-    <DiscordPart
+    <Molecule.SettingsPart
       title="Weekly charts"
       description="Every Monday, post the week’s charts you turn on to a channel in your Discord server, together in one post with your message and links to their discussions on Orbis."
     >
@@ -288,6 +287,6 @@ export function DiscordChartSettings({ community }: { community: Community }) {
         </>
       )}
       {(error ?? sendError) && <Atom.ErrorMessage>{error ?? sendError}</Atom.ErrorMessage>}
-    </DiscordPart>
+    </Molecule.SettingsPart>
   );
 }

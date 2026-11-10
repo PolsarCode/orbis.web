@@ -2923,6 +2923,42 @@ export async function postChartsToFacebook(
   return res.json();
 }
 
+export type FacebookReleasesStatus = {
+  enabled: boolean;
+  lastPost: {
+    date: string;
+    version: string | null;
+    postId: string | null;
+    postedAt: string;
+  } | null;
+};
+
+export async function getFacebookReleases(token: string): Promise<FacebookReleasesStatus> {
+  const res = await send(token, "/admin/facebook-releases");
+
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t load the update posts."));
+  return res.json();
+}
+
+export async function updateFacebookReleases(
+  token: string,
+  enabled: boolean,
+): Promise<FacebookReleasesStatus> {
+  const res = await send(token, "/admin/facebook-releases", "PATCH", { enabled });
+
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t save that."));
+  return res.json();
+}
+
+export async function postReleaseToFacebook(
+  token: string,
+): Promise<{ postId: string; date: string; version: string | null }> {
+  const res = await send(token, "/admin/facebook-releases/send", "POST");
+
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t post to Facebook."));
+  return res.json();
+}
+
 export async function sendDiscordCharts(
   token: string,
   communityId: number,

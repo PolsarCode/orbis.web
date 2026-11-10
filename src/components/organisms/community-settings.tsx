@@ -34,7 +34,7 @@ import {
 import { useAuthStore } from "@/stores/auth-store";
 import { useCommunityStore } from "@/stores/community-store";
 import { linkPlatforms, normalizeLink } from "./community-links";
-import { DiscordChannelSettings, DiscordPart } from "./discord-channel-settings";
+import { DiscordChannelSettings } from "./discord-channel-settings";
 import { DiscordChartSettings } from "./discord-chart-settings";
 import { DISCORD_CHECK_MS, DiscordWidgetSteps } from "./discord-setup";
 import { CommunityBanSettings } from "./community-ban-settings";
@@ -705,7 +705,7 @@ function DiscordSettings({ community }: { community: Community }) {
       description="Connect the community’s Discord server, and choose what Orbis posts to its channels."
     >
       <div className="flex flex-col divide-y divide-divider">
-        <DiscordPart
+        <Molecule.SettingsPart
           title="Online count and invite"
           description="Show how many people are online in the server, with a button to join it. Only the online count and invite link are read, and nothing is added to your server."
         >
@@ -775,7 +775,7 @@ function DiscordSettings({ community }: { community: Community }) {
             </p>
           )}
           {error && !choice && <Atom.ErrorMessage>{error}</Atom.ErrorMessage>}
-        </DiscordPart>
+        </Molecule.SettingsPart>
         <DiscordChannelSettings community={community} />
         <DiscordChartSettings community={community} />
       </div>

@@ -27,6 +27,7 @@ export * from "./page-wallpaper";
 export * from "./person-card";
 export * from "./settings-section";
 export * from "./settings-row";
+export * from "./settings-part";
 export * from "./user-link";
 export * from "./steam-badge";
 export * from "./stream-pill";

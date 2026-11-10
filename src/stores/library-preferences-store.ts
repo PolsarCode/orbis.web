@@ -9,8 +9,6 @@ export type LibraryStatusFilter = "all" | LibraryStatus;
 export type LibraryPage = "discover" | "mine" | "charts";
 export type LibrarySort = "updated" | "title" | "year";
 
-const pages: LibraryPage[] = ["discover", "mine", "charts"];
-const mediaTypes: MediaType[] = ["anime", "manga", "game"];
 const sorts: LibrarySort[] = ["updated", "title", "year"];
 
 type LibraryPreferences = {
@@ -19,12 +17,11 @@ type LibraryPreferences = {
   view: LibraryViewMode;
   sort: LibrarySort;
   page: LibraryPage;
-  mediaType: MediaType;
   setType: (type: LibraryTypeFilter) => void;
   setStatus: (status: LibraryStatusFilter) => void;
   setView: (view: LibraryViewMode) => void;
   setSort: (sort: LibrarySort) => void;
-  setPage: (page: LibraryPage, mediaType: MediaType) => void;
+  setPage: (page: LibraryPage) => void;
 };
 
 export const useLibraryPreferencesStore = create<LibraryPreferences>()(
@@ -35,23 +32,15 @@ export const useLibraryPreferencesStore = create<LibraryPreferences>()(
       view: "list",
       sort: "updated",
       page: "discover",
-      mediaType: "anime",
       setType: (type) => set({ type }),
       setStatus: (status) => set({ status }),
       setView: (view) => set({ view }),
       setSort: (sort) => set({ sort }),
-      setPage: (page, mediaType) => set({ page, mediaType }),
+      setPage: (page) => set({ page }),
     }),
     {
       name: "library-preferences",
-      partialize: ({ type, status, view, sort, page, mediaType }) => ({
-        type,
-        status,
-        view,
-        sort,
-        page,
-        mediaType,
-      }),
+      partialize: ({ type, status, view, sort }) => ({ type, status, view, sort }),
       skipHydration: true,
       merge: (saved, current) => {
         if (!saved || typeof saved !== "object") return current;
@@ -65,9 +54,6 @@ export const useLibraryPreferencesStore = create<LibraryPreferences>()(
           view: values.view === "cards" || values.view === "list"
             ? values.view : current.view,
           sort: values.sort && sorts.includes(values.sort) ? values.sort : current.sort,
-          page: values.page && pages.includes(values.page) ? values.page : current.page,
-          mediaType: values.mediaType && mediaTypes.includes(values.mediaType)
-            ? values.mediaType : current.mediaType,
         };
       },
     },

@@ -7,11 +7,16 @@ import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import {
   getFacebookCharts,
+  getFacebookReleases,
   postChartsToFacebook,
+  postReleaseToFacebook,
   updateFacebookCharts,
+  updateFacebookReleases,
   type FacebookChartsStatus,
+  type FacebookReleasesStatus,
 } from "@/lib/api";
 import { useReadOnly } from "@/lib/read-only";
+import { formatChangelogDate } from "@/lib/changelog";
 import { longDate } from "@/lib/time";
 import { useAuthStore } from "@/stores/auth-store";
 import { OAuthConnectionRow } from "./oauth-buttons";
@@ -21,18 +26,41 @@ function chartWeek(week: string) {
   return `week ${Number(number)}, ${year}`;
 }
 
-function FacebookStatus({
-  status,
+function releaseName({ date, version }: { date: string; version: string | null }) {
+  return version ?? formatChangelogDate(date);
+}
+
+function FacebookAutoPost<S>({
+  label,
+  description,
+  enabled,
+  lastPost,
+  noPost,
+  confirmTitle,
+  confirmDescription,
+  postedMessage,
+  update,
+  post,
+  load,
   onChange,
 }: {
-  status: FacebookChartsStatus;
-  onChange: (status: FacebookChartsStatus) => void;
+  label: string;
+  description: string;
+  enabled: boolean;
+  lastPost: { label: string; postId: string | null; postedAt: string } | null;
+  noPost: string;
+  confirmTitle: string;
+  confirmDescription: string;
+  postedMessage: string;
+  update: (token: string, enabled: boolean) => Promise<S>;
+  post: (token: string) => Promise<unknown>;
+  load: (token: string) => Promise<S>;
+  onChange: (status: S) => void;
 }) {
   const { message } = App.useApp();
   const readOnly = useReadOnly();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { page, pageError, enabled, lastPost } = status;
 
   async function toggle(next: boolean) {
     const { token } = useAuthStore.getState();
@@ -40,7 +68,7 @@ function FacebookStatus({
     setSaving(true);
     setError(null);
     try {
-      onChange(await updateFacebookCharts(token, next));
+      onChange(await update(token, next));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
     } finally {
@@ -52,8 +80,9 @@ function FacebookStatus({
     const { token } = useAuthStore.getState();
     if (!token) return;
     try {
-      await postChartsToFacebook(token);
-      message.success("Posted this week’s charts to Facebook.");
+      await post(token);
+      message.success(postedMessage);
+      void load(token).then(onChange, () => undefined);
     } catch (e) {
       message.error(e instanceof Error ? e.message : "Couldn’t post to Facebook.");
     }
@@ -61,23 +90,7 @@ function FacebookStatus({
 
   return (
     <>
-      <OAuthConnectionRow
-        provider="facebook"
-        title={page?.name ?? "Facebook Page"}
-        status={
-          pageError ? (
-            <span className="whitespace-normal text-danger">
-              Couldn’t check the Page: {pageError}
-            </span>
-          ) : (
-            page && `Page ID ${page.id}`
-          )
-        }
-      />
-      <Molecule.SettingsRow
-        label="Post the weekly charts every Monday"
-        description="The anime, manga and games charts each get their own post at the start of every chart week."
-      >
+      <Molecule.SettingsRow label={label} description={description}>
         <Molecule.ReadOnlyGate action="change automatic posts">
           <Switch checked={enabled} loading={saving} onChange={toggle} />
         </Molecule.ReadOnlyGate>
@@ -85,9 +98,7 @@ function FacebookStatus({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-1">
           <p className="text-xs text-muted">
-            {lastPost
-              ? `Last posted: ${chartWeek(lastPost.week)} · ${longDate(lastPost.postedAt)}`
-              : "No automatic post yet."}
+            {lastPost ? `Last posted: ${lastPost.label} · ${longDate(lastPost.postedAt)}` : noPost}
           </p>
           {lastPost?.postId && (
             <a
@@ -102,13 +113,8 @@ function FacebookStatus({
           )}
         </div>
         <Popconfirm
-          title="Post this week’s charts to Facebook?"
-          description={
-            <span className="block max-w-64">
-              Posts the anime, manga and games charts to the Orbis Facebook Page now, one post
-              each. Monday’s posts still go out.
-            </span>
-          }
+          title={confirmTitle}
+          description={<span className="block max-w-64">{confirmDescription}</span>}
           okText="Post"
           disabled={readOnly}
           onConfirm={postNow}
@@ -129,28 +135,100 @@ function FacebookStatus({
 }
 
 export function WebsiteSettings() {
-  const [status, setStatus] = useState<FacebookChartsStatus | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [charts, setCharts] = useState<FacebookChartsStatus | null>(null);
+  const [chartsError, setChartsError] = useState<string | null>(null);
+  const [releases, setReleases] = useState<FacebookReleasesStatus | null>(null);
+  const [releasesError, setReleasesError] = useState<string | null>(null);
 
   useEffect(() => {
     const { token } = useAuthStore.getState();
     if (!token) return;
     getFacebookCharts(token)
-      .then(setStatus)
-      .catch((e: Error) => setLoadError(e.message));
+      .then(setCharts)
+      .catch((e: Error) => setChartsError(e.message));
+    getFacebookReleases(token)
+      .then(setReleases)
+      .catch((e: Error) => setReleasesError(e.message));
   }, []);
 
   return (
     <Molecule.SettingsSection
       title="Facebook"
-      description="The weekly charts are posted to the Orbis Facebook Page."
+      description="Automatic posts to the Orbis Facebook Page."
     >
-      {loadError ? (
-        <Atom.ErrorMessage>{loadError}</Atom.ErrorMessage>
-      ) : !status ? (
+      {chartsError ? (
+        <Atom.ErrorMessage>{chartsError}</Atom.ErrorMessage>
+      ) : !charts ? (
         <Atom.Loader />
-      ) : status.configured ? (
-        <FacebookStatus status={status} onChange={setStatus} />
+      ) : charts.configured ? (
+        <>
+          <OAuthConnectionRow
+            provider="facebook"
+            title={charts.page?.name ?? "Facebook Page"}
+            status={
+              charts.pageError ? (
+                <span className="whitespace-normal text-danger">
+                  Couldn’t check the Page: {charts.pageError}
+                </span>
+              ) : (
+                charts.page && `Page ID ${charts.page.id}`
+              )
+            }
+          />
+          <div className="flex flex-col divide-y divide-divider">
+            <Molecule.SettingsPart
+              title="Weekly charts"
+              description="The trending anime, manga and games, with a link to each chart’s discussion on Orbis."
+            >
+              <FacebookAutoPost
+                label="Post the weekly charts every Monday"
+                description="The anime, manga and games charts each get their own post at the start of every chart week."
+                enabled={charts.enabled}
+                lastPost={
+                  charts.lastPost && { ...charts.lastPost, label: chartWeek(charts.lastPost.week) }
+                }
+                noPost="No automatic post yet."
+                confirmTitle="Post this week’s charts to Facebook?"
+                confirmDescription="Posts the anime, manga and games charts to the Orbis Facebook Page now, one post each. Monday’s posts still go out."
+                postedMessage="Posted this week’s charts to Facebook."
+                update={updateFacebookCharts}
+                post={postChartsToFacebook}
+                load={getFacebookCharts}
+                onChange={setCharts}
+              />
+            </Molecule.SettingsPart>
+            <Molecule.SettingsPart
+              title="What’s new in Orbis"
+              description="The changes in each Orbis update, with a link to them in the changelog."
+            >
+              {releasesError ? (
+                <Atom.ErrorMessage>{releasesError}</Atom.ErrorMessage>
+              ) : !releases ? (
+                <Atom.Loader />
+              ) : (
+                <FacebookAutoPost
+                  label="Post what’s new after each update"
+                  description="When a new day is added to the changelog, posts an image of its changes with the version number, plus a link to the changelog. Turning it on posts anything newer than the last post right away, or the newest update if nothing’s been posted yet."
+                  enabled={releases.enabled}
+                  lastPost={
+                    releases.lastPost && {
+                      ...releases.lastPost,
+                      label: releaseName(releases.lastPost),
+                    }
+                  }
+                  noPost="No update posted yet."
+                  confirmTitle="Post the latest update to Facebook?"
+                  confirmDescription="Posts the newest changelog update that isn’t on Facebook yet."
+                  postedMessage="Posted the latest update to Facebook."
+                  update={updateFacebookReleases}
+                  post={postReleaseToFacebook}
+                  load={getFacebookReleases}
+                  onChange={setReleases}
+                />
+              )}
+            </Molecule.SettingsPart>
+          </div>
+        </>
       ) : (
         <>
           <OAuthConnectionRow provider="facebook" title="Facebook Page" status="Not set up" />
