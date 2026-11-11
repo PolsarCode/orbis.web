@@ -2965,14 +2965,25 @@ export type MilestoneCommunity = { id: number; name: string };
 
 export type MilestoneKind = "members" | "communities" | "followers";
 
+export type MilestoneProgress = { count: number | null; next: number };
+
+export type PostedMilestone = {
+  kind: MilestoneKind;
+  milestone: number;
+  community: MilestoneCommunity | null;
+  postId: string | null;
+  postedAt: string;
+};
+
 export type FacebookMilestonesStatus = Record<MilestoneKind, boolean> & {
-  lastPost: {
-    kind: MilestoneKind;
-    milestone: number;
-    community: MilestoneCommunity | null;
-    postId: string | null;
-    postedAt: string;
-  } | null;
+  configured: boolean;
+  goal: number;
+  progress: {
+    followers: MilestoneProgress;
+    members: MilestoneProgress;
+    communities: (MilestoneProgress & { community: MilestoneCommunity }) | null;
+  };
+  recentPosts: PostedMilestone[];
 };
 
 export async function getFacebookMilestones(token: string): Promise<FacebookMilestonesStatus> {
@@ -2984,7 +2995,7 @@ export async function getFacebookMilestones(token: string): Promise<FacebookMile
 
 export async function updateFacebookMilestones(
   token: string,
-  changes: Partial<Record<MilestoneKind, boolean>>,
+  changes: Partial<Record<MilestoneKind, boolean>> & { goal?: number },
 ): Promise<FacebookMilestonesStatus> {
   const res = await send(token, "/admin/facebook-milestones", "PATCH", changes);
 

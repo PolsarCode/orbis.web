@@ -1,7 +1,16 @@
 "use client";
 
 import { Pagination, Segmented, Tooltip } from "antd";
-import { BookUser, Boxes, Globe, Lock, MailCheck, MailWarning, Users } from "lucide-react";
+import {
+  BookUser,
+  Boxes,
+  Globe,
+  Lock,
+  MailCheck,
+  MailWarning,
+  PartyPopper,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -26,6 +35,7 @@ import { useDirectoryPreferencesStore } from "@/stores/directory-preferences-sto
 import { AdminToggle } from "./admin-toggle";
 import { OAuthIcon } from "./oauth-buttons";
 import { VerifyToggle } from "./verify-toggle";
+import { MilestoneSettings } from "./milestone-settings";
 import { WebsiteSettings } from "./website-settings";
 
 const directoryLists = [
@@ -34,12 +44,19 @@ const directoryLists = [
 ] as const;
 
 type DirectoryTab = (typeof directoryLists)[number]["value"];
-type Tab = "website" | DirectoryTab;
+type HeadAdminTab = "website" | "milestones";
+type Tab = HeadAdminTab | DirectoryTab;
+
+const headAdminTabs: HeadAdminTab[] = ["website", "milestones"];
 
 const sections = [
   { value: "website", label: "Website", icon: <Globe size={16} /> },
+  { value: "milestones", label: "Milestones", icon: <PartyPopper size={16} /> },
   { value: "users", label: "Directory", icon: <BookUser size={16} /> },
 ] as const;
+
+const isDirectoryTab = (tab: Tab): tab is DirectoryTab =>
+  directoryLists.some(({ value }) => value === tab);
 
 const joined = (date: string) =>
   new Date(date).toLocaleDateString(undefined, {
@@ -461,10 +478,12 @@ export function DirectoryView() {
   const [authFailed, setAuthFailed] = useState(false);
   const requested = useSearchParams().get("tab");
   const shownSections = sections.filter(
-    ({ value }) => value !== "website" || profile?.isHeadAdmin,
+    ({ value }) => isDirectoryTab(value) || profile?.isHeadAdmin,
   );
   const directoryTabs = directoryLists.map(({ value }) => value);
-  const shownTabs: Tab[] = profile?.isHeadAdmin ? ["website", ...directoryTabs] : directoryTabs;
+  const shownTabs: Tab[] = profile?.isHeadAdmin
+    ? [...headAdminTabs, ...directoryTabs]
+    : directoryTabs;
   const defaultTab = shownTabs[0];
   const tab = shownTabs.find((value) => value === requested) ?? defaultTab;
   const tabHref = (value: Tab) => (value === defaultTab ? "/admin" : `/admin?tab=${value}`);
@@ -521,7 +540,7 @@ export function DirectoryView() {
             <Atom.TabLink
               key={value}
               href={tabHref(value)}
-              active={(value === "website") === (tab === "website")}
+              active={isDirectoryTab(value) ? isDirectoryTab(tab) : tab === value}
               className="whitespace-nowrap"
             >
               {icon}
@@ -529,7 +548,7 @@ export function DirectoryView() {
             </Atom.TabLink>
           ))}
         </div>
-        {tab !== "website" && (
+        {isDirectoryTab(tab) && (
           <div className="ml-auto shrink-0 self-center">
             <ViewToggle />
           </div>
@@ -537,7 +556,7 @@ export function DirectoryView() {
       </nav>
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-6 pb-24 sm:px-8 sm:pt-8">
         <div className="mx-auto flex w-full max-w-[880px] flex-col gap-6">
-          {tab !== "website" && (
+          {isDirectoryTab(tab) && (
             <Segmented<DirectoryTab>
               block
               aria-label="Directory lists"
@@ -586,6 +605,8 @@ export function DirectoryView() {
                 />
               )}
             />
+          ) : tab === "milestones" ? (
+            <MilestoneSettings />
           ) : (
             <WebsiteSettings />
           )}

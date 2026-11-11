@@ -7,19 +7,13 @@ import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import {
   getFacebookCharts,
-  getFacebookMilestones,
   getFacebookReleases,
   postChartsToFacebook,
-  postMilestoneToFacebook,
   postReleaseToFacebook,
   updateFacebookCharts,
-  updateFacebookMilestones,
   updateFacebookReleases,
   type FacebookChartsStatus,
-  type FacebookMilestonesStatus,
   type FacebookReleasesStatus,
-  type MilestoneCommunity,
-  type MilestoneKind,
 } from "@/lib/api";
 import { useReadOnly } from "@/lib/read-only";
 import { formatChangelogDate } from "@/lib/changelog";
@@ -36,39 +30,6 @@ function releaseName({ date, version }: { date: string; version: string | null }
   return version ?? formatChangelogDate(date);
 }
 
-function milestoneName({
-  kind,
-  milestone,
-  community,
-}: {
-  kind: MilestoneKind;
-  milestone: number;
-  community: MilestoneCommunity | null;
-}) {
-  const count = milestone.toLocaleString("en-US");
-  return kind === "followers"
-    ? `Facebook Page, ${count} followers`
-    : `${community?.name ?? "Orbis"}, ${count} members`;
-}
-
-const milestoneSwitches: { kind: MilestoneKind; label: string; description: string }[] = [
-  {
-    kind: "followers",
-    label: "Facebook followers",
-    description: "When the Orbis Facebook Page reaches a new follower count.",
-  },
-  {
-    kind: "members",
-    label: "Orbis members",
-    description: "When Orbis reaches a new member count.",
-  },
-  {
-    kind: "communities",
-    label: "Community members",
-    description: "When a public community reaches a new member count.",
-  },
-];
-
 type AutoPostSwitch<S> = {
   key: string;
   label: string;
@@ -77,7 +38,34 @@ type AutoPostSwitch<S> = {
   update: (token: string, enabled: boolean) => Promise<S>;
 };
 
-function FacebookAutoPost<S>({
+export function FacebookPostLink({ postId }: { postId: string }) {
+  return (
+    <a
+      href={`https://www.facebook.com/${postId}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="focus-ring flex w-fit items-center gap-1.5 rounded-sm text-[13px] font-semibold text-accent hover:underline"
+    >
+      View on Facebook
+      <ExternalLink size={14} aria-hidden />
+    </a>
+  );
+}
+
+export function FacebookNotSetUp() {
+  return (
+    <>
+      <OAuthConnectionRow provider="facebook" title="Facebook Page" status="Not set up" />
+      <p className="text-xs text-muted">
+        Add <code className="rounded bg-rail-item px-1">FACEBOOK_PAGE_ID</code> and{" "}
+        <code className="rounded bg-rail-item px-1">FACEBOOK_PAGE_TOKEN</code> to the server’s
+        settings, then restart the server.
+      </p>
+    </>
+  );
+}
+
+export function FacebookAutoPost<S>({
   switches,
   lastPost,
   noPost,
@@ -148,17 +136,7 @@ function FacebookAutoPost<S>({
           <p className="text-xs text-muted">
             {lastPost ? `Last posted: ${lastPost.label} · ${longDate(lastPost.postedAt)}` : noPost}
           </p>
-          {lastPost?.postId && (
-            <a
-              href={`https://www.facebook.com/${lastPost.postId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="focus-ring flex w-fit items-center gap-1.5 rounded-sm text-[13px] font-semibold text-accent hover:underline"
-            >
-              View on Facebook
-              <ExternalLink size={14} aria-hidden />
-            </a>
-          )}
+          {lastPost?.postId && <FacebookPostLink postId={lastPost.postId} />}
         </div>
         <Popconfirm
           title={confirmTitle}
@@ -187,8 +165,6 @@ export function WebsiteSettings() {
   const [chartsError, setChartsError] = useState<string | null>(null);
   const [releases, setReleases] = useState<FacebookReleasesStatus | null>(null);
   const [releasesError, setReleasesError] = useState<string | null>(null);
-  const [milestones, setMilestones] = useState<FacebookMilestonesStatus | null>(null);
-  const [milestonesError, setMilestonesError] = useState<string | null>(null);
 
   useEffect(() => {
     const { token } = useAuthStore.getState();
@@ -199,9 +175,6 @@ export function WebsiteSettings() {
     getFacebookReleases(token)
       .then(setReleases)
       .catch((e: Error) => setReleasesError(e.message));
-    getFacebookMilestones(token)
-      .then(setMilestones)
-      .catch((e: Error) => setMilestonesError(e.message));
   }, []);
 
   return (
@@ -303,51 +276,10 @@ export function WebsiteSettings() {
                 />
               )}
             </Molecule.SettingsPart>
-            <Molecule.SettingsPart
-              title="Milestones"
-              description="Posts an image when a count reaches 10, 25, 50, 100, 250, 500, 1,000 and so on. Each switch only posts milestones reached after it’s turned on."
-            >
-              {milestonesError ? (
-                <Atom.ErrorMessage>{milestonesError}</Atom.ErrorMessage>
-              ) : !milestones ? (
-                <Atom.Loader />
-              ) : (
-                <FacebookAutoPost
-                  switches={milestoneSwitches.map(({ kind, label, description }) => ({
-                    key: kind,
-                    label,
-                    description,
-                    enabled: milestones[kind],
-                    update: (token: string, enabled: boolean) =>
-                      updateFacebookMilestones(token, { [kind]: enabled }),
-                  }))}
-                  lastPost={
-                    milestones.lastPost && {
-                      ...milestones.lastPost,
-                      label: milestoneName(milestones.lastPost),
-                    }
-                  }
-                  noPost="No milestone posted yet."
-                  confirmTitle="Post the latest milestone to Facebook?"
-                  confirmDescription="Posts the most recent milestone that isn’t on Facebook yet, from the switches that are on, even one reached before they were turned on."
-                  postedMessage="Posted the latest milestone to Facebook."
-                  post={postMilestoneToFacebook}
-                  load={getFacebookMilestones}
-                  onChange={setMilestones}
-                />
-              )}
-            </Molecule.SettingsPart>
           </div>
         </>
       ) : (
-        <>
-          <OAuthConnectionRow provider="facebook" title="Facebook Page" status="Not set up" />
-          <p className="text-xs text-muted">
-            Add <code className="rounded bg-rail-item px-1">FACEBOOK_PAGE_ID</code> and{" "}
-            <code className="rounded bg-rail-item px-1">FACEBOOK_PAGE_TOKEN</code> to the server’s
-            settings, then restart the server.
-          </p>
-        </>
+        <FacebookNotSetUp />
       )}
     </Molecule.SettingsSection>
   );
