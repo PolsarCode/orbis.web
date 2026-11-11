@@ -1,0 +1,28 @@
+{
+  "date": "2026-11-11",
+  "versions": ["v0.125.1", "v0.126.0", "v0.127.0", "v0.128.0", "v0.129.0", "v0.129.1"],
+  "entries": [
+    {
+      "type": "new",
+      "title": "Milestone celebrations on Facebook",
+      "description": "The Orbis Facebook page now celebrates when Orbis, a community, or the page itself reaches a new member or follower milestone, with an image to mark the moment."
+    },
+    {
+      "type": "new",
+      "title": "See how many people follow Orbis on Facebook",
+      "description": "The home page stats and the Find us page now show the Facebook page's follower count, and you can tap it to follow along.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "improved",
+      "title": "Links and downloads work better in the desktop app",
+      "description": "Links to other sites now open in your usual browser, and when a download finishes, the desktop app shows you the file in its folder."
+    },
+    {
+      "type": "improved",
+      "title": "Library status tabs sit below the toolbar",
+      "description": "In your library and on profiles, the status tabs now come after the search and sort controls, so the page reads more naturally from top to bottom.",
+      "platforms": ["web"]
+    }
+  ]
+}
