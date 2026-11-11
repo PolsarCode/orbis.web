@@ -16,9 +16,9 @@ const sizes = {
 };
 
 const badges: Partial<Record<keyof typeof sizes, { box: string; icon: string }>> = {
-  sm: { box: "h-4 w-4", icon: "size-[9px]" },
+  sm: { box: "h-4 w-4", icon: "size-2" },
   md: { box: "h-[18px] w-[18px]", icon: "size-2.5" },
-  rail: { box: "h-4 w-4 sm:h-5 sm:w-5", icon: "size-[9px] sm:size-[11px]" },
+  rail: { box: "h-4 w-4 sm:h-5 sm:w-5", icon: "size-2 sm:size-2.5" },
   lg: { box: "h-7 w-7", icon: "size-4" },
 };
 
