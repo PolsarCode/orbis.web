@@ -1,8 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import * as Atom from "@atom";
-import * as Molecule from "@molecule";
 import {
   getFacebookPosts,
   postFacebookPostNow,
@@ -10,8 +7,7 @@ import {
   type FacebookPostKind,
   type FacebookPostsStatus,
 } from "@/lib/api";
-import { useAuthStore } from "@/stores/auth-store";
-import { FacebookAutoPost, FacebookNotSetUp } from "./website-settings";
+import { FacebookAutoPost } from "./facebook-auto-post";
 
 type PostCopy = {
   label: string;
@@ -25,10 +21,10 @@ const copy: Record<FacebookPostKind, PostCopy> = {
   cover: {
     label: "Change the Page cover every Monday",
     description:
-      "Shows the top 3 trending anime, manga and games from the new weekly charts. The cover changes quietly, without a post or a notification.",
+      "Fills the cover with the new weekly charts: a tilted row each for anime, manga and games, starting with each #1. The cover changes quietly, without a post or a notification.",
     confirmTitle: "Change the Page cover now?",
     confirmDescription:
-      "Sets the top 3 trending anime, manga and games from this week’s charts as the Facebook Page cover.",
+      "Sets this week’s trending anime, manga and games as the Facebook Page cover.",
     postedMessage: "Changed the Facebook Page cover.",
   },
   spotlight: {
@@ -95,28 +91,7 @@ const copy: Record<FacebookPostKind, PostCopy> = {
   },
 };
 
-const sections: { title: string; description: string; kinds: FacebookPostKind[] }[] = [
-  {
-    title: "Page cover",
-    description: "The cover photo at the top of the Orbis Facebook Page.",
-    kinds: ["cover"],
-  },
-  {
-    title: "Weekly posts",
-    description:
-      "A different post each day of the week on the Orbis Facebook Page. Posts go out at 12:00 PM Philippine time.",
-    kinds: ["spotlight", "debate", "most-added", "hashtags", "community", "tip"],
-  },
-  {
-    title: "Seasonal posts",
-    description: "Posts about each new season on the Orbis Facebook Page.",
-    kinds: ["season", "coming"],
-  },
-];
-
-const DESCRIPTION = "Automatic posts and Page cover changes on the Orbis Facebook Page.";
-
-function AutoPost({
+export function FacebookPostSetting({
   kind,
   status,
   onChange,
@@ -149,48 +124,5 @@ function AutoPost({
       load={getFacebookPosts}
       onChange={onChange}
     />
-  );
-}
-
-export function FacebookPostSettings() {
-  const [status, setStatus] = useState<FacebookPostsStatus | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const { token } = useAuthStore.getState();
-    if (!token) return;
-    getFacebookPosts(token)
-      .then(setStatus)
-      .catch((e: Error) => setError(e.message));
-  }, []);
-
-  if (error || !status || !status.configured) {
-    return (
-      <Molecule.SettingsSection title="Auto posts" description={DESCRIPTION}>
-        {error ? (
-          <Atom.ErrorMessage>{error}</Atom.ErrorMessage>
-        ) : !status ? (
-          <Atom.Loader />
-        ) : (
-          <FacebookNotSetUp />
-        )}
-      </Molecule.SettingsSection>
-    );
-  }
-
-  return (
-    <>
-      {sections.map(({ title, description, kinds }) => (
-        <Molecule.SettingsSection key={title} title={title} description={description}>
-          <div className="flex flex-col divide-y divide-divider">
-            {kinds.map((kind) => (
-              <div key={kind} className="flex flex-col gap-5 py-6 first:pt-0 last:pb-0">
-                <AutoPost kind={kind} status={status} onChange={setStatus} />
-              </div>
-            ))}
-          </div>
-        </Molecule.SettingsSection>
-      ))}
-    </>
   );
 }

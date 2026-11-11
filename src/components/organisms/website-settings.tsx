@@ -1,25 +1,30 @@
 "use client";
 
-import { App, Popconfirm, Switch } from "antd";
-import { ExternalLink, Send } from "lucide-react";
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useEffect, useState, type ReactNode } from "react";
 import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import {
   getFacebookCharts,
+  getFacebookPosts,
   getFacebookReleases,
   postChartsToFacebook,
   postReleaseToFacebook,
   updateFacebookCharts,
   updateFacebookReleases,
   type FacebookChartsStatus,
+  type FacebookPostKind,
+  type FacebookPostsStatus,
   type FacebookReleasesStatus,
 } from "@/lib/api";
-import { useReadOnly } from "@/lib/read-only";
 import { formatChangelogDate } from "@/lib/changelog";
-import { longDate } from "@/lib/time";
 import { useAuthStore } from "@/stores/auth-store";
+import { FacebookAutoPost, FacebookNotSetUp } from "./facebook-auto-post";
+import { FacebookPostSetting } from "./facebook-post-settings";
 import { OAuthConnectionRow } from "./oauth-buttons";
+
+const WEEKLY: FacebookPostKind[] = ["spotlight", "debate", "most-added", "hashtags", "community", "tip"];
+const SEASONAL: FacebookPostKind[] = ["season", "coming"];
 
 function chartWeek(week: string) {
   const [year, number] = week.split("-W");
@@ -30,134 +35,32 @@ function releaseName({ date, version }: { date: string; version: string | null }
   return version ?? formatChangelogDate(date);
 }
 
-type AutoPostSwitch<S> = {
-  key: string;
-  label: string;
-  description: string;
-  enabled: boolean;
-  update: (token: string, enabled: boolean) => Promise<S>;
-};
-
-export function FacebookPostLink({ postId }: { postId: string }) {
+function PostList({ children }: { children: ReactNode }) {
   return (
-    <a
-      href={`https://www.facebook.com/${postId}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="focus-ring flex w-fit items-center gap-1.5 rounded-sm text-[13px] font-semibold text-accent hover:underline"
-    >
-      View on Facebook
-      <ExternalLink size={14} aria-hidden />
-    </a>
+    <div className="flex flex-col divide-y divide-divider [&>*]:flex [&>*]:flex-col [&>*]:gap-5 [&>*]:py-6 [&>*:first-child]:pt-0 [&>*:last-child]:pb-0">
+      {children}
+    </div>
   );
 }
 
-export function FacebookNotSetUp() {
-  return (
-    <>
-      <OAuthConnectionRow provider="facebook" title="Facebook Page" status="Not set up" />
-      <p className="text-xs text-muted">
-        Add <code className="rounded bg-rail-item px-1">FACEBOOK_PAGE_ID</code> and{" "}
-        <code className="rounded bg-rail-item px-1">FACEBOOK_PAGE_TOKEN</code> to the server’s
-        settings, then restart the server.
-      </p>
-    </>
-  );
-}
-
-export function FacebookAutoPost<S>({
-  switches,
-  lastPost,
-  noPost,
-  confirmTitle,
-  confirmDescription,
-  postedMessage,
-  post,
-  load,
+function ScheduledPosts({
+  kinds,
+  status,
+  error,
   onChange,
 }: {
-  switches: AutoPostSwitch<S>[];
-  lastPost: { label: string; postId: string | null; postedAt: string } | null;
-  noPost: string;
-  confirmTitle: string;
-  confirmDescription: string;
-  postedMessage: string;
-  post: (token: string) => Promise<unknown>;
-  load: (token: string) => Promise<S>;
-  onChange: (status: S) => void;
+  kinds: FacebookPostKind[];
+  status: FacebookPostsStatus | null;
+  error: string | null;
+  onChange: (status: FacebookPostsStatus) => void;
 }) {
-  const { message } = App.useApp();
-  const readOnly = useReadOnly();
-  const [saving, setSaving] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  async function toggle({ key, update }: AutoPostSwitch<S>, next: boolean) {
-    const { token } = useAuthStore.getState();
-    if (!token) return;
-    setSaving(key);
-    setError(null);
-    try {
-      onChange(await update(token, next));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong.");
-    } finally {
-      setSaving(null);
-    }
-  }
-
-  async function postNow() {
-    const { token } = useAuthStore.getState();
-    if (!token) return;
-    try {
-      await post(token);
-      message.success(postedMessage);
-      void load(token).then(onChange, () => undefined);
-    } catch (e) {
-      message.error(e instanceof Error ? e.message : "Couldn’t post to Facebook.");
-    }
-  }
-
-  return (
-    <>
-      {switches.map((item) => (
-        <Molecule.SettingsRow key={item.key} label={item.label} description={item.description}>
-          <Molecule.ReadOnlyGate action="change automatic posts">
-            <Switch
-              checked={item.enabled}
-              loading={saving === item.key}
-              disabled={saving !== null && saving !== item.key}
-              onChange={(next) => toggle(item, next)}
-            />
-          </Molecule.ReadOnlyGate>
-        </Molecule.SettingsRow>
-      ))}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-col gap-1">
-          <p className="text-xs text-muted">
-            {lastPost ? `Last posted: ${lastPost.label} · ${longDate(lastPost.postedAt)}` : noPost}
-          </p>
-          {lastPost?.postId && <FacebookPostLink postId={lastPost.postId} />}
-        </div>
-        <Popconfirm
-          title={confirmTitle}
-          description={<span className="block max-w-64">{confirmDescription}</span>}
-          okText="Post"
-          disabled={readOnly}
-          onConfirm={postNow}
-        >
-          <Atom.Button
-            size="small"
-            variant="secondary"
-            icon={<Send size={12} />}
-            disabled={readOnly}
-          >
-            Post now
-          </Atom.Button>
-        </Popconfirm>
-      </div>
-      {error && <Atom.ErrorMessage>{error}</Atom.ErrorMessage>}
-    </>
-  );
+  if (error) return <Atom.ErrorMessage>{error}</Atom.ErrorMessage>;
+  if (!status) return <Atom.Loader />;
+  return kinds.map((kind) => (
+    <div key={kind}>
+      <FacebookPostSetting kind={kind} status={status} onChange={onChange} />
+    </div>
+  ));
 }
 
 export function WebsiteSettings() {
@@ -165,6 +68,8 @@ export function WebsiteSettings() {
   const [chartsError, setChartsError] = useState<string | null>(null);
   const [releases, setReleases] = useState<FacebookReleasesStatus | null>(null);
   const [releasesError, setReleasesError] = useState<string | null>(null);
+  const [posts, setPosts] = useState<FacebookPostsStatus | null>(null);
+  const [postsError, setPostsError] = useState<string | null>(null);
 
   useEffect(() => {
     const { token } = useAuthStore.getState();
@@ -175,12 +80,15 @@ export function WebsiteSettings() {
     getFacebookReleases(token)
       .then(setReleases)
       .catch((e: Error) => setReleasesError(e.message));
+    getFacebookPosts(token)
+      .then(setPosts)
+      .catch((e: Error) => setPostsError(e.message));
   }, []);
 
   return (
     <Molecule.SettingsSection
       title="Facebook"
-      description="Automatic posts to the Orbis Facebook Page."
+      description="Everything Orbis posts to its Facebook Page on its own, and the Page cover."
     >
       {chartsError ? (
         <Atom.ErrorMessage>{chartsError}</Atom.ErrorMessage>
@@ -214,31 +122,50 @@ export function WebsiteSettings() {
           />
           <div className="flex flex-col divide-y divide-divider">
             <Molecule.SettingsPart
-              title="Weekly charts"
-              description="The trending anime, manga and games, with a link to each chart’s discussion on Orbis."
+              title="Page cover"
+              description="The cover photo at the top of the Orbis Facebook Page."
             >
-              <FacebookAutoPost
-                switches={[
-                  {
-                    key: "charts",
-                    label: "Post the weekly charts every Monday",
-                    description:
-                      "The anime, manga and games charts each get their own post at the start of every chart week.",
-                    enabled: charts.enabled,
-                    update: updateFacebookCharts,
-                  },
-                ]}
-                lastPost={
-                  charts.lastPost && { ...charts.lastPost, label: chartWeek(charts.lastPost.week) }
-                }
-                noPost="No automatic post yet."
-                confirmTitle="Post this week’s charts to Facebook?"
-                confirmDescription="Posts the anime, manga and games charts to the Orbis Facebook Page now, one post each. Monday’s posts still go out."
-                postedMessage="Posted this week’s charts to Facebook."
-                post={postChartsToFacebook}
-                load={getFacebookCharts}
-                onChange={setCharts}
-              />
+              <ScheduledPosts kinds={["cover"]} status={posts} error={postsError} onChange={setPosts} />
+            </Molecule.SettingsPart>
+            <Molecule.SettingsPart
+              title="Weekly posts"
+              description="A different post each day of the week. The charts go out on Monday at 8:00 AM Philippine time, and the rest at 12:00 PM."
+            >
+              <PostList>
+                <div>
+                  <FacebookAutoPost
+                    switches={[
+                      {
+                        key: "charts",
+                        label: "Weekly charts on Mondays",
+                        description:
+                          "The anime, manga and games charts, each in its own post at the start of every chart week, with a link to its discussion on Orbis.",
+                        enabled: charts.enabled,
+                        update: updateFacebookCharts,
+                      },
+                    ]}
+                    lastPost={
+                      charts.lastPost && { ...charts.lastPost, label: chartWeek(charts.lastPost.week) }
+                    }
+                    noPost="No automatic post yet."
+                    confirmTitle="Post this week’s charts to Facebook?"
+                    confirmDescription="Posts the anime, manga and games charts to the Orbis Facebook Page now, one post each. Monday’s posts still go out."
+                    postedMessage="Posted this week’s charts to Facebook."
+                    post={postChartsToFacebook}
+                    load={getFacebookCharts}
+                    onChange={setCharts}
+                  />
+                </div>
+                <ScheduledPosts kinds={WEEKLY} status={posts} error={postsError} onChange={setPosts} />
+              </PostList>
+            </Molecule.SettingsPart>
+            <Molecule.SettingsPart
+              title="Seasonal posts"
+              description="Posts about each new season, at 12:00 PM Philippine time."
+            >
+              <PostList>
+                <ScheduledPosts kinds={SEASONAL} status={posts} error={postsError} onChange={setPosts} />
+              </PostList>
             </Molecule.SettingsPart>
             <Molecule.SettingsPart
               title="What’s new in Orbis"
@@ -277,6 +204,16 @@ export function WebsiteSettings() {
               )}
             </Molecule.SettingsPart>
           </div>
+          <p className="text-xs text-muted">
+            Milestone posts are in the{" "}
+            <Link
+              href="/admin?tab=milestones"
+              className="focus-ring rounded-sm font-semibold text-accent hover:underline"
+            >
+              Milestones
+            </Link>{" "}
+            tab.
+          </p>
         </>
       ) : (
         <FacebookNotSetUp />

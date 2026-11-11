@@ -16,7 +16,7 @@ import {
 import { useReadOnly } from "@/lib/read-only";
 import { longDate } from "@/lib/time";
 import { useAuthStore } from "@/stores/auth-store";
-import { FacebookAutoPost, FacebookNotSetUp, FacebookPostLink } from "./website-settings";
+import { FacebookAutoPost, FacebookNotSetUp, FacebookPostLink } from "./facebook-auto-post";
 
 const DESCRIPTION =
   "Posts an image to the Orbis Facebook Page when a count reaches 10, 25, 50, 100, 250, 500, 1,000 and so on. Each switch only posts milestones reached after it’s turned on.";
