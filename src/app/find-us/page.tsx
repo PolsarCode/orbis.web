@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import * as Atom from "@atom";
 import * as Template from "@template";
 import { OAuthConnectionRow } from "@/components/organisms/oauth-buttons";
+import { getStats } from "@/lib/api";
+import { FACEBOOK_PAGE_URL } from "@/lib/links";
+
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Find us",
@@ -13,11 +17,20 @@ const links = [
     provider: "facebook",
     label: "Facebook",
     description: "Weekly charts, updates, and news",
-    href: "https://www.facebook.com/profile.php?id=61596068415501",
+    href: FACEBOOK_PAGE_URL,
   },
 ] as const;
 
-export default function FindUsPage() {
+function followerLabel(followers: number) {
+  return `${followers.toLocaleString("en-US")} ${followers === 1 ? "follower" : "followers"}`;
+}
+
+export default async function FindUsPage() {
+  const followers = await getStats().then(
+    ({ facebookFollowers }) => facebookFollowers,
+    () => null,
+  );
+
   return (
     <Template.LegalTemplate title="Find us" updated="November 10, 2026">
       <p>
@@ -30,7 +43,11 @@ export default function FindUsPage() {
             key={link.href}
             provider={link.provider}
             title={link.label}
-            status={link.description}
+            status={
+              link.provider === "facebook" && typeof followers === "number"
+                ? `${link.description} · ${followerLabel(followers)}`
+                : link.description
+            }
           >
             <Atom.Button
               size="small"

@@ -9,6 +9,9 @@ const { width: WIDTH } = SHARE_IMAGE;
 const NUMBER = /^\d{1,9}$/;
 const BANNER = { width: WIDTH - 112, height: 280 };
 const ICON = { width: 168, height: 168 };
+const FACEBOOK_BLUE = "#0866FF";
+const FACEBOOK_LOGO =
+  "M880 112H144c-17.7 0-32 14.3-32 32v736c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V144c0-17.7-14.3-32-32-32zm-92.4 233.5h-63.9c-50.1 0-59.8 23.8-59.8 58.8v77.1h119.6l-15.6 120.7h-104V912H539.2V602.2H434.9V481.4h104.3v-89c0-103.3 63.1-159.6 155.3-159.6 44.2 0 82.1 3.3 93.2 4.8v107.9z";
 const { background, surface, divider, foreground, muted, accent, accentForeground } = palette.dark;
 
 const confetti = [
@@ -100,22 +103,47 @@ function CommunityBanner({ community }: { community: MilestoneCommunity }) {
   );
 }
 
+function FacebookBadge() {
+  return (
+    <div style={{ display: "flex", justifyContent: "center", marginTop: 36 }}>
+      <div
+        style={{
+          display: "flex",
+          width: 132,
+          height: 132,
+          borderRadius: 36,
+          border: `6px solid ${background}`,
+          backgroundColor: "#ffffff",
+          overflow: "hidden",
+        }}
+      >
+        <svg width={120} height={120} viewBox="112 112 800 800">
+          <path d={FACEBOOK_LOGO} fill={FACEBOOK_BLUE} />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
 function MilestoneImage({
-  members,
+  milestone,
+  followers,
   community,
   link,
   backdrop,
 }: {
-  members: number;
+  milestone: number;
+  followers: boolean;
   community: MilestoneCommunity | null;
   link: string;
   backdrop: string;
 }) {
-  const count = members.toLocaleString("en-US");
-  const ring = community ? 440 : 640;
-  const headline = community ? 56 : 64;
+  const count = milestone.toLocaleString("en-US");
+  const ring = community ? 440 : followers ? 520 : 640;
+  const headline = followers ? 52 : community ? 56 : 64;
   const numberSize = Math.round(ring * (count.length <= 3 ? 0.5 : count.length <= 5 ? 0.36 : 0.28));
   const name = community?.name ?? "Orbis";
+  const shift = community ? 120 : followers ? 60 : 0;
 
   return (
     <div
@@ -139,7 +167,7 @@ function MilestoneImage({
           style={{
             position: "absolute",
             left: x,
-            top: community ? y + 120 : y,
+            top: y + shift,
             width: size,
             height: round ? size : size * 0.5,
             borderRadius: round ? size : 3,
@@ -163,6 +191,7 @@ function MilestoneImage({
         orbis.
       </div>
       {community && <CommunityBanner community={community} />}
+      {followers && <FacebookBadge />}
       <div
         style={{
           display: "flex",
@@ -248,7 +277,7 @@ function MilestoneImage({
                 color: muted,
               }}
             >
-              MEMBERS
+              {followers ? "FOLLOWERS" : "MEMBERS"}
             </div>
           </div>
         </div>
@@ -264,12 +293,16 @@ function MilestoneImage({
             textAlign: "center",
           }}
         >
-          {`${name} just reached ${count} members!`}
+          {followers
+            ? `Orbis just reached ${count} followers on Facebook!`
+            : `${name} just reached ${count} members!`}
         </div>
         <div style={{ display: "flex", marginTop: 14, fontSize: 28, color: muted }}>
-          {community
-            ? "Thank you to everyone who’s joined. Come say hi on Orbis."
-            : "Thank you to everyone who’s joined so far."}
+          {followers
+            ? "Thank you for following along."
+            : community
+              ? "Thank you to everyone who’s joined. Come say hi on Orbis."
+              : "Thank you to everyone who’s joined so far."}
         </div>
       </div>
       <div
@@ -281,7 +314,9 @@ function MilestoneImage({
           color: muted,
         }}
       >
-        <span>{community ? "Community milestone" : "Orbis milestone"}</span>
+        <span>
+          {followers ? "Facebook milestone" : community ? "Community milestone" : "Orbis milestone"}
+        </span>
         <span style={{ color: foreground, fontWeight: 600 }}>{link}</span>
       </div>
     </div>
@@ -290,15 +325,25 @@ function MilestoneImage({
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const members = url.searchParams.get("members") ?? "";
+  const members = url.searchParams.get("members");
+  const followers = url.searchParams.get("followers");
   const communityId = url.searchParams.get("community");
-  if (!NUMBER.test(members) || (communityId !== null && !NUMBER.test(communityId))) {
+  const value = followers ?? members ?? "";
+  if (
+    !NUMBER.test(value) ||
+    (members !== null && followers !== null) ||
+    (communityId !== null && (followers !== null || !NUMBER.test(communityId)))
+  ) {
     return new Response("Pick a milestone like 10, 25 or 50.", { status: 400 });
   }
-  const count = Number(members);
+  const count = Number(value);
 
   let community: MilestoneCommunity | null = null;
-  if (communityId) {
+  if (followers !== null) {
+    if (milestoneReached((await getStats()).facebookFollowers ?? 0) !== count) {
+      return new Response("The Facebook Page hasn’t reached that milestone yet.", { status: 404 });
+    }
+  } else if (communityId) {
     const found = await getCommunity(null, communityId).catch(() => null);
     if (!found?.isPublic || milestoneReached(found.memberCount ?? 0) !== count) {
       return new Response("No milestone for that community.", { status: 404 });
@@ -314,7 +359,8 @@ export async function GET(request: Request) {
 
   return new ImageResponse(
     <MilestoneImage
-      members={count}
+      milestone={count}
+      followers={followers !== null}
       community={community}
       link={communityId ? `${url.host}/communities/${communityId}` : url.host}
       backdrop={await shareBackdrop()}

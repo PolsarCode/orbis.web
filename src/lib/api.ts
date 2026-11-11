@@ -1815,6 +1815,7 @@ export type Stats = {
   communities: number;
   posts: number;
   comments: number;
+  facebookFollowers: number | null;
 };
 
 export async function getStats(): Promise<Stats> {
@@ -2891,8 +2892,9 @@ export async function updateDiscordChartChannel(
 
 export type FacebookChartsStatus = {
   configured: boolean;
-  page: { id: string; name: string | null } | null;
+  page: { id: string; name: string | null; followers: number | null } | null;
   pageError: string | null;
+  followersError: string | null;
   enabled: boolean;
   lastPost: { week: string; postId: string | null; postedAt: string } | null;
 };
@@ -2961,10 +2963,12 @@ export async function postReleaseToFacebook(
 
 export type MilestoneCommunity = { id: number; name: string };
 
-export type FacebookMilestonesStatus = {
-  enabled: boolean;
+export type MilestoneKind = "members" | "communities" | "followers";
+
+export type FacebookMilestonesStatus = Record<MilestoneKind, boolean> & {
   lastPost: {
-    members: number;
+    kind: MilestoneKind;
+    milestone: number;
     community: MilestoneCommunity | null;
     postId: string | null;
     postedAt: string;
@@ -2980,9 +2984,9 @@ export async function getFacebookMilestones(token: string): Promise<FacebookMile
 
 export async function updateFacebookMilestones(
   token: string,
-  enabled: boolean,
+  changes: Partial<Record<MilestoneKind, boolean>>,
 ): Promise<FacebookMilestonesStatus> {
-  const res = await send(token, "/admin/facebook-milestones", "PATCH", { enabled });
+  const res = await send(token, "/admin/facebook-milestones", "PATCH", changes);
 
   if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t save that."));
   return res.json();
@@ -2990,7 +2994,12 @@ export async function updateFacebookMilestones(
 
 export async function postMilestoneToFacebook(
   token: string,
-): Promise<{ postId: string; members: number; community: MilestoneCommunity | null }> {
+): Promise<{
+  postId: string;
+  kind: MilestoneKind;
+  milestone: number;
+  community: MilestoneCommunity | null;
+}> {
   const res = await send(token, "/admin/facebook-milestones/send", "POST");
 
   if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t post to Facebook."));

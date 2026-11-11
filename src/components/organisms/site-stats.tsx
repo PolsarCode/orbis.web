@@ -13,8 +13,11 @@ import {
   type Stats,
 } from "@/lib/api";
 import { displayName } from "@/lib/display-name";
+import { FACEBOOK_PAGE_URL } from "@/lib/links";
 
 const DURATION = 1200;
+const FACEBOOK_F =
+  "M787.6 345.5h-63.9c-50.1 0-59.8 23.8-59.8 58.8v77.1h119.6l-15.6 120.7h-104V912H539.2V602.2H434.9V481.4h104.3v-89c0-103.3 63.1-159.6 155.3-159.6 44.2 0 82.1 3.3 93.2 4.8v107.9z";
 const FACES = 4;
 const ICONS = 4;
 
@@ -205,6 +208,24 @@ export function SiteStats() {
         <Figure value={stats.posts} one="post" many="posts" />
         <Figure value={stats.comments} one="comment" many="comments" />
       </FloatingCard>
+      {typeof stats.facebookFollowers === "number" && (
+        <a
+          href={FACEBOOK_PAGE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Follow Orbis on Facebook, ${stats.facebookFollowers.toLocaleString()} followers`}
+          className="focus-ring rounded-2xl lg:mr-16"
+        >
+          <FloatingCard delay="-6s">
+            <span aria-hidden className={`${bubble} bg-[#0866FF]! text-white`}>
+              <svg viewBox="251 212 720 720" fill="currentColor" className="h-4 w-4 lg:h-5 lg:w-5">
+                <path d={FACEBOOK_F} />
+              </svg>
+            </span>
+            <Figure value={stats.facebookFollowers} one="follower" many="followers" />
+          </FloatingCard>
+        </a>
+      )}
     </div>
   );
 }
