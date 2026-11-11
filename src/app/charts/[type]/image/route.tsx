@@ -1,14 +1,25 @@
-import { ImageResponse } from "next/og";
 import type { CSSProperties } from "react";
 import { getChart, type Chart, type ChartEntry, type ChartMovement, type MediaType } from "@/lib/api";
-import { imageData, retina, type ImageSize } from "@/lib/image-data";
+import {
+  Cover,
+  crownPaths,
+  Footer,
+  Frame,
+  Header,
+  Icon,
+  imageResponse,
+  medals,
+  mediaTypeOf,
+  periodMaxAge,
+  typeNames,
+} from "@/lib/facebook-image";
+import { imageData, retina } from "@/lib/image-data";
 import { countLabel } from "@/lib/library";
-import { ogFonts } from "@/lib/og-fonts";
 import { palette } from "@/lib/palette";
 import { SHARE_IMAGE, shareBackdrop } from "@/lib/share-backdrop";
 import { weekRange } from "@/lib/time";
 
-const { width: WIDTH, height: HEIGHT } = SHARE_IMAGE;
+const { width: WIDTH } = SHARE_IMAGE;
 const TOP = 10;
 const PODIUM = 3;
 const CONTENT_WIDTH = WIDTH - 112;
@@ -19,14 +30,7 @@ const COVERS = {
   runnerUp: { width: 84, height: 120 },
   row: { width: 46, height: 66 },
 };
-const titles: Record<MediaType, string> = { anime: "Anime", manga: "Manga", game: "Games" };
-const medals = ["#fcd34d", "#e4e4e7", "#fdba74"];
-const crownPaths = [
-  "M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z",
-  "M5 21h14",
-];
-const { background, surface, divider, foreground, muted, accent, accentForeground, online, danger } =
-  palette.dark;
+const { surface, divider, muted, accent, accentForeground, online, danger } = palette.dark;
 
 const arrows: Record<Exclude<ChartMovement, "new">, { color: string; paths: string[] }> = {
   up: { color: online, paths: ["m5 12 7-7 7 7", "M12 19V5"] },
@@ -45,25 +49,6 @@ async function loadImages(entry: ChartEntry, index: number): Promise<Images> {
     card ? imageData(bannerImage ?? coverImage, card, !bannerImage) : Promise.resolve(null),
   ]);
   return { cover: coverData, backdrop };
-}
-
-function Icon({ paths, color, size }: { paths: string[]; color: string; size: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={color}
-      strokeWidth={3}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      {paths.map((d) => (
-        <path key={d} d={d} />
-      ))}
-    </svg>
-  );
 }
 
 function Movement({ movement, size }: { movement: ChartMovement; size: number }) {
@@ -87,23 +72,7 @@ function Movement({ movement, size }: { movement: ChartMovement; size: number })
   }
 
   const { color, paths } = arrows[movement];
-  return <Icon paths={paths} color={color} size={size} />;
-}
-
-function Cover({ src, size, radius }: { src: string | null; size: ImageSize; radius: number }) {
-  return (
-    <div
-      style={{
-        ...size,
-        flexShrink: 0,
-        borderRadius: radius,
-        backgroundColor: divider,
-        backgroundImage: src ? `url(${src})` : "none",
-        backgroundSize: "100% 100%",
-        boxShadow: "0 8px 24px rgba(0, 0, 0, 0.45)",
-      }}
-    />
-  );
+  return <Icon paths={paths} color={color} size={size} weight={3} />;
 }
 
 const clamp = (lines: number): CSSProperties => ({
@@ -182,7 +151,7 @@ function PodiumCard({ entry, images }: { entry: ChartEntry; images: Images }) {
                 lineHeight: 1,
               }}
             >
-              {featured && <Icon paths={crownPaths} color={medal} size={50} />}
+              {featured && <Icon paths={crownPaths} color={medal} size={50} weight={3} />}
               {`#${entry.rank}`}
             </div>
             <Movement movement={entry.movement} size={featured ? 40 : 34} />
@@ -275,47 +244,11 @@ function ChartImage({
   const rest = entries.slice(PODIUM);
 
   return (
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        padding: "48px 56px",
-        backgroundColor: background,
-        backgroundImage: `url(${backdrop})`,
-        backgroundSize: "100% 100%",
-        color: foreground,
-        fontFamily: "Inter",
-      }}
-    >
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-        <div
-          style={{
-            fontFamily: "Barlow Condensed",
-            fontSize: 70,
-            fontWeight: 800,
-            color: accent,
-            lineHeight: 1,
-          }}
-        >
-          orbis.
-        </div>
-        <div
-          style={{
-            marginTop: 8,
-            fontFamily: "Barlow Condensed",
-            fontSize: 54,
-            fontWeight: 700,
-            lineHeight: 1,
-          }}
-        >
-          {`Top ${entries.length} ${titles[type]} of the week`}
-        </div>
-        <div style={{ marginTop: 8, fontSize: 26, color: muted }}>
-          {weekRange(chart.startsAt, chart.endsAt)}
-        </div>
-      </div>
+    <Frame backdrop={backdrop}>
+      <Header
+        headline={`Top ${entries.length} ${typeNames[type]} of the week`}
+        subline={weekRange(chart.startsAt, chart.endsAt)}
+      />
       <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 24 }}>
         {podium[0] && <PodiumCard entry={podium[0]} images={images[0]} />}
         {podium.length > 1 && (
@@ -347,26 +280,13 @@ function ChartImage({
           </div>
         )}
       </div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          marginTop: "auto",
-          paddingTop: 16,
-          fontSize: 22,
-          color: muted,
-        }}
-      >
-        <span>Weekly charts, every Monday</span>
-        <span style={{ color: foreground, fontWeight: 600 }}>{site}</span>
-      </div>
-    </div>
+      <Footer caption="Weekly charts, every Monday" site={site} />
+    </Frame>
   );
 }
 
 export async function GET(request: Request, { params }: { params: Promise<{ type: string }> }) {
-  const { type: segment } = await params;
-  const type = (Object.keys(titles) as MediaType[]).find((value) => value === segment);
+  const type = mediaTypeOf((await params).type);
   if (!type) return new Response("Not found.", { status: 404 });
 
   const url = new URL(request.url);
@@ -383,8 +303,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ type
     Promise.all(entries.map(loadImages)),
     shareBackdrop(),
   ]);
-  const maxAge = new Date(chart.endsAt).getTime() <= Date.now() ? 604800 : 3600;
-  return new ImageResponse(
+  return imageResponse(
     <ChartImage
       chart={chart}
       type={type}
@@ -393,11 +312,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ type
       site={url.host}
       backdrop={backdrop}
     />,
-    {
-      width: WIDTH,
-      height: HEIGHT,
-      fonts: await ogFonts(),
-      headers: { "Cache-Control": `public, max-age=${maxAge}, s-maxage=${maxAge}` },
-    },
+    periodMaxAge(chart.endsAt),
   );
 }

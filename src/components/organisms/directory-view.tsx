@@ -4,6 +4,7 @@ import { Pagination, Segmented, Tooltip } from "antd";
 import {
   BookUser,
   Boxes,
+  CalendarClock,
   Globe,
   Lock,
   MailCheck,
@@ -35,6 +36,7 @@ import { useDirectoryPreferencesStore } from "@/stores/directory-preferences-sto
 import { AdminToggle } from "./admin-toggle";
 import { OAuthIcon } from "./oauth-buttons";
 import { VerifyToggle } from "./verify-toggle";
+import { FacebookPostSettings } from "./facebook-post-settings";
 import { MilestoneSettings } from "./milestone-settings";
 import { WebsiteSettings } from "./website-settings";
 
@@ -44,14 +46,15 @@ const directoryLists = [
 ] as const;
 
 type DirectoryTab = (typeof directoryLists)[number]["value"];
-type HeadAdminTab = "website" | "milestones";
+type HeadAdminTab = "website" | "milestones" | "auto-posts";
 type Tab = HeadAdminTab | DirectoryTab;
 
-const headAdminTabs: HeadAdminTab[] = ["website", "milestones"];
+const headAdminTabs: HeadAdminTab[] = ["website", "milestones", "auto-posts"];
 
 const sections = [
   { value: "website", label: "Website", icon: <Globe size={16} /> },
   { value: "milestones", label: "Milestones", icon: <PartyPopper size={16} /> },
+  { value: "auto-posts", label: "Auto posts", icon: <CalendarClock size={16} /> },
   { value: "users", label: "Directory", icon: <BookUser size={16} /> },
 ] as const;
 
@@ -607,6 +610,8 @@ export function DirectoryView() {
             />
           ) : tab === "milestones" ? (
             <MilestoneSettings />
+          ) : tab === "auto-posts" ? (
+            <FacebookPostSettings />
           ) : (
             <WebsiteSettings />
           )}

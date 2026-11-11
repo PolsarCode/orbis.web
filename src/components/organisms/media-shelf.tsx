@@ -2,6 +2,7 @@
 
 import {
   CalendarClock,
+  CalendarRange,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -17,13 +18,21 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode, type Ref } from "react";
 import {
   getMediaList,
+  getSeason,
   type LibraryEntry,
   type MediaListItem,
   type MediaListName,
   type MediaType,
 } from "@/lib/api";
 import * as Atom from "@atom";
-import { countLabel, mediaPath, mediaTypeParam } from "@/lib/library";
+import {
+  countLabel,
+  mediaPath,
+  mediaTypeParam,
+  releaseLabel,
+  seasonId,
+  seasonTitle,
+} from "@/lib/library";
 import { useAuthStore } from "@/stores/auth-store";
 import { useMediaShelfStore } from "@/stores/media-shelf-store";
 import { mediaTypes } from "./activity-card";
@@ -31,11 +40,16 @@ import { drift, DRIFT_MS, SLIDE_MS } from "./anime-spotlight";
 import { AddStatusPill, MediaCover, StatusPill } from "./library-view";
 
 const types: MediaType[] = ["anime", "manga", "game"];
+type ShelfList = MediaListName | "next";
+
 const lists: MediaListName[] = ["trending", "season", "top", "upcoming"];
-const ranked: MediaListName[] = ["trending", "top"];
-const listIcons: Record<MediaListName, LucideIcon> = {
+const discoverLists: ShelfList[] = ["trending", "season", "next", "top", "upcoming"];
+const ranked: ShelfList[] = ["trending", "top"];
+const dated: ShelfList[] = ["next", "upcoming"];
+const listIcons: Record<ShelfList, LucideIcon> = {
   trending: Flame,
   season: Sparkles,
+  next: CalendarRange,
   top: Trophy,
   upcoming: CalendarClock,
 };
@@ -44,13 +58,14 @@ const SECTION_SIZE = 6;
 const SECTION_SIZE_ON_PHONES = 3;
 const sectionTitles: Record<MediaType, string> = { anime: "Anime", manga: "Manga", game: "Games" };
 const FEATURED = 5;
-const listKey = (type: MediaType, list: MediaListName) => `${type}:${list}`;
+const listKey = (type: MediaType, list: ShelfList) => `${type}:${list}`;
 
-function hasList(type: MediaType, list: MediaListName) {
+function hasList(type: MediaType, list: ShelfList) {
   return !(type === "manga" && list === "upcoming");
 }
 
-function listLabel(list: MediaListName, type: MediaType | null) {
+function listLabel(list: ShelfList, type: MediaType | null) {
+  if (list === "next") return `Next season · ${seasonTitle(seasonId(1))}`;
   if (list === "season") {
     return type ? { anime: "This season", manga: "New series", game: "New releases" }[type] : "New";
   }
@@ -66,10 +81,12 @@ function saved(entry: LibraryEntry): SavedEntry {
 function ShelfCard({
   item,
   rank,
+  showDate,
   onEntry,
 }: {
   item: MediaListItem;
   rank: number | null;
+  showDate: boolean;
   onEntry?: (entry: SavedEntry) => void;
 }) {
   const entry = item.entry && { ...item.entry, mediaType: item.type, title: item.title };
@@ -97,7 +114,9 @@ function ShelfCard({
               {item.score.toFixed(1)}
             </span>
           )}
-          <span className="truncate text-white/80">{countLabel(item)}</span>
+          <span className="truncate text-white/80">
+            {(showDate && releaseLabel(item)) || countLabel(item)}
+          </span>
           {item.entry && !onEntry && (
             <Check size={14} aria-hidden className="ml-auto shrink-0 text-online" />
           )}
@@ -126,7 +145,7 @@ function ShelfItems({
   onScroll,
 }: {
   items: MediaListItem[] | null | undefined;
-  list: MediaListName;
+  list: ShelfList;
   grid: boolean;
   cardClassName?: string;
   onEntry?: (id: string, entry: SavedEntry) => void;
@@ -177,6 +196,7 @@ function ShelfItems({
               <ShelfCard
                 item={item}
                 rank={ranked.includes(list) ? index + 1 : null}
+                showDate={dated.includes(list)}
                 onEntry={onEntry && ((entry) => onEntry(item.id, entry))}
               />
             </li>
@@ -196,8 +216,12 @@ function useMediaLists(keys: string[], ready = true) {
     for (const key of wanted.split(",")) {
       if (requested.current.has(key)) continue;
       requested.current.add(key);
-      const [type, list] = key.split(":") as [MediaType, MediaListName];
-      getMediaList(token, type, list)
+      const [type, list] = key.split(":") as [MediaType, ShelfList];
+      const request =
+        list === "next"
+          ? getSeason(token, type, seasonId(1)).then((season) => season?.items ?? [])
+          : getMediaList(token, type, list);
+      request
         .then((found) => setResults((current) => ({ ...current, [key]: found })))
         .catch(() => setResults((current) => ({ ...current, [key]: null })));
     }
@@ -227,7 +251,7 @@ function ShelfRow({
   onEntry,
 }: {
   items: MediaListItem[] | null | undefined;
-  list: MediaListName;
+  list: ShelfList;
   cardClassName: string;
   onEntry?: (id: string, entry: SavedEntry) => void;
 }) {
@@ -547,7 +571,7 @@ function Featured({
 
 export function LibraryDiscover() {
   const type = mediaTypeParam(useSearchParams().get("type"));
-  const shown = lists.filter((list) => hasList(type, list));
+  const shown = discoverLists.filter((list) => hasList(type, list));
   const { results, onEntry } = useMediaLists(shown.map((list) => listKey(type, list)));
 
   return (
@@ -555,6 +579,7 @@ export function LibraryDiscover() {
       <Featured key={type} items={results[listKey(type, "trending")]} onEntry={onEntry} />
       {shown.map((list) => {
         const Icon = listIcons[list];
+        if (list === "next" && results[listKey(type, list)]?.length === 0) return null;
         return (
           <section
             key={list}

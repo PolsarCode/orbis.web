@@ -20,6 +20,7 @@ export * from "./feedback-dock";
 export * from "./discussion-modal";
 export * from "./discord-chart-settings";
 export * from "./directory-view";
+export * from "./facebook-post-settings";
 export * from "./friends-panel";
 export * from "./group-chat-modals";
 export * from "./email-confirmation";

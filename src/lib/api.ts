@@ -626,6 +626,30 @@ export async function getCommunity(
   return res.ok ? res.json() : null;
 }
 
+export type CommunityWeekly = {
+  id: number;
+  name: string;
+  description: string | null;
+  iconUrl: string | null;
+  coverUrl: string | null;
+  isVerified: boolean;
+  members: number;
+  gained: number;
+  startsAt: string;
+  endsAt: string;
+};
+
+export async function getCommunityWeekly(
+  communityId: number,
+  until: string,
+): Promise<CommunityWeekly | null> {
+  const res = await api(withQuery(`/communities/${communityId}/weekly`, { until }));
+
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error("Could not load this community’s week.");
+  return res.json();
+}
+
 export type RailFolder = {
   type: "folder";
   id: number;
@@ -1765,6 +1789,15 @@ export async function getTrendingTags(
   return res.json();
 }
 
+export type WeeklyTags = { startsAt: string; endsAt: string; tags: TrendingTag[] };
+
+export async function getWeeklyTags(until: string): Promise<WeeklyTags> {
+  const res = await api(withQuery("/tags/weekly", { until }));
+
+  if (!res.ok) throw new Error("Could not load this week’s tags.");
+  return res.json();
+}
+
 export async function getFollowedTags(token: string | null): Promise<TagSummary[]> {
   const res = await api("/tags/following", { headers: authHeaders(token) });
 
@@ -2521,6 +2554,45 @@ export async function getChartDiscussion(
   return res.json();
 }
 
+export type SeasonName = "winter" | "spring" | "summer" | "fall";
+
+export type MediaSeason = {
+  type: MediaType;
+  season: SeasonName;
+  year: number;
+  startsAt: string;
+  endsAt: string;
+  items: MediaListItem[];
+};
+
+export async function getSeason(
+  token: string | null,
+  type: MediaType,
+  season: string,
+): Promise<MediaSeason | null> {
+  const res = await api(`/library/seasons/${type}/${season}`, { headers: authHeaders(token) });
+
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(await errorMessage(res, "This season isn’t available right now."));
+  return res.json();
+}
+
+export type MostAdded = {
+  startsAt: string;
+  endsAt: string;
+  items: {
+    media: { type: MediaType; sourceId: string; title: string; coverImage: string | null };
+    adds: number;
+  }[];
+};
+
+export async function getMostAdded(type: MediaType, until: string): Promise<MostAdded> {
+  const res = await api(withQuery(`/library/most-added/${type}`, { until }));
+
+  if (!res.ok) throw new Error(await errorMessage(res, "The most added titles aren’t available right now."));
+  return res.json();
+}
+
 export async function getLibrary(token: string): Promise<LibraryEntry[]> {
   const res = await send(token, "/library");
 
@@ -3012,6 +3084,54 @@ export async function postMilestoneToFacebook(
   community: MilestoneCommunity | null;
 }> {
   const res = await send(token, "/admin/facebook-milestones/send", "POST");
+
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t post to Facebook."));
+  return res.json();
+}
+
+export type FacebookPostKind =
+  | "cover"
+  | "spotlight"
+  | "debate"
+  | "most-added"
+  | "hashtags"
+  | "community"
+  | "tip"
+  | "season"
+  | "coming";
+
+export type FacebookPostsStatus = {
+  configured: boolean;
+  posts: {
+    kind: FacebookPostKind;
+    enabled: boolean;
+    lastPost: { period: string; label: string; postId: string | null; postedAt: string } | null;
+  }[];
+};
+
+export async function getFacebookPosts(token: string): Promise<FacebookPostsStatus> {
+  const res = await send(token, "/admin/facebook-posts");
+
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t load the automatic posts."));
+  return res.json();
+}
+
+export async function updateFacebookPost(
+  token: string,
+  kind: FacebookPostKind,
+  enabled: boolean,
+): Promise<FacebookPostsStatus> {
+  const res = await send(token, "/admin/facebook-posts", "PATCH", { kind, enabled });
+
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t save that."));
+  return res.json();
+}
+
+export async function postFacebookPostNow(
+  token: string,
+  kind: FacebookPostKind,
+): Promise<{ postIds: string[] }> {
+  const res = await send(token, `/admin/facebook-posts/${kind}/send`, "POST");
 
   if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t post to Facebook."));
   return res.json();

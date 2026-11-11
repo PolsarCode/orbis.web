@@ -15,8 +15,10 @@ export function longDate(date: string) {
 }
 
 export function weekRange(startsAt: string, endsAt: string) {
-  const start = new Date(startsAt);
-  const end = new Date(new Date(endsAt).getTime() - 1);
+  return dateRange(new Date(startsAt), new Date(new Date(endsAt).getTime() - 1));
+}
+
+export function dateRange(start: Date, end: Date) {
   const day = { month: "short", day: "numeric", timeZone: "UTC" } as const;
   const withYear = { ...day, year: "numeric" } as const;
   const sameYear = start.getUTCFullYear() === end.getUTCFullYear();
