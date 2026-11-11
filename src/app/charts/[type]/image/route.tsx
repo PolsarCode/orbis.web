@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import type { CSSProperties } from "react";
-import sharp from "sharp";
 import { getChart, type Chart, type ChartEntry, type ChartMovement, type MediaType } from "@/lib/api";
+import { imageData, retina, type ImageSize } from "@/lib/image-data";
 import { countLabel } from "@/lib/library";
 import { ogFonts } from "@/lib/og-fonts";
 import { palette } from "@/lib/palette";
@@ -34,26 +34,7 @@ const arrows: Record<Exclude<ChartMovement, "new">, { color: string; paths: stri
   same: { color: muted, paths: ["M5 12h14"] },
 };
 
-type Size = { width: number; height: number };
 type Images = { cover: string | null; backdrop: string | null };
-
-async function imageData(src: string | null, { width, height }: Size, blur = false) {
-  if (!src) return null;
-  try {
-    const res = await fetch(src);
-    if (!res.ok) return null;
-    let image = sharp(Buffer.from(await res.arrayBuffer())).resize(width, height, { fit: "cover" });
-    if (blur) image = image.blur(24).modulate({ brightness: 0.8 });
-    const jpeg = await image.jpeg({ quality: 82 }).toBuffer();
-    return `data:image/jpeg;base64,${jpeg.toString("base64")}`;
-  } catch {
-    return null;
-  }
-}
-
-function retina({ width, height }: Size): Size {
-  return { width: width * 2, height: height * 2 };
-}
 
 async function loadImages(entry: ChartEntry, index: number): Promise<Images> {
   const { coverImage, bannerImage } = entry.media;
@@ -109,7 +90,7 @@ function Movement({ movement, size }: { movement: ChartMovement; size: number })
   return <Icon paths={paths} color={color} size={size} />;
 }
 
-function Cover({ src, size, radius }: { src: string | null; size: Size; radius: number }) {
+function Cover({ src, size, radius }: { src: string | null; size: ImageSize; radius: number }) {
   return (
     <div
       style={{

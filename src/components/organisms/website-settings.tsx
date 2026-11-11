@@ -7,13 +7,18 @@ import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import {
   getFacebookCharts,
+  getFacebookMilestones,
   getFacebookReleases,
   postChartsToFacebook,
+  postMilestoneToFacebook,
   postReleaseToFacebook,
   updateFacebookCharts,
+  updateFacebookMilestones,
   updateFacebookReleases,
   type FacebookChartsStatus,
+  type FacebookMilestonesStatus,
   type FacebookReleasesStatus,
+  type MilestoneCommunity,
 } from "@/lib/api";
 import { useReadOnly } from "@/lib/read-only";
 import { formatChangelogDate } from "@/lib/changelog";
@@ -28,6 +33,16 @@ function chartWeek(week: string) {
 
 function releaseName({ date, version }: { date: string; version: string | null }) {
   return version ?? formatChangelogDate(date);
+}
+
+function milestoneName({
+  members,
+  community,
+}: {
+  members: number;
+  community: MilestoneCommunity | null;
+}) {
+  return `${community?.name ?? "Orbis"}, ${members.toLocaleString("en-US")} members`;
 }
 
 function FacebookAutoPost<S>({
@@ -139,6 +154,8 @@ export function WebsiteSettings() {
   const [chartsError, setChartsError] = useState<string | null>(null);
   const [releases, setReleases] = useState<FacebookReleasesStatus | null>(null);
   const [releasesError, setReleasesError] = useState<string | null>(null);
+  const [milestones, setMilestones] = useState<FacebookMilestonesStatus | null>(null);
+  const [milestonesError, setMilestonesError] = useState<string | null>(null);
 
   useEffect(() => {
     const { token } = useAuthStore.getState();
@@ -149,6 +166,9 @@ export function WebsiteSettings() {
     getFacebookReleases(token)
       .then(setReleases)
       .catch((e: Error) => setReleasesError(e.message));
+    getFacebookMilestones(token)
+      .then(setMilestones)
+      .catch((e: Error) => setMilestonesError(e.message));
   }, []);
 
   return (
@@ -224,6 +244,36 @@ export function WebsiteSettings() {
                   post={postReleaseToFacebook}
                   load={getFacebookReleases}
                   onChange={setReleases}
+                />
+              )}
+            </Molecule.SettingsPart>
+            <Molecule.SettingsPart
+              title="Member milestones"
+              description="Celebrates when Orbis or a public community reaches a new member count."
+            >
+              {milestonesError ? (
+                <Atom.ErrorMessage>{milestonesError}</Atom.ErrorMessage>
+              ) : !milestones ? (
+                <Atom.Loader />
+              ) : (
+                <FacebookAutoPost
+                  label="Post member milestones"
+                  description="When Orbis or a public community reaches 10, 25, 50, 100, 250, 500 or 1,000 members and so on, posts an image of the milestone with a link. Only milestones reached while this is on are posted."
+                  enabled={milestones.enabled}
+                  lastPost={
+                    milestones.lastPost && {
+                      ...milestones.lastPost,
+                      label: milestoneName(milestones.lastPost),
+                    }
+                  }
+                  noPost="No milestone posted yet."
+                  confirmTitle="Post the latest milestone to Facebook?"
+                  confirmDescription="Posts the most recent milestone that isn’t on Facebook yet, even one reached before this was turned on."
+                  postedMessage="Posted the latest milestone to Facebook."
+                  update={updateFacebookMilestones}
+                  post={postMilestoneToFacebook}
+                  load={getFacebookMilestones}
+                  onChange={setMilestones}
                 />
               )}
             </Molecule.SettingsPart>

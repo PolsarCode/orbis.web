@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { ImageResponse } from "next/og";
+import type { CSSProperties } from "react";
 
 type Fonts = NonNullable<NonNullable<ConstructorParameters<typeof ImageResponse>[1]>["fonts"]>;
 
@@ -21,3 +22,11 @@ export async function ogFonts(): Promise<Fonts> {
     { name: "Barlow Condensed", data: extraBold, weight: 800, style: "normal" },
   ];
 }
+
+export const clampLines = (lines: number, fontSize: number): CSSProperties => ({
+  display: "block",
+  overflow: "hidden",
+  lineClamp: lines,
+  paddingBottom: fontSize * 0.2,
+  marginBottom: fontSize * -0.2,
+});

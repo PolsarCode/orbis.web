@@ -1,8 +1,8 @@
 import { ImageResponse } from "next/og";
-import type { CSSProperties, ReactElement } from "react";
+import type { ReactElement } from "react";
 import { changeCount, formatChangelogDate, type ChangelogType } from "@/lib/changelog";
 import { getChangelog } from "@/lib/changelog-files";
-import { ogFonts } from "@/lib/og-fonts";
+import { clampLines, ogFonts } from "@/lib/og-fonts";
 import { palette } from "@/lib/palette";
 import { SHARE_IMAGE, shareBackdrop } from "@/lib/share-backdrop";
 
@@ -47,14 +47,6 @@ const kinds: Record<ChangelogType, { label: string; color: string; icon: ReactEl
     ].map((d) => <path key={d} d={d} />),
   },
 };
-
-const clamp = (lines: number, fontSize: number): CSSProperties => ({
-  display: "block",
-  overflow: "hidden",
-  lineClamp: lines,
-  paddingBottom: fontSize * 0.2,
-  marginBottom: fontSize * -0.2,
-});
 
 type Change = { type: ChangelogType; title: string; description: string };
 
@@ -111,7 +103,7 @@ function ChangeCard({ change, lines }: { change: Change; lines: number }) {
         </div>
         <div
           style={{
-            ...clamp(2, 34),
+            ...clampLines(2, 34),
             fontFamily: "Barlow Condensed",
             fontSize: 34,
             fontWeight: 700,
@@ -120,7 +112,7 @@ function ChangeCard({ change, lines }: { change: Change; lines: number }) {
         >
           {change.title}
         </div>
-        <div style={{ ...clamp(lines, 22), fontSize: 22, lineHeight: 1.4, color: muted }}>
+        <div style={{ ...clampLines(lines, 22), fontSize: 22, lineHeight: 1.4, color: muted }}>
           {change.description}
         </div>
       </div>

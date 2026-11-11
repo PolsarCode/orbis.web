@@ -2959,6 +2959,44 @@ export async function postReleaseToFacebook(
   return res.json();
 }
 
+export type MilestoneCommunity = { id: number; name: string };
+
+export type FacebookMilestonesStatus = {
+  enabled: boolean;
+  lastPost: {
+    members: number;
+    community: MilestoneCommunity | null;
+    postId: string | null;
+    postedAt: string;
+  } | null;
+};
+
+export async function getFacebookMilestones(token: string): Promise<FacebookMilestonesStatus> {
+  const res = await send(token, "/admin/facebook-milestones");
+
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t load the milestone posts."));
+  return res.json();
+}
+
+export async function updateFacebookMilestones(
+  token: string,
+  enabled: boolean,
+): Promise<FacebookMilestonesStatus> {
+  const res = await send(token, "/admin/facebook-milestones", "PATCH", { enabled });
+
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t save that."));
+  return res.json();
+}
+
+export async function postMilestoneToFacebook(
+  token: string,
+): Promise<{ postId: string; members: number; community: MilestoneCommunity | null }> {
+  const res = await send(token, "/admin/facebook-milestones/send", "POST");
+
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn’t post to Facebook."));
+  return res.json();
+}
+
 export async function sendDiscordCharts(
   token: string,
   communityId: number,

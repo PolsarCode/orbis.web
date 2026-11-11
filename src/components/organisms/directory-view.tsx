@@ -1,7 +1,7 @@
 "use client";
 
-import { Pagination, Tooltip } from "antd";
-import { Boxes, Globe, Lock, MailCheck, MailWarning, Users } from "lucide-react";
+import { Pagination, Segmented, Tooltip } from "antd";
+import { BookUser, Boxes, Globe, Lock, MailCheck, MailWarning, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -28,13 +28,18 @@ import { OAuthIcon } from "./oauth-buttons";
 import { VerifyToggle } from "./verify-toggle";
 import { WebsiteSettings } from "./website-settings";
 
-const tabs = [
+const directoryLists = [
   { value: "users", label: "Users", icon: <Users size={16} /> },
   { value: "communities", label: "Communities", icon: <Boxes size={16} /> },
-  { value: "website", label: "Website", icon: <Globe size={16} /> },
 ] as const;
 
-type Tab = (typeof tabs)[number]["value"];
+type DirectoryTab = (typeof directoryLists)[number]["value"];
+type Tab = "website" | DirectoryTab;
+
+const sections = [
+  { value: "website", label: "Website", icon: <Globe size={16} /> },
+  { value: "users", label: "Directory", icon: <BookUser size={16} /> },
+] as const;
 
 const joined = (date: string) =>
   new Date(date).toLocaleDateString(undefined, {
@@ -455,8 +460,14 @@ export function DirectoryView() {
   useSignOutRedirect();
   const [authFailed, setAuthFailed] = useState(false);
   const requested = useSearchParams().get("tab");
-  const shownTabs = tabs.filter(({ value }) => value !== "website" || profile?.isHeadAdmin);
-  const tab: Tab = shownTabs.find(({ value }) => value === requested)?.value ?? "users";
+  const shownSections = sections.filter(
+    ({ value }) => value !== "website" || profile?.isHeadAdmin,
+  );
+  const directoryTabs = directoryLists.map(({ value }) => value);
+  const shownTabs: Tab[] = profile?.isHeadAdmin ? ["website", ...directoryTabs] : directoryTabs;
+  const defaultTab = shownTabs[0];
+  const tab = shownTabs.find((value) => value === requested) ?? defaultTab;
+  const tabHref = (value: Tab) => (value === defaultTab ? "/admin" : `/admin?tab=${value}`);
   const [tabsRef, tabsFade] = useTabScroller<HTMLDivElement>(tab);
 
   useEffect(() => {
@@ -506,11 +517,11 @@ export function DirectoryView() {
           style={tabsFade}
           className="-mb-px flex min-w-0 items-end gap-6 overflow-x-auto overflow-y-hidden [scrollbar-width:none]"
         >
-          {shownTabs.map(({ value, label, icon }) => (
+          {shownSections.map(({ value, label, icon }) => (
             <Atom.TabLink
               key={value}
-              href={value === "users" ? "/admin" : `/admin?tab=${value}`}
-              active={tab === value}
+              href={tabHref(value)}
+              active={(value === "website") === (tab === "website")}
               className="whitespace-nowrap"
             >
               {icon}
@@ -525,7 +536,16 @@ export function DirectoryView() {
         )}
       </nav>
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-6 pb-24 sm:px-8 sm:pt-8">
-        <div className="mx-auto w-full max-w-[880px]">
+        <div className="mx-auto flex w-full max-w-[880px] flex-col gap-6">
+          {tab !== "website" && (
+            <Segmented<DirectoryTab>
+              block
+              aria-label="Directory lists"
+              value={tab}
+              onChange={(value) => router.push(tabHref(value))}
+              options={[...directoryLists]}
+            />
+          )}
           {tab === "users" ? (
             <DirectoryList
               key={`users-${profile.userId}`}
