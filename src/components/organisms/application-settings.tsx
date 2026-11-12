@@ -4,7 +4,7 @@ import { SlidersHorizontal } from "lucide-react";
 import * as Molecule from "@molecule";
 import { FriendsSidePanel } from "./friends-panel";
 import { SettingsTabs } from "./settings-tabs";
-import { StartupSwitch } from "./startup-switch";
+import { StartupSettings } from "./startup-settings";
 
 export function ApplicationSettings() {
   return (
@@ -20,12 +20,7 @@ export function ApplicationSettings() {
           icon: <SlidersHorizontal size={16} aria-hidden />,
           content: (
             <Molecule.SettingsSection title="Startup">
-              <Molecule.SettingsRow
-                label="Start Orbis on startup"
-                description="Open Orbis automatically when you log in to your computer."
-              >
-                <StartupSwitch />
-              </Molecule.SettingsRow>
+              <StartupSettings />
             </Molecule.SettingsSection>
           ),
         },

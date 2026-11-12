@@ -18,9 +18,9 @@ export async function requestDesktopAttention() {
   await getCurrentWindow().requestUserAttention(UserAttentionType.Informational);
 }
 
-async function invokeDesktop<T>(command: string) {
+async function invokeDesktop<T>(command: string, args?: Record<string, unknown>) {
   const { invoke } = await import("@tauri-apps/api/core");
-  return invoke<T>(command);
+  return invoke<T>(command, args);
 }
 
 export function startsOnLogin() {
@@ -29,6 +29,14 @@ export function startsOnLogin() {
 
 export function setStartOnLogin(enabled: boolean) {
   return invokeDesktop<void>(enabled ? "plugin:autostart|enable" : "plugin:autostart|disable");
+}
+
+export function startsMinimized() {
+  return invokeDesktop<boolean>("starts_minimized");
+}
+
+export function setStartsMinimized(enabled: boolean) {
+  return invokeDesktop<void>("set_starts_minimized", { enabled });
 }
 
 export async function setDesktopBadge(count: number) {
