@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-13",
+  "versions": ["v0.131.1"],
+  "entries": [
+    {
+      "type": "improved",
+      "title": "Start over when picking a username after signing in with another account",
+      "description": "When you sign up with another account and choose your username, you can now tap \"Start over\" if it's not you, and see links to the Terms and Community guidelines.",
+      "platforms": ["mobile"]
+    }
+  ]
+}
