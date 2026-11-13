@@ -22,7 +22,15 @@ export function CommentPreview({
     <div className="flex flex-col gap-3 border-t border-divider pt-3">
       <ul className="flex flex-col gap-3">
         {comments.map((comment) => (
-          <li key={comment.id} className="flex gap-2.5">
+          <li
+            key={comment.id}
+            className="flex cursor-pointer gap-2.5"
+            onClick={(event) => {
+              event.stopPropagation();
+              if ((event.target as HTMLElement).closest("a, button")) return;
+              onViewAll();
+            }}
+          >
             <HiddenGate hiddenBecause={comment.hiddenBecause} className="min-w-0 flex-1">
               <Atom.Avatar
                 size="xs"
