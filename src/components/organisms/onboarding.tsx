@@ -102,7 +102,7 @@ export const tourStops: TourStop[] = [
     placement: "rightBottom",
     title: "Notifications",
     description:
-      "Comments on your posts, replies, friend requests, and report updates all land here, and new ones pop up in the corner for a few seconds. Search and filter them on the notifications page.",
+      "Comments on your posts, replies, friend requests, new episodes and game releases from your library, and report updates all land here, and new ones pop up in the corner for a few seconds. Search and filter them on the notifications page, and choose which ones you get in Settings.",
   },
   {
     target: "account",
@@ -367,9 +367,9 @@ export const pageTours = {
     {
       target: "library-pages",
       placement: "bottom",
-      title: "Discover, your library, charts, and calendar",
+      title: "Discover, your library, calendar, and charts",
       description:
-        "Discover has what’s trending, new, top-rated, and coming soon. My library has everything you’ve added, Charts ranks the top titles of each week with a discussion under each chart, and Calendar shows when your anime air and your planned games come out.",
+        "Discover has what’s trending, new, top-rated, and coming soon. My library has everything you’ve added, Calendar shows when your anime air and your planned games come out, and Charts ranks the top titles of each week, with a discussion under each chart.",
     },
     {
       target: "library-view",

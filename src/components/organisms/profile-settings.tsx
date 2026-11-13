@@ -2,6 +2,7 @@
 
 import { App } from "antd";
 import {
+  Bell,
   CircleCheck,
   Database,
   Link2,
@@ -22,6 +23,7 @@ import { AppearOfflineSwitch } from "./appear-offline-switch";
 import { OAuthConnections } from "./oauth-connections";
 import { ChangelogSwitch } from "./changelog-switch";
 import { ResendConfirmation } from "./email-confirmation";
+import { NotificationSettings } from "./notification-settings";
 import { NsfwSwitch } from "./nsfw-switch";
 import { FriendsSidePanel } from "./friends-panel";
 import { PrivateProfileSwitch } from "./private-profile-switch";
@@ -109,6 +111,12 @@ export function ProfileSettings({ profile }: { profile: Profile }) {
               </Molecule.SettingsSection>
             </>
           ),
+        },
+        {
+          key: "notifications",
+          label: "Notifications",
+          icon: <Bell size={16} aria-hidden />,
+          content: <NotificationSettings />,
         },
         {
           key: "privacy",

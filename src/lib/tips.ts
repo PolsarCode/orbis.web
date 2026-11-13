@@ -155,6 +155,12 @@ export const tips: Tip[] = [
     action: { label: "Open calendar", href: "/library?tab=calendar" },
   },
   {
+    id: "notification-settings",
+    title: "Choose which notifications you get",
+    body: "The Notifications tab in Settings lets you turn off each kind of notification, like new episodes, game releases, mentions, or reposts, and turn off pop-ups on this device.",
+    action: { label: "Open Notifications", href: "/settings?tab=notifications" },
+  },
+  {
     id: "chart-discussions",
     title: "Talk about the weekly charts",
     body: "Every weekly chart has its own discussion under the list. Share what you think of this week’s picks, or look back at earlier weeks.",

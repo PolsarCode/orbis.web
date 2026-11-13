@@ -4,10 +4,13 @@ import { Switch } from "antd";
 import {
   AtSign,
   Bell,
+  CalendarDays,
   CheckCheck,
   CircleCheck,
   Inbox,
   CloudOff,
+  Gamepad2,
+  Library,
   MessageSquare,
   MessageSquareQuote,
   MessagesSquare,
@@ -15,6 +18,7 @@ import {
   Quote,
   Repeat,
   Reply,
+  Tv,
   UserCheck,
   UserPlus,
   Users,
@@ -36,6 +40,7 @@ import { useTabScroller } from "@/lib/use-tab-scroller";
 import { useAuthStore } from "@/stores/auth-store";
 import { useNotificationsStore } from "@/stores/notifications-store";
 import { FriendsSidePanel } from "./friends-panel";
+import { MediaCover } from "./library-view";
 import { SearchScope } from "./site-search";
 
 const typeIcons: Record<NotificationType, ReactNode> = {
@@ -52,14 +57,35 @@ const typeIcons: Record<NotificationType, ReactNode> = {
   forum_quote: <Quote size={12} />,
   repost: <Repeat size={12} />,
   quote: <MessageSquareQuote size={12} />,
+  episode_aired: <Tv size={12} />,
+  game_released: <Gamepad2 size={12} />,
+  game_date: <CalendarDays size={12} />,
 };
 
 const filters: { value: NotificationFilter; label: string; icon: ReactNode }[] = [
   { value: "all", label: "All", icon: <Inbox size={16} /> },
   { value: "comments", label: "Posts & comments", icon: <MessageSquare size={16} /> },
   { value: "friends", label: "Friends", icon: <Users size={16} /> },
+  { value: "catalog", label: "Catalog", icon: <Library size={16} /> },
   { value: "reports", label: "Reports", icon: <CircleCheck size={16} /> },
 ];
+
+export function NotificationPicture({ notification }: { notification: Notification }) {
+  const { actor, imageUrl } = notification;
+  if (!actor && imageUrl) return <MediaCover src={imageUrl} className="w-8" />;
+  const name = actor ? displayName(actor) : "Orbis";
+  return <Atom.Avatar label={name} src={actor?.avatarUrl} seed={actor?.id ?? 0} />;
+}
+
+export function NotificationText({ notification }: { notification: Notification }) {
+  const { actor, imageUrl, message } = notification;
+  if (!actor && imageUrl) return <>{message}</>;
+  return (
+    <>
+      <span className="font-semibold">{actor ? displayName(actor) : "Orbis"}</span> {message}
+    </>
+  );
+}
 
 export function NotificationRow({
   notification,
@@ -70,8 +96,6 @@ export function NotificationRow({
   onOpen: () => void;
   compact?: boolean;
 }) {
-  const { actor } = notification;
-  const name = actor ? displayName(actor) : "Orbis";
   const unread = !notification.readAt;
 
   return (
@@ -91,14 +115,14 @@ export function NotificationRow({
         }
       >
         <span className="relative shrink-0">
-          <Atom.Avatar label={name} src={actor?.avatarUrl} seed={actor?.id ?? 0} />
+          <NotificationPicture notification={notification} />
           <span className="absolute -right-1 -bottom-1 flex h-5 w-5 items-center justify-center rounded-full border border-divider bg-surface text-foreground">
             {typeIcons[notification.type]}
           </span>
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="text-sm">
-            <span className="font-semibold">{name}</span> {notification.message}
+            <NotificationText notification={notification} />
           </span>
           <span className="text-xs text-muted">{timeAgo(notification.createdAt)}</span>
         </span>

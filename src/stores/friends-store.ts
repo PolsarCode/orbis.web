@@ -12,6 +12,7 @@ import type {
 } from "@/lib/api";
 import { currentDevice } from "@/lib/desktop";
 import { showDesktopNotifications } from "@/lib/desktop-notifications";
+import { useNotificationPreferencesStore } from "./notification-preferences-store";
 import { requireToken, useAuthStore } from "./auth-store";
 import { useCommunityStore } from "./community-store";
 import { useMessagesStore } from "./messages-store";
@@ -129,9 +130,10 @@ export const useFriendsStore = create<FriendsState>()((set, get) => ({
     socket.on(
       "notifications:changed",
       ({ notifications = [] }: { notifications?: Notification[] } = {}) => {
+        const { toasts, desktop } = useNotificationPreferencesStore.getState();
         useNotificationsStore.getState().refresh();
-        useNotificationsStore.getState().showToasts(notifications);
-        void showDesktopNotifications(notifications);
+        if (toasts) useNotificationsStore.getState().showToasts(notifications);
+        if (desktop) void showDesktopNotifications(notifications);
       },
     );
     socket.on("friends:changed", () => get().fetchFriends());

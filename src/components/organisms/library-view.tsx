@@ -1197,8 +1197,8 @@ function LibraryShelf({
 const libraryPages: { value: LibraryPage; label: string; icon: ReactNode }[] = [
   { value: "discover", label: "Discover", icon: <Telescope size={16} /> },
   { value: "mine", label: "My library", icon: <Library size={16} /> },
-  { value: "charts", label: "Charts", icon: <Trophy size={16} /> },
   { value: "calendar", label: "Calendar", icon: <CalendarDays size={16} /> },
+  { value: "charts", label: "Charts", icon: <Trophy size={16} /> },
 ];
 
 function pageHref(page: LibraryPage, type: MediaType) {

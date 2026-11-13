@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import * as Atom from "@atom";
 import type { Notification } from "@/lib/api";
-import { displayName } from "@/lib/display-name";
 import { useAuthStore } from "@/stores/auth-store";
 import { useNotificationsStore } from "@/stores/notifications-store";
+import { NotificationPicture, NotificationText } from "./notification-center";
 
 const SHOW_MS = 5000;
 const FADE_MS = 300;
@@ -14,9 +13,6 @@ const FADE_MS = 300;
 function Toast({ notification }: { notification: Notification }) {
   const dismiss = useNotificationsStore((state) => state.dismissToast);
   const [shown, setShown] = useState(false);
-  const { actor } = notification;
-  const name = actor ? displayName(actor) : "Orbis";
-
   useEffect(() => {
     const frame = requestAnimationFrame(() => setShown(true));
     const fadeOut = setTimeout(() => setShown(false), SHOW_MS);
@@ -40,9 +36,9 @@ function Toast({ notification }: { notification: Notification }) {
         shown ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
       }`}
     >
-      <Atom.Avatar label={name} src={actor?.avatarUrl} seed={actor?.id ?? 0} />
+      <NotificationPicture notification={notification} />
       <span className="min-w-0 flex-1 text-sm">
-        <span className="font-semibold">{name}</span> {notification.message}
+        <NotificationText notification={notification} />
       </span>
     </Link>
   );

@@ -32,6 +32,7 @@ export type Profile = {
   isPublic: boolean;
   showNsfw: boolean;
   showChangelog: boolean;
+  mutedNotifications: NotificationType[];
   isAdmin: boolean;
   isHeadAdmin: boolean;
   emailVerifiedAt: string | null;
@@ -576,7 +577,16 @@ export type Member = {
 export async function updatePreferences(
   token: string,
   preferences: Partial<
-    Pick<Profile, "theme" | "appearOffline" | "status" | "isPublic" | "showNsfw" | "showChangelog">
+    Pick<
+      Profile,
+      | "theme"
+      | "appearOffline"
+      | "status"
+      | "isPublic"
+      | "showNsfw"
+      | "showChangelog"
+      | "mutedNotifications"
+    >
   >,
 ): Promise<Profile> {
   const res = await send(token, "/users/me/preferences", "PATCH", preferences);
@@ -2083,19 +2093,23 @@ export type NotificationType =
   | "forum_reply"
   | "forum_quote"
   | "repost"
-  | "quote";
+  | "quote"
+  | "episode_aired"
+  | "game_released"
+  | "game_date";
 
 export type Notification = {
   id: number;
   type: NotificationType;
   message: string;
   link: string;
+  imageUrl: string | null;
   readAt: string | null;
   createdAt: string;
   actor: Author | null;
 };
 
-export type NotificationFilter = "all" | "comments" | "friends" | "reports";
+export type NotificationFilter = "all" | "comments" | "friends" | "catalog" | "reports";
 
 export type NotificationQuery = {
   cursor?: string;
