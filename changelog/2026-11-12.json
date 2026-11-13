@@ -1,0 +1,11 @@
+{
+  "date": "2026-11-12",
+  "versions": ["v0.130.0", "v0.130.1", "v0.131.0"],
+  "entries": [
+    {
+      "type": "new",
+      "title": "Start the desktop app minimized",
+      "description": "When Orbis opens as you log in to your computer, it now stays minimized until you need it. You can turn this off in the startup settings."
+    }
+  ]
+}
