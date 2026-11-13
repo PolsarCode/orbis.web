@@ -63,6 +63,7 @@ import {
 } from "@/stores/library-preferences-store";
 import { mediaTypes } from "./activity-card";
 import { FriendsSidePanel } from "./friends-panel";
+import { LibraryCalendar } from "./library-calendar";
 import { EntryMenu } from "./library-controls";
 import { LibraryDiscover } from "./media-shelf";
 import { PageTour } from "./onboarding";
@@ -1197,10 +1198,11 @@ const libraryPages: { value: LibraryPage; label: string; icon: ReactNode }[] = [
   { value: "discover", label: "Discover", icon: <Telescope size={16} /> },
   { value: "mine", label: "My library", icon: <Library size={16} /> },
   { value: "charts", label: "Charts", icon: <Trophy size={16} /> },
+  { value: "calendar", label: "Calendar", icon: <CalendarDays size={16} /> },
 ];
 
 function pageHref(page: LibraryPage, type: MediaType) {
-  return page === "mine" ? "/library?tab=mine" : libraryPath(page, type);
+  return page === "mine" || page === "calendar" ? `/library?tab=${page}` : libraryPath(page, type);
 }
 
 function LibraryPages({ page, type }: { page: LibraryPage | null; type: MediaType }) {
@@ -1266,7 +1268,7 @@ export function LibraryView() {
 
   useEffect(() => {
     if (!hydrated) return;
-    if (!page || (page === "mine" && !signedIn)) router.replace(pageHref("discover", type));
+    if (!page || ((page === "mine" || page === "calendar") && !signedIn)) router.replace(pageHref("discover", type));
   }, [hydrated, page, router, type, signedIn]);
 
   useEffect(() => {
@@ -1293,7 +1295,9 @@ export function LibraryView() {
       <LibraryPages page={page} type={type} />
       <div className="flex min-h-0 flex-1">
         <Template.PageColumn>
-          {!page ? null : page !== "mine" ? (
+          {!page ? null : page === "calendar" ? (
+            signedIn && <LibraryCalendar />
+          ) : page !== "mine" ? (
             <div className="flex flex-col gap-6">
               <MediaTypeSwitch page={page} type={type} />
               {page === "charts" ? <WeeklyCharts /> : <LibraryDiscover />}

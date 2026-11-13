@@ -2600,6 +2600,37 @@ export async function getLibrary(token: string): Promise<LibraryEntry[]> {
   return res.json();
 }
 
+export type CalendarEpisode = {
+  entryId: number;
+  sourceId: string;
+  title: string;
+  coverImage: string | null;
+  episode: number;
+  airsAt: string;
+};
+
+export type CalendarGame = {
+  entryId: number;
+  sourceId: string;
+  title: string;
+  coverImage: string | null;
+  releaseDate: string | null;
+  precision: "day" | "month" | "quarter" | "year" | null;
+};
+
+export type LibraryCalendar = {
+  month: string;
+  episodes: CalendarEpisode[];
+  games: CalendarGame[];
+};
+
+export async function getLibraryCalendar(token: string, month: string): Promise<LibraryCalendar> {
+  const res = await send(token, `/library/calendar?month=${month}`);
+
+  if (!res.ok) throw new Error(await errorMessage(res, "Could not load your calendar."));
+  return res.json();
+}
+
 export async function addToLibrary(
   token: string,
   item: {

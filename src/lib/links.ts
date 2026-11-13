@@ -2,7 +2,7 @@ import { getLinkPreview, type LinkPreview } from "./api";
 
 export type YouTubeVideo = { id: string; start: number };
 
-export const FACEBOOK_PAGE_URL = "https://www.facebook.com/profile.php?id=61596068415501";
+export const FACEBOOK_PAGE_URL = "https://www.facebook.com/OrbisFeed";
 
 export const TEXT_LINK = /(?:https?:\/\/|www\.)[^\s<>"']+/i;
 const TRAILING_PUNCTUATION = /[.,!?;:)\]}'"]+$/;

@@ -149,6 +149,12 @@ export const tips: Tip[] = [
     action: { label: "Open charts", href: "/library?tab=charts" },
   },
   {
+    id: "library-calendar",
+    title: "See what’s airing this week",
+    body: "Calendar in the Catalog shows when new episodes of the anime you’re watching air, in your own time zone, and when the games you plan to play come out. Switch between a month grid and a week list.",
+    action: { label: "Open calendar", href: "/library?tab=calendar" },
+  },
+  {
     id: "chart-discussions",
     title: "Talk about the weekly charts",
     body: "Every weekly chart has its own discussion under the list. Share what you think of this week’s picks, or look back at earlier weeks.",

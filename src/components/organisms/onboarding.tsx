@@ -367,9 +367,9 @@ export const pageTours = {
     {
       target: "library-pages",
       placement: "bottom",
-      title: "Discover, your library, and charts",
+      title: "Discover, your library, charts, and calendar",
       description:
-        "Discover has what’s trending, new, top-rated, and coming soon. My library has everything you’ve added, and Charts ranks the top titles of each week, with a discussion under each chart.",
+        "Discover has what’s trending, new, top-rated, and coming soon. My library has everything you’ve added, Charts ranks the top titles of each week with a discussion under each chart, and Calendar shows when your anime air and your planned games come out.",
     },
     {
       target: "library-view",

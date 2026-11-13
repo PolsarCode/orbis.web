@@ -35,6 +35,7 @@ export * from "./changelog-view";
 export * from "./settings-tabs";
 export * from "./landing-hero";
 export * from "./library-controls";
+export * from "./library-calendar";
 export * from "./library-view";
 export * from "./media-profile";
 export * from "./media-shelf";
