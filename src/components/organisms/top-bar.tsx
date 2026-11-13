@@ -8,6 +8,7 @@ import * as Molecule from "@molecule";
 import { useFriendsStore } from "@/stores/friends-store";
 import { useLayoutStore } from "@/stores/layout-store";
 import { useMessagesStore } from "@/stores/messages-store";
+import { useShowChat } from "./chat-dock";
 import { HEADER_POPOVER_LIMIT, HeaderPopover, HeaderPopoverNote } from "./header-popover";
 import { ConversationRow } from "./messages-view";
 import { NotificationBell } from "./notification-bell";
@@ -112,9 +113,7 @@ function RequestsButton() {
 function MessagesButton() {
   const conversations = useMessagesStore((state) => state.conversations);
   const loaded = useMessagesStore((state) => state.loaded);
-  const pageOpen = useMessagesStore((state) => state.pageOpen);
-  const openChat = useMessagesStore((state) => state.openChat);
-  const select = useMessagesStore((state) => state.select);
+  const showChat = useShowChat();
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const active = open || pathname === "/messages";
@@ -145,8 +144,7 @@ function MessagesButton() {
                 active={false}
                 onSelect={() => {
                   setOpen(false);
-                  if (pageOpen) select(conversation.id);
-                  else openChat(conversation.id);
+                  showChat(conversation.id);
                 }}
               />
             ))}
