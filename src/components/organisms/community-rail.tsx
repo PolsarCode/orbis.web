@@ -797,10 +797,10 @@ export function CommunityRail() {
             <Plus size={20} />
           </button>
         </RailSlot>
-        <RailSlot label="Explore communities">
+        <RailSlot label="Explore">
           <Link
             href="/explore"
-            aria-label="Explore communities"
+            aria-label="Explore"
             data-tour="explore"
             aria-current={pathname === "/explore" ? "page" : undefined}
             className={itemClass(pathname === "/explore")}
