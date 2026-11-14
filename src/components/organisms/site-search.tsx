@@ -47,7 +47,6 @@ import { displayName } from "@/lib/display-name";
 import { mediaPath, statusLabel } from "@/lib/library";
 import { spoilerLabel } from "@/lib/spoiler";
 import { tagHref } from "@/lib/tags";
-import { useMediaQuery } from "@/lib/use-media-query";
 import { ticketNumber } from "@/lib/ticket";
 import { useAuthStore } from "@/stores/auth-store";
 import {
@@ -791,9 +790,7 @@ export function SiteSearch() {
   const signedIn = useAuthStore((state) => Boolean(state.token));
   const pathname = usePathname();
   const mac = useSyncExternalStore(subscribe, isMac, () => false);
-  const desktop = useMediaQuery("(min-width: 40rem)", false);
   const [item, setItem] = useState<FeedEntry | null>(null);
-  const dropdown = open && signedIn && desktop;
 
   useEffect(() => {
     closeSearch();
@@ -825,19 +822,8 @@ export function SiteSearch() {
     return () => window.removeEventListener("keydown", handleKey);
   }, [signedIn]);
 
-  useEffect(() => {
-    if (!dropdown) return;
-
-    function handleEscape(event: globalThis.KeyboardEvent) {
-      if (event.key === "Escape" && !event.defaultPrevented) closeSearch();
-    }
-
-    window.addEventListener("keydown", handleEscape);
-    return () => window.removeEventListener("keydown", handleEscape);
-  }, [dropdown, closeSearch]);
-
   return (
-    <div className="relative">
+    <>
       <button
         type="button"
         data-tour="search"
@@ -852,20 +838,8 @@ export function SiteSearch() {
           {mac ? "⌘K" : "Ctrl K"}
         </kbd>
       </button>
-      {dropdown && (
-        <>
-          <div aria-hidden className="fixed inset-0 z-[999]" onMouseDown={closeSearch} />
-          <div
-            role="dialog"
-            aria-label="Search"
-            className="absolute top-0 left-1/2 z-[1000] w-[min(640px,calc(100vw-2rem))] -translate-x-1/2 overflow-hidden rounded-lg border border-divider bg-surface shadow-[0_16px_32px_-16px_rgb(0_0_0/0.45)]"
-          >
-            <SearchPanel scope={scope} onOpenItem={setItem} />
-          </div>
-        </>
-      )}
       <Modal
-        open={open && signedIn && !desktop}
+        open={open && signedIn}
         onCancel={closeSearch}
         footer={null}
         closable={false}
@@ -878,6 +852,6 @@ export function SiteSearch() {
         <SearchPanel scope={scope} onOpenItem={setItem} />
       </Modal>
       <DiscussionModal item={item} onClose={() => setItem(null)} onChange={setItem} />
-    </div>
+    </>
   );
 }
