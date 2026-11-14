@@ -33,7 +33,7 @@ import {
 } from "@/lib/oauth";
 import { useAuthStore } from "@/stores/auth-store";
 import { useCommunityStore } from "@/stores/community-store";
-import { linkPlatforms, normalizeLink } from "./community-links";
+import { cleanLinks, CommunityLinkFields, linkPlatforms } from "./community-links";
 import { DiscordChannelSettings } from "./discord-channel-settings";
 import { DiscordChartSettings } from "./discord-chart-settings";
 import { DISCORD_CHECK_MS, DiscordWidgetSteps } from "./discord-setup";
@@ -104,7 +104,7 @@ function GeneralSettings({ community }: { community: Community }) {
             }}
           />
           <span className="text-xs text-muted">
-            Shown when people hover over the community in Explore.
+            Shown on the community’s card in Explore.
           </span>
         </label>
         <label className="flex items-start justify-between gap-4">
@@ -142,12 +142,7 @@ function LinksSettings({ community }: { community: Community }) {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const links: CommunityLinks = {};
-  for (const { key } of linkPlatforms) {
-    const link = normalizeLink(values[key] ?? "");
-    if (link) links[key] = link;
-  }
-  const invalid = linkPlatforms.some(({ key, pattern }) => links[key] && !pattern.test(links[key]));
+  const { links, invalid } = cleanLinks(values);
   const changed = linkPlatforms.some(({ key }) => links[key] !== saved[key]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -175,28 +170,13 @@ function LinksSettings({ community }: { community: Community }) {
       description="Add the community’s other places. They show as icons on the cover photo, next to Twitch and Discord."
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {linkPlatforms.map(({ key, label, icon, example, pattern }) => {
-          const wrong = Boolean(links[key] && !pattern.test(links[key]));
-          return (
-            <Molecule.FormField
-              key={key}
-              label={label}
-              name={key}
-              inputMode="url"
-              autoComplete="off"
-              maxLength={300}
-              prefix={<span className="text-muted">{icon}</span>}
-              placeholder={example}
-              status={wrong ? "error" : undefined}
-              extra={wrong ? `Use a link like ${example}` : undefined}
-              value={values[key] ?? ""}
-              onChange={(event) => {
-                setValues({ ...values, [key]: event.target.value });
-                setMessage(null);
-              }}
-            />
-          );
-        })}
+        <CommunityLinkFields
+          values={values}
+          onChange={(next) => {
+            setValues(next);
+            setMessage(null);
+          }}
+        />
         {error && <Atom.ErrorMessage>{error}</Atom.ErrorMessage>}
         <div className="flex items-center gap-3">
           <Atom.Button type="submit" loading={pending} disabled={!changed || invalid}>

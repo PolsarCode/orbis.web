@@ -155,6 +155,12 @@ export const tips: Tip[] = [
     action: { label: "Open calendar", href: "/library?tab=calendar" },
   },
   {
+    id: "explore-friends",
+    title: "Join your friends’ communities",
+    body: "Explore shows the communities your friends joined that you haven’t yet, and lets you sort them and hide the ones you’re already in.",
+    action: { label: "Open Explore", href: "/explore" },
+  },
+  {
     id: "notification-settings",
     title: "Choose which notifications you get",
     body: "The Notifications tab in Settings lets you turn off each kind of notification, like new episodes, game releases, mentions, or reposts, and turn off pop-ups on this device.",

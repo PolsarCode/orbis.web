@@ -707,12 +707,15 @@ export async function updateRailLayout(
   return res.json();
 }
 
-export async function createCommunity(
-  token: string,
-  name: string,
-  isPublic: boolean,
-): Promise<Community> {
-  const res = await send(token, "/communities", "POST", { name, isPublic });
+export type NewCommunity = {
+  name: string;
+  isPublic: boolean;
+  description: string;
+  links: CommunityLinks;
+};
+
+export async function createCommunity(token: string, community: NewCommunity): Promise<Community> {
+  const res = await send(token, "/communities", "POST", community);
 
   if (res.status === 403) throw new Error(await errorMessage(res, "You can’t create more communities."));
   if (!res.ok) throw new Error("Could not create the community. Please try again.");
@@ -793,6 +796,34 @@ export async function searchCommunities(
   const res = await send(token, withQuery("/communities/search", { q: query }));
 
   if (!res.ok) throw new Error("Could not search communities.");
+  return res.json();
+}
+
+export type ExploreSort = "popular" | "newest";
+
+export type ExplorePage = { items: CommunitySearchResult[]; nextPage: number | null };
+
+export async function exploreCommunities(
+  token: string,
+  { sort, hideJoined, page }: { sort: ExploreSort; hideJoined: boolean; page: number },
+): Promise<ExplorePage> {
+  const res = await send(
+    token,
+    withQuery("/communities/explore", {
+      sort,
+      hideJoined: hideJoined ? "true" : undefined,
+      page: String(page),
+    }),
+  );
+
+  if (!res.ok) throw new Error("Could not load communities.");
+  return res.json();
+}
+
+export async function getFriendCommunities(token: string): Promise<CommunitySearchResult[]> {
+  const res = await send(token, "/communities/explore/friends");
+
+  if (!res.ok) throw new Error("Could not load your friends’ communities.");
   return res.json();
 }
 

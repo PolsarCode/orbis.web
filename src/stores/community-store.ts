@@ -19,7 +19,7 @@ type CommunityState = {
   loaded: boolean;
   failed: boolean;
   fetchCommunities: () => Promise<void>;
-  createCommunity: (name: string, isPublic: boolean) => Promise<Community>;
+  createCommunity: (community: api.NewCommunity) => Promise<Community>;
   joinCommunity: (communityId: number) => Promise<Community>;
   leaveCommunity: (communityId: number) => Promise<void>;
   forgetCommunity: (communityId: number, removed?: boolean) => void;
@@ -80,8 +80,8 @@ export const useCommunityStore = create<CommunityState>()((set, get) => ({
     set(communities ? { communities, loaded: true, failed: false } : { failed: true });
     if (layout) set({ layout });
   },
-  createCommunity: async (name, isPublic) => {
-    const community = await api.createCommunity(requireToken(), name, isPublic);
+  createCommunity: async (input) => {
+    const community = await api.createCommunity(requireToken(), input);
     set((state) => ({
       communities: [...state.communities, { ...community, role: "owner" }],
       layout: [...state.layout, { type: "community", communityId: community.id }],

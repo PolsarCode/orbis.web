@@ -11,6 +11,7 @@ import {
 import { Dropdown, Tooltip } from "antd";
 import { Link2 } from "lucide-react";
 import type { ReactNode } from "react";
+import * as Molecule from "@molecule";
 import type { CommunityLinkPlatform, CommunityLinks } from "@/lib/api";
 
 function KickIcon({ className }: { className?: string }) {
@@ -90,6 +91,45 @@ export function normalizeLink(value: string) {
   const link = value.trim();
   if (!link || /^[a-z][a-z0-9+.-]*:/i.test(link)) return link;
   return `https://${link}`;
+}
+
+export function cleanLinks(values: CommunityLinks) {
+  const links: CommunityLinks = {};
+  for (const { key } of linkPlatforms) {
+    const link = normalizeLink(values[key] ?? "");
+    if (link) links[key] = link;
+  }
+  const invalid = linkPlatforms.some(({ key, pattern }) => links[key] && !pattern.test(links[key]));
+  return { links, invalid };
+}
+
+export function CommunityLinkFields({
+  values,
+  onChange,
+}: {
+  values: CommunityLinks;
+  onChange: (values: CommunityLinks) => void;
+}) {
+  const { links } = cleanLinks(values);
+  return linkPlatforms.map(({ key, label, icon, example, pattern }) => {
+    const wrong = Boolean(links[key] && !pattern.test(links[key]));
+    return (
+      <Molecule.FormField
+        key={key}
+        label={label}
+        name={key}
+        inputMode="url"
+        autoComplete="off"
+        maxLength={300}
+        prefix={<span className="text-muted">{icon}</span>}
+        placeholder={example}
+        status={wrong ? "error" : undefined}
+        extra={wrong ? `Use a link like ${example}` : undefined}
+        value={values[key] ?? ""}
+        onChange={(event) => onChange({ ...values, [key]: event.target.value })}
+      />
+    );
+  });
 }
 
 const iconClassName =

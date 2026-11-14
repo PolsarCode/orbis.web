@@ -42,7 +42,7 @@ export const tourStops: TourStop[] = [
     placement: "right",
     title: "Start a community",
     description:
-      "Make your own space, public or private. As the owner you can set its icon, cover, and background right on its page. New accounts can start one after their first day.",
+      "Make your own space, public or private. Give it a description, icon, cover, and links when you create it, or add them later. New accounts can start one after their first day.",
   },
   {
     target: "explore",
@@ -400,16 +400,28 @@ export const pageTours = {
   ],
   explore: [
     {
+      target: "explore-friends",
+      placement: "bottom",
+      title: "Where your friends are",
+      description: "Communities your friends joined that you haven’t yet, with the most friends first.",
+    },
+    {
       target: "search",
       placement: "bottom",
       title: "Search communities",
-      description: "Find public communities by name and join them right from the results.",
+      description: "Find public communities by name or description and join them right from the results.",
+    },
+    {
+      target: "explore-filters",
+      placement: "bottom",
+      title: "Sort and filter",
+      description: "Sort communities by popular or newest, and hide the ones you’ve already joined.",
     },
     {
       target: "explore-communities",
       placement: "top",
-      title: "Popular communities",
-      description: "Hover over a community to see what it’s about, who’s in it, and which friends are there.",
+      title: "All communities",
+      description: "Each card shows what a community is about, who’s in it, and which friends are there. Join it right here.",
     },
   ],
   reports: [

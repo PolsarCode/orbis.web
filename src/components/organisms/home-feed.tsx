@@ -83,7 +83,7 @@ export function HomeFeed({ latestChangelog }: { latestChangelog: ChangelogDay | 
             description="You’ve seen all recent posts from your communities. Explore other communities to find more discussions."
             action={
               <Atom.ButtonLink href="/explore" variant="secondary">
-                Explore communities
+                Explore
               </Atom.ButtonLink>
             }
           />
