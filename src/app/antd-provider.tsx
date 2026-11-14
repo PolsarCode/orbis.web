@@ -97,9 +97,20 @@ export function AntdProvider({ children }: { children: ReactNode }) {
                   textHoverBg: "transparent",
                 }
               : {},
+            Popover: {
+              sizePopupArrow: 22,
+            },
             Tooltip: {
-              colorBgSpotlight: colors.foreground,
-              colorTextLightSolid: colors.background,
+              colorBgSpotlight: colors.accent,
+              colorTextLightSolid: colors.accentForeground,
+            },
+          },
+        }}
+        popover={{
+          styles: {
+            container: {
+              border: `2px solid ${colors.accent}`,
+              boxShadow: `0 0 0 3px color-mix(in srgb, ${colors.accent} 14%, transparent), 0 8px 24px rgb(0 0 0 / 0.14)`,
             },
           },
         }}

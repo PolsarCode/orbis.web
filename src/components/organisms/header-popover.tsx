@@ -28,14 +28,12 @@ export function HeaderPanel({
         onOpenChange={onOpenChange}
         trigger="click"
         placement="bottomRight"
-        arrow={false}
-        align={{ offset: [0, 8] }}
+        arrow={{ pointAtCenter: true }}
         styles={{
           container: {
             padding: 20,
             borderRadius: 12,
-            boxShadow: "none",
-            border: "1px solid var(--divider)",
+            border: "2px solid var(--accent)",
           },
         }}
         content={content}

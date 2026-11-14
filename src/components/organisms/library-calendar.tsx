@@ -1,5 +1,6 @@
 "use client";
 
+import { Popover } from "antd";
 import { CalendarDays, CalendarX, ChevronLeft, ChevronRight, List } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -7,6 +8,7 @@ import * as Atom from "@atom";
 import * as Molecule from "@molecule";
 import { getLibraryCalendar, type CalendarGame, type LibraryCalendar } from "@/lib/api";
 import { mediaPath, shortDate } from "@/lib/library";
+import { longDate, timeAgo } from "@/lib/time";
 import { useAuthStore } from "@/stores/auth-store";
 import { useLibraryPreferencesStore, type CalendarView } from "@/stores/library-preferences-store";
 import { MediaCover } from "./library-view";
@@ -27,6 +29,7 @@ type CalendarItem = {
   coverImage: string | null;
   label: string;
   sortsAt: number;
+  detail?: { kind: string; when: string; at: string };
 };
 
 const pad = (value: number) => String(value).padStart(2, "0");
@@ -100,6 +103,18 @@ function itemsByDay(calendars: LibraryCalendar[], games: CalendarGame[]) {
           minute: "2-digit",
         })}`,
         sortsAt: airsAt.getTime(),
+        detail: {
+          kind: `Anime · Episode ${episode.episode}`,
+          when: airsAt.toLocaleString(undefined, {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+          }),
+          at: episode.airsAt,
+        },
       });
     }
   }
@@ -108,18 +123,46 @@ function itemsByDay(calendars: LibraryCalendar[], games: CalendarGame[]) {
     if (game.precision !== "day" || !game.releaseDate) continue;
     const date = new Date(game.releaseDate);
     const key = `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
-    add(key, gameItem(game, "Release", date.getTime()));
+    add(key, {
+      ...gameItem(game, "Release", date.getTime()),
+      detail: {
+        kind: "Game · Release day",
+        when: date.toLocaleDateString(undefined, {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+          timeZone: "UTC",
+        }),
+        at: game.releaseDate,
+      },
+    });
   }
 
   for (const items of days.values()) items.sort((a, b) => a.sortsAt - b.sortsAt);
   return days;
 }
 
-function CalendarChip({ item, compact = false }: { item: CalendarItem; compact?: boolean }) {
+function ChipDetail({ item, detail }: { item: CalendarItem; detail: NonNullable<CalendarItem["detail"]> }) {
+  const soon = timeAgo(detail.at);
   return (
+    <div className="flex max-w-64 items-start gap-3">
+      <MediaCover src={item.coverImage} className="w-14 shrink-0" />
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <span className="font-semibold">{item.title}</span>
+        <span className="text-xs text-muted">{detail.kind}</span>
+        <span className="text-xs">{detail.when}</span>
+        {soon !== longDate(detail.at) && <span className="text-xs text-muted">{soon}</span>}
+      </div>
+    </div>
+  );
+}
+
+function CalendarChip({ item, compact = false }: { item: CalendarItem; compact?: boolean }) {
+  const chip = (
     <Link
       href={item.href}
-      title={`${item.title} · ${item.label}`}
+      title={compact && item.detail ? undefined : `${item.title} · ${item.label}`}
       className="focus-ring flex min-w-0 items-center gap-1.5 rounded-md p-0.5 hover:bg-rail-item"
     >
       <MediaCover src={item.coverImage} className={compact ? "w-5" : "w-10"} />
@@ -132,6 +175,12 @@ function CalendarChip({ item, compact = false }: { item: CalendarItem; compact?:
         </span>
       </span>
     </Link>
+  );
+  if (!compact || !item.detail) return chip;
+  return (
+    <Popover content={<ChipDetail item={item} detail={item.detail} />} mouseEnterDelay={0.3}>
+      {chip}
+    </Popover>
   );
 }
 

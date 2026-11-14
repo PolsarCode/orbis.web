@@ -193,6 +193,34 @@ body {
     padding: 16px;
   }
 
+  .ant-popover {
+    --ant-tooltip-arrow-background-color: transparent;
+  }
+
+  .ant-popover > .ant-popover-arrow {
+    z-index: 1;
+  }
+
+  .ant-popover > .ant-popover-arrow::after {
+    width: 17px;
+    height: 17px;
+    background: var(--surface);
+    border-right: 2px solid var(--accent);
+    border-bottom: 2px solid var(--accent);
+  }
+
+  .ant-popover[class*="ant-popover-placement-top"] > .ant-popover-arrow {
+    translate: 0 -2px;
+  }
+
+  .ant-popover[class*="ant-popover-placement-left"] > .ant-popover-arrow {
+    translate: -2px 0;
+  }
+
+  .ant-popover[class*="ant-popover-placement-right"] > .ant-popover-arrow {
+    translate: 2px 0;
+  }
+
   .ant-message {
     top: auto !important;
     bottom: 24px;
