@@ -477,6 +477,14 @@ export async function getPublicLibraryUpdates(): Promise<PublicLibraryUpdate[]> 
   return res.json();
 }
 
+export type PublicLibraryTitle = { type: MediaType; sourceId: string; updatedAt: string };
+
+export async function getPublicLibraryTitles(): Promise<PublicLibraryTitle[]> {
+  const res = await api("/public/library-titles", { next: { revalidate: 3600 } });
+  if (!res.ok) throw new Error("Could not load library titles.");
+  return res.json();
+}
+
 export type FeedContentType = FeedEntry["type"];
 
 export type Page<T> = { items: T[]; nextCursor: string | null };

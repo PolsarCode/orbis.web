@@ -2,6 +2,8 @@ import { getLinkPreview, type LinkPreview } from "./api";
 
 export type YouTubeVideo = { id: string; start: number };
 
+export const SITE_URL = "https://orbis.polsar.studio";
+
 export const FACEBOOK_PAGE_URL = "https://www.facebook.com/OrbisFeed";
 
 export const TEXT_LINK = /(?:https?:\/\/|www\.)[^\s<>"']+/i;

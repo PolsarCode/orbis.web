@@ -8,6 +8,7 @@ import { authScript } from "@/stores/auth-store";
 import { themeScript } from "@/stores/theme-store";
 import { AntdProvider } from "./antd-provider";
 import "./globals.css";
+import { SITE_URL } from "@/lib/links";
 import { landingTitle, siteTitle } from "@/lib/site-title";
 
 const inter = Inter({
@@ -25,6 +26,7 @@ const description =
   "Orbis is a home for fan communities, with a feed for quick updates and a library to track what you’re watching, reading, and playing.";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: { default: landingTitle, template: `%s - ${siteTitle}` },
   description,
   applicationName: "Orbis",
