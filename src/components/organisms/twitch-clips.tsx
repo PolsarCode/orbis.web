@@ -83,8 +83,23 @@ export function TwitchClips({ communityId, username, name }: ClipSource & { name
       </div>
     ) : (
       <Molecule.TabSection title="Clips" actions={source}>
-        <div className="flex justify-center py-12">
-          <Atom.Loader />
+        <div role="status">
+          <span className="sr-only">Loading clips</span>
+          <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {[0, 1, 2, 3].map((card) => (
+              <li
+                key={card}
+                aria-hidden
+                className="flex animate-pulse flex-col overflow-hidden rounded-lg border border-divider bg-surface motion-reduce:animate-none"
+              >
+                <span className="block aspect-video w-full bg-rail-item" />
+                <span className="flex flex-col gap-2 p-3">
+                  <span className="h-2.5 w-4/5 rounded-full bg-rail-item" />
+                  <span className="h-2 w-1/2 rounded-full bg-rail-item" />
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
       </Molecule.TabSection>
     );
