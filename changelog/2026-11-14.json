@@ -1,0 +1,42 @@
+{
+  "date": "2026-11-14",
+  "versions": ["v0.132.0", "v0.133.0", "v0.134.0", "v0.135.0", "v0.136.0", "v0.136.1", "v0.137.0", "v0.137.1"],
+  "entries": [
+    {
+      "type": "new",
+      "title": "Library calendar for airing anime and upcoming games",
+      "description": "See when new episodes of the anime you follow air and when the games in your library come out, all on one calendar. Click any item for its details.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Get notified about new episodes and game releases",
+      "description": "Orbis now lets you know when a title in your library gets a new episode, a game comes out, or a release date changes.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Choose which notifications you get",
+      "description": "A new notification settings page lets you turn each kind of notification on or off, and choose whether pop-up and desktop notifications show on this device.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "new",
+      "title": "Sort Explore and see where your friends are",
+      "description": "Sort communities in Explore by popular or newest, hide the ones you've joined, and find communities your friends are in that you haven't joined yet.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "improved",
+      "title": "Add a description and links when you create a community",
+      "description": "When you start a new community, you can now say what it's about and add its links right away.",
+      "platforms": ["web"]
+    },
+    {
+      "type": "improved",
+      "title": "Open all comments from a comment preview",
+      "description": "Clicking a comment in a post's preview now opens the full comments, so you can read the whole conversation.",
+      "platforms": ["web"]
+    }
+  ]
+}
